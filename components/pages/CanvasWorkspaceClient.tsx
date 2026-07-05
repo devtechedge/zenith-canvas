@@ -18,7 +18,8 @@ import {
   Cloud,
   Check,
   Download,
-  Share2
+  Share2,
+  Menu
 } from 'lucide-react';
 import Link from 'next/link';
 import { useParams, useRouter } from 'next/navigation';
@@ -59,6 +60,7 @@ export default function CanvasWorkspaceClient() {
     return localStorage.getItem(`zenith-theme-${canvasId}`) || 'default';
   });
   const [isFocusMode, setIsFocusMode] = useState<boolean>(false);
+  const [isMobileSidebarOpen, setIsMobileSidebarOpen] = useState(false);
 
   // 1. Fetch current canvas details
   const canvas = useLiveQuery(() => db.canvases.get(canvasId), [canvasId]);
@@ -470,7 +472,13 @@ export default function CanvasWorkspaceClient() {
   return (
     <div className="flex h-screen overflow-hidden font-sans text-[#1A1A1A] bg-[#F4F7F6]">
       {/* Sidebar navigation */}
-      {!isFocusMode && <Sidebar onOpenCommandPalette={() => setIsCommandPaletteOpen(true)} />}
+      {!isFocusMode && (
+        <Sidebar 
+          onOpenCommandPalette={() => setIsCommandPaletteOpen(true)} 
+          mobileOpen={isMobileSidebarOpen}
+          onCloseMobile={() => setIsMobileSidebarOpen(false)}
+        />
+      )}
  
       {/* Main editor page container */}
       <div className="flex-1 flex flex-col h-screen overflow-hidden">
@@ -478,6 +486,15 @@ export default function CanvasWorkspaceClient() {
         {/* Top Control Header */}
         <header className="h-14 border-b-2 border-[#1A1A1A] bg-white px-6 flex items-center justify-between flex-shrink-0 z-20">
           <div className="flex items-center space-x-2">
+            {!isFocusMode && (
+              <button
+                onClick={() => setIsMobileSidebarOpen(true)}
+                className="md:hidden p-1.5 border-2 border-[#1A1A1A] bg-[#FFB703] neo-shadow-sm mr-1 active:translate-x-[1px] active:translate-y-[1px] active:shadow-none cursor-pointer"
+                title="Toggle Menu"
+              >
+                <Menu className="w-4 h-4 text-[#1A1A1A]" />
+              </button>
+            )}
             <Link href="/">
               <button className="p-1 border border-transparent hover:border-[#1A1A1A] hover:bg-gray-100 rounded text-gray-500 transition-all">
                 <ChevronLeft className="w-4 h-4" />

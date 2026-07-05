@@ -23,3 +23,50 @@
     box-shadow: 4px 4px 0px 0px #FFB703;
   }
 }
+
+/* --- Premium 2026 Trend Aesthetic Scrollbars --- */
+/* Hide bulky default scrollbar arrow buttons completely */
+::-webkit-scrollbar-button {
+  display: none !important;
+  width: 0 !important;
+  height: 0 !important;
+}
+
+/* Ultra-thin scrollbar layout */
+::-webkit-scrollbar {
+  width: 6px;
+  height: 6px;
+}
+
+::-webkit-scrollbar-track {
+  background: transparent;
+}
+
+/* Invisible scrollbar thumb by default when not in use */
+::-webkit-scrollbar-thumb {
+  background: transparent;
+  border-radius: 9999px;
+  border: 1.5px solid transparent;
+  background-clip: padding-box;
+  transition: background-color 0.25s ease-in-out;
+}
+
+/* Reappear smoothly with high-polish translucent styling when mouse is dragged/hovered near scrollable containers */
+*:hover::-webkit-scrollbar-thumb {
+  background-color: rgba(26, 26, 26, 0.2);
+}
+
+/* Darken slightly when actively hovering or dragging the thumb itself */
+::-webkit-scrollbar-thumb:hover {
+  background-color: rgba(26, 26, 26, 0.45) !important;
+}
+
+/* Firefox auto-hiding scrollbar integration */
+* {
+  scrollbar-width: thin;
+  scrollbar-color: transparent transparent;
+}
+
+*:hover {
+  scrollbar-color: rgba(26, 26, 26, 0.2) transparent;
+}

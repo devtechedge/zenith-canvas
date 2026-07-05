@@ -18,7 +18,8 @@ import {
   CloudOff,
   RefreshCw,
   Layout,
-  FileText
+  FileText,
+  X
 } from 'lucide-react';
 import { motion, AnimatePresence } from 'motion/react';
 import Link from 'next/link';
@@ -27,9 +28,11 @@ import ConfirmDialog from '@/components/ui/ConfirmDialog';
 
 interface SidebarProps {
   onOpenCommandPalette: () => void;
+  mobileOpen?: boolean;
+  onCloseMobile?: () => void;
 }
 
-export default function Sidebar({ onOpenCommandPalette }: SidebarProps) {
+export default function Sidebar({ onOpenCommandPalette, mobileOpen = false, onCloseMobile }: SidebarProps) {
   const params = useParams();
   const currentCanvasId = params?.canvasId as string;
   const { syncStatus, isOnline, createNewCanvas, deleteCanvasAndChildren } = useCanvasSync();
@@ -186,21 +189,41 @@ export default function Sidebar({ onOpenCommandPalette }: SidebarProps) {
   };
 
   return (
-    <aside className="w-64 h-screen bg-[#F4F7F6] border-r-2 border-[#1A1A1A] flex flex-col justify-between overflow-hidden">
-      {/* Upper Brand Section */}
-      <div className="flex flex-col flex-1 overflow-y-auto">
-        {/* Brand Header */}
-        <div className="p-4 border-b-2 border-[#1A1A1A] bg-white flex items-center justify-between">
-          <div className="flex items-center space-x-2">
-            <div className="w-8 h-8 bg-[#FFB703] border-2 border-[#1A1A1A] neo-shadow-sm flex items-center justify-center font-bold text-sm">
-              ZC
+    <>
+      {/* Mobile Sidebar Overlay Backdrop */}
+      {mobileOpen && (
+        <div 
+          className="fixed inset-0 bg-black/40 backdrop-blur-xs z-40 md:hidden transition-opacity cursor-pointer"
+          onClick={onCloseMobile}
+        />
+      )}
+
+      <aside className={`
+        fixed inset-y-0 left-0 z-50 w-64 h-screen bg-[#F4F7F6] border-r-2 border-[#1A1A1A] flex flex-col justify-between overflow-hidden transition-transform duration-300 md:translate-x-0 md:static md:flex
+        ${mobileOpen ? 'translate-x-0 shadow-2xl' : '-translate-x-full'}
+      `}>
+        {/* Upper Brand Section */}
+        <div className="flex flex-col flex-1 overflow-y-auto">
+          {/* Brand Header */}
+          <div className="p-4 border-b-2 border-[#1A1A1A] bg-white flex items-center justify-between">
+            <div className="flex items-center space-x-2">
+              <div className="w-8 h-8 bg-[#FFB703] border-2 border-[#1A1A1A] neo-shadow-sm flex items-center justify-center font-bold text-sm">
+                ZC
+              </div>
+              <div>
+                <h1 className="text-sm font-extrabold tracking-tight">ZENITH CANVAS</h1>
+                <p className="text-[10px] font-mono text-gray-500">v1.2.0-distributed</p>
+              </div>
             </div>
-            <div>
-              <h1 className="text-sm font-extrabold tracking-tight">ZENITH CANVAS</h1>
-              <p className="text-[10px] font-mono text-gray-500">v1.2.0-distributed</p>
-            </div>
+            {/* Mobile close button */}
+            <button
+              onClick={onCloseMobile}
+              className="md:hidden p-1 border border-[#1A1A1A] bg-white rounded-none hover:bg-gray-100"
+              title="Close Menu"
+            >
+              <X className="w-4 h-4 text-[#1A1A1A]" />
+            </button>
           </div>
-        </div>
 
         {/* Search Palette Trigger */}
         <div className="p-3">
@@ -296,5 +319,6 @@ export default function Sidebar({ onOpenCommandPalette }: SidebarProps) {
         message="Are you sure you want to delete this canvas and all its nested sub-canvases? This action is irreversible."
       />
     </aside>
+    </>
   );
 }

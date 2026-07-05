@@ -17,7 +17,8 @@ import {
   Monitor, 
   Zap,
   Sparkles,
-  HelpCircle
+  HelpCircle,
+  Menu
 } from 'lucide-react';
 import Link from 'next/link';
 import { motion, AnimatePresence } from 'motion/react';
@@ -25,6 +26,7 @@ import { motion, AnimatePresence } from 'motion/react';
 export default function WorkspaceHubClient() {
   const { createNewCanvas } = useCanvasSync();
   const [isCommandPaletteOpen, setIsCommandPaletteOpen] = useState(false);
+  const [isMobileSidebarOpen, setIsMobileSidebarOpen] = useState(false);
 
   // Trigger seeding on application load
   useEffect(() => {
@@ -59,29 +61,44 @@ export default function WorkspaceHubClient() {
   return (
     <div className="flex h-screen overflow-hidden font-sans text-[#1A1A1A] bg-[#F4F7F6]">
       {/* Recursively Tree Sidebar */}
-      <Sidebar onOpenCommandPalette={() => setIsCommandPaletteOpen(true)} />
+      <Sidebar 
+        onOpenCommandPalette={() => setIsCommandPaletteOpen(true)} 
+        mobileOpen={isMobileSidebarOpen}
+        onCloseMobile={() => setIsMobileSidebarOpen(false)}
+      />
 
       {/* Main Workspace Dashboard */}
       <main className="flex-1 overflow-y-auto p-6 md:p-10 space-y-8">
         {/* Top Header */}
-        <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4 border-b-2 border-[#1A1A1A] pb-5">
-          <div>
-            <div className="flex items-center space-x-2">
-              <span className="text-[10px] font-mono font-bold bg-[#FFB703] text-[#1A1A1A] border-2 border-[#1A1A1A] px-2.5 py-0.5 uppercase rounded-none neo-shadow-sm animate-pulse">
-                Global Workspace active
-              </span>
+        <div className="flex flex-col md:flex-row md:items-center md:justify-between gap-4 border-b-2 border-[#1A1A1A] pb-5">
+          <div className="flex items-start justify-between w-full md:w-auto">
+            <div>
+              <div className="flex items-center space-x-2">
+                <span className="text-[10px] font-mono font-bold bg-[#FFB703] text-[#1A1A1A] border-2 border-[#1A1A1A] px-2.5 py-0.5 uppercase rounded-none neo-shadow-sm animate-pulse">
+                  Global Workspace active
+                </span>
+              </div>
+              <h1 className="text-3xl font-black tracking-tight mt-1 text-[#1A1A1A]">
+                Zenith Canvas Hub
+              </h1>
+              <p className="text-sm font-medium text-gray-500 mt-1">
+                Double-buffered delta replication and distributed block-based workspace.
+              </p>
             </div>
-            <h1 className="text-3xl font-black tracking-tight mt-1 text-[#1A1A1A]">
-              Zenith Canvas Hub
-            </h1>
-            <p className="text-sm font-medium text-gray-500 mt-1">
-              Double-buffered delta replication and distributed block-based workspace.
-            </p>
+
+            {/* Mobile Menu Trigger Button */}
+            <button
+              onClick={() => setIsMobileSidebarOpen(true)}
+              className="md:hidden flex items-center justify-center p-2.5 border-2 border-[#1A1A1A] bg-[#FFB703] neo-shadow-sm active:translate-x-[1px] active:translate-y-[1px] active:shadow-none cursor-pointer"
+              title="Open Navigation Menu"
+            >
+              <Menu className="w-5 h-5 text-[#1A1A1A]" />
+            </button>
           </div>
 
           <button
             onClick={handleLaunchCanvas}
-            className="flex items-center justify-center space-x-2 px-5 py-2.5 bg-[#FFB703] border-2 border-[#1A1A1A] neo-shadow text-sm font-bold uppercase hover:translate-x-[2px] hover:translate-y-[2px] hover:shadow-none transition-all cursor-pointer"
+            className="flex items-center justify-center space-x-2 px-5 py-2.5 bg-[#FFB703] border-2 border-[#1A1A1A] neo-shadow text-sm font-bold uppercase hover:translate-x-[2px] hover:translate-y-[2px] hover:shadow-none transition-all cursor-pointer w-full md:w-auto"
           >
             <Plus className="w-4 h-4" />
             <span>Launch Canvas Node</span>
