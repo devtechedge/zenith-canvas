@@ -3192,6 +3192,1115 @@ export default function CanvasEditor({ canvasId, isLocked = false }: CanvasEdito
                 })()
               )}
 
+              {/* ZENITH 10-TIER DEVOPS & RELATIONAL SCHEMA SUITE */}
+              {el.type === 'zenith_ops_deck' && (
+                (() => {
+                  const zenithState = propertiesObj.zenithOps || {
+                    activeTab: 'migrator', // migrator, ast_diff, api_sandbox, conflict, git_ledger, sql_optimizer, bento, audio_synth, jwt_inspector, prompt_optimizer
+                    migrator: {
+                      tableName: 'zenith_users',
+                      columns: [
+                        { name: 'id', type: 'VARCHAR(255)', primaryKey: true, nullable: false, default: '' },
+                        { name: 'email', type: 'VARCHAR(255)', primaryKey: false, nullable: false, default: '' },
+                        { name: 'meta_json', type: 'JSONB', primaryKey: false, nullable: true, default: '' }
+                      ],
+                      results: null,
+                      loading: false
+                    },
+                    astDiff: {
+                      originalText: '# Welcome to Zenith\n- [ ] Todo item\n> A quote note.',
+                      modifiedText: '## Welcome to Zenith\n- [x] Todo item\n- List item\n> A revised quote note.',
+                      results: null,
+                      loading: false
+                    },
+                    apiSandbox: {
+                      method: 'POST',
+                      url: 'https://api.zenith-canvas.local/v1/workspace/query',
+                      headers: [
+                        { key: 'Authorization', value: 'Bearer zn_live_9a2f1b' },
+                        { key: 'Content-Type', value: 'application/json' }
+                      ],
+                      requestBody: '{\n  "query_scope": "canvases",\n  "include_blocks": true\n}',
+                      results: null,
+                      loading: false
+                    },
+                    conflict: {
+                      localStateText: 'Local User Edit Content',
+                      remoteStateText: 'Remote Peer Edit Content',
+                      results: null,
+                      loading: false
+                    },
+                    gitLedger: {
+                      commitMessage: 'Distributed node snapshot update',
+                      author: 'Lead Architect',
+                      commits: [],
+                      loading: false
+                    },
+                    sqlOptimizer: {
+                      query: 'SELECT * FROM zenith_elements JOIN canvases ON elements.canvas_id = canvases.id WHERE canvases.is_archived = false AND elements.type = \'text\';',
+                      results: null,
+                      loading: false
+                    },
+                    bento: {
+                      cols: 4,
+                      items: [
+                        { id: 'b-1', title: 'Server Metrics', colSpan: 2 },
+                        { id: 'b-2', title: 'AST Graph', colSpan: 2 },
+                        { id: 'b-3', title: 'Audio Soundboard', colSpan: 4 }
+                      ]
+                    },
+                    audioSynth: {
+                      frequency: 440,
+                      type: 'sine',
+                      sustain: 0.1,
+                      duration: 0.2
+                    },
+                    jwt: {
+                      secretKey: 'zenith-secret-token-key-2026',
+                      algorithm: 'HS256',
+                      payloadFieldsJson: '{\n  "user_id": "usr_81b9c2a",\n  "role": "admin",\n  "scope": "write:all"\n}',
+                      results: null,
+                      loading: false
+                    },
+                    promptOptimizer: {
+                      promptRole: 'You are an advanced full-stack systems engineering agent.',
+                      results: null,
+                      loading: false
+                    },
+                    logs: [
+                      { time: '14:28:30', op: 'ENGINE_BOOT', payload: 'Zenith 10-Tier DevOps Engine Suite boot active. Core serverless route ready.', status: 'OK' }
+                    ]
+                  };
+
+                  const updateZenithState = (key: string, value: any) => {
+                    const updated = { ...zenithState, [key]: value };
+                    updateCanvasElement(el.id, { properties: JSON.stringify({ ...propertiesObj, zenithOps: updated }) });
+                  };
+
+                  const triggerZenithLog = (op: string, payload: string, status: 'OK' | 'WARNING' | 'CONFLICT' | 'PENDING') => {
+                    const time = new Date().toTimeString().split(' ')[0];
+                    const newLog = { time, op, payload, status };
+                    const updatedLogs = [...(zenithState.logs || []), newLog].slice(-25);
+                    updateZenithState('logs', updatedLogs);
+                  };
+
+                  const triggerApiCall = async (action: string, payload: any) => {
+                    try {
+                      const res = await fetch('/api/zenith', {
+                        method: 'POST',
+                        headers: { 'Content-Type': 'application/json' },
+                        body: JSON.stringify({ action, payload })
+                      });
+                      const data = await res.json();
+                      return data;
+                    } catch (err: any) {
+                      return { success: false, error: err?.message || 'Network communication failure' };
+                    }
+                  };
+
+                  // Web Audio API sound wave synthesis
+                  const playAcousticWave = (freq: number, type: string, duration: number, sustain: number) => {
+                    if (typeof window === 'undefined') return;
+                    try {
+                      const AudioContext = window.AudioContext || (window as any).webkitAudioContext;
+                      if (!AudioContext) return;
+                      const ctx = new AudioContext();
+                      const osc = ctx.createOscillator();
+                      const gain = ctx.createGain();
+                      osc.type = type as any;
+                      osc.frequency.setValueAtTime(freq, ctx.currentTime);
+                      gain.gain.setValueAtTime(0.05, ctx.currentTime);
+                      gain.gain.exponentialRampToValueAtTime(0.0001, ctx.currentTime + duration + sustain);
+                      osc.connect(gain);
+                      gain.connect(ctx.destination);
+                      osc.start();
+                      osc.stop(ctx.currentTime + duration + sustain);
+                    } catch (e) {
+                      console.error('Audio Synthesis failure:', e);
+                    }
+                  };
+
+                  return (
+                    <div className="border-2 border-slate-700 p-4 bg-slate-900 text-slate-100 rounded-none my-4 w-full font-mono relative overflow-hidden shadow-2xl">
+                      {/* Executive High-Performance Header */}
+                      <div className="flex flex-wrap items-center justify-between border-b border-slate-800 pb-3 mb-4 bg-slate-950 -mx-4 -mt-4 p-4">
+                        <div className="flex items-center space-x-2">
+                          <Cpu className="w-5 h-5 text-emerald-400 animate-pulse" />
+                          <div>
+                            <span className="text-xs font-black uppercase tracking-widest text-emerald-400 block font-sans">
+                              Zenith DevOps & Schema Engine Suite
+                            </span>
+                            <span className="text-[9px] text-slate-400 block">
+                              Relational Migrators, AST Diffs, Mock Sandboxes, OT Conflict-Solvers, Acoustic Synths & JWT Inspects
+                            </span>
+                          </div>
+                        </div>
+                        <div className="flex items-center space-x-2 mt-2 sm:mt-0 font-sans text-[8px] font-extrabold">
+                          <span className="text-emerald-400 bg-emerald-950 border border-emerald-800/60 px-1.5 py-0.5 rounded-sm uppercase animate-pulse">
+                            ACTIVE ENGINE: ONLINE
+                          </span>
+                        </div>
+                      </div>
+
+                      {/* 10-Tier Feature Tabs */}
+                      <div className="flex flex-wrap gap-1 border-b border-slate-800 pb-3 mb-4 text-[8px] font-sans font-bold">
+                        {[
+                          { id: 'migrator', label: '1. SCHEMA MIGRATOR', icon: Database },
+                          { id: 'ast_diff', label: '2. AST COMPARER', icon: FileJson },
+                          { id: 'api_sandbox', label: '3. REQUEST SANDBOX', icon: Globe },
+                          { id: 'conflict', label: '4. STATE SYNC MERGER', icon: GitCompare },
+                          { id: 'git_ledger', label: '5. REVISION LEDGER', icon: History },
+                          { id: 'sql_optimizer', label: '6. EXPLAIN SQL OPTIMIZER', icon: Terminal },
+                          { id: 'bento', label: '7. BENTO GRID COMPOSER', icon: LayoutGrid },
+                          { id: 'audio_synth', label: '8. ACOUSTIC SYNTH', icon: Volume2 },
+                          { id: 'jwt', label: '9. JWT SIGNER & AUDITOR', icon: Shield },
+                          { id: 'prompt_optimizer', label: '10. AI GROUNDING CAP', icon: Sparkles }
+                        ].map((tab) => {
+                          const Icon = tab.icon;
+                          const isActive = zenithState.activeTab === tab.id;
+                          return (
+                            <button
+                              key={tab.id}
+                              onClick={() => {
+                                updateZenithState('activeTab', tab.id);
+                                triggerZenithLog('SUITE_TAB', `Activated system tier: ${tab.label}`, 'OK');
+                              }}
+                              className={`px-2 py-1.5 border flex items-center gap-1 transition-all cursor-pointer ${isActive ? 'bg-emerald-500 text-slate-950 border-emerald-400 font-extrabold' : 'bg-slate-950 text-slate-400 border-slate-800 hover:text-white hover:bg-slate-800'}`}
+                            >
+                              <Icon className="w-3 h-3" />
+                              <span>{tab.label}</span>
+                            </button>
+                          );
+                        })}
+                      </div>
+
+                      {/* Main Interactive Deck Grid */}
+                      <div className="grid grid-cols-1 lg:grid-cols-3 gap-4 mb-4">
+                        <div className="lg:col-span-2 border border-slate-800 bg-slate-950 p-4 min-h-[300px] flex flex-col justify-between">
+                          
+                          {/* Tab 1: Relational Schema Migrator */}
+                          {zenithState.activeTab === 'migrator' && (
+                            <div className="space-y-3">
+                              <div className="flex items-center justify-between border-b border-slate-800 pb-1.5">
+                                <span className="text-[10px] font-bold text-emerald-400 uppercase">Schema Migration Engine (PostgreSQL)</span>
+                                <span className="text-[8px] bg-emerald-950 px-1.5 py-0.5 text-emerald-300 rounded border border-emerald-900/40">DDL compiler</span>
+                              </div>
+                              <p className="text-[9px] text-slate-400 font-sans">
+                                Define columns and types below. Zenith compiles the active configuration into standard DDL queries ready to run against PostgreSQL or serverless databases.
+                              </p>
+
+                              <div className="space-y-2">
+                                <div className="grid grid-cols-2 gap-2">
+                                  <div>
+                                    <span className="text-[8px] text-slate-500 block font-bold uppercase mb-1">Target Table Name:</span>
+                                    <input
+                                      type="text"
+                                      value={zenithState.migrator.tableName}
+                                      onChange={(e) => {
+                                        const sub = { ...zenithState.migrator, tableName: e.target.value };
+                                        updateZenithState('migrator', sub);
+                                      }}
+                                      className="w-full bg-slate-900 border border-slate-800 text-slate-100 p-1 text-[9px] outline-none"
+                                    />
+                                  </div>
+                                  <div className="flex items-end">
+                                    <button
+                                      onClick={() => {
+                                        const cols = [...zenithState.migrator.columns, { name: `col_${Math.random().toString(36).substring(2, 6)}`, type: 'VARCHAR(255)', primaryKey: false, nullable: true, default: '' }];
+                                        const sub = { ...zenithState.migrator, columns: cols };
+                                        updateZenithState('migrator', sub);
+                                        triggerZenithLog('MIGRATE_COL_ADD', 'Added new metadata column definition.', 'OK');
+                                      }}
+                                      className="px-2 py-1 bg-slate-800 hover:bg-slate-700 text-slate-200 text-[8px] font-bold border border-slate-700 cursor-pointer w-full flex items-center justify-center gap-1"
+                                    >
+                                      + ADD COLUMN FIELD
+                                    </button>
+                                  </div>
+                                </div>
+
+                                <div className="border border-slate-800 max-h-28 overflow-y-auto bg-black/30 p-1.5 space-y-1">
+                                  {zenithState.migrator.columns.map((col: any, cIdx: number) => (
+                                    <div key={cIdx} className="flex flex-wrap items-center gap-1.5 bg-slate-900 p-1 border border-slate-800/60">
+                                      <input
+                                        type="text"
+                                        value={col.name}
+                                        onChange={(e) => {
+                                          const cols = [...zenithState.migrator.columns];
+                                          cols[cIdx].name = e.target.value;
+                                          updateZenithState('migrator', { ...zenithState.migrator, columns: cols });
+                                        }}
+                                        className="bg-slate-950 border border-slate-800 text-slate-200 p-0.5 text-[8px] w-20 outline-none"
+                                      />
+                                      <select
+                                        value={col.type}
+                                        onChange={(e) => {
+                                          const cols = [...zenithState.migrator.columns];
+                                          cols[cIdx].type = e.target.value;
+                                          updateZenithState('migrator', { ...zenithState.migrator, columns: cols });
+                                        }}
+                                        className="bg-slate-950 border border-slate-800 text-[8px] text-emerald-400 p-0.5 outline-none cursor-pointer"
+                                      >
+                                        <option value="INT">INT</option>
+                                        <option value="VARCHAR(255)">VARCHAR(255)</option>
+                                        <option value="TEXT">TEXT</option>
+                                        <option value="JSONB">JSONB</option>
+                                        <option value="TIMESTAMP">TIMESTAMP</option>
+                                        <option value="BOOLEAN">BOOLEAN</option>
+                                      </select>
+                                      <label className="flex items-center gap-1 text-[8px] text-slate-400">
+                                        <input
+                                          type="checkbox"
+                                          checked={col.primaryKey}
+                                          onChange={(e) => {
+                                            const cols = [...zenithState.migrator.columns];
+                                            cols[cIdx].primaryKey = e.target.checked;
+                                            updateZenithState('migrator', { ...zenithState.migrator, columns: cols });
+                                          }}
+                                          className="scale-75"
+                                        />
+                                        PKey
+                                      </label>
+                                      <button
+                                        onClick={() => {
+                                          const cols = zenithState.migrator.columns.filter((_: any, idx: number) => idx !== cIdx);
+                                          updateZenithState('migrator', { ...zenithState.migrator, columns: cols });
+                                          triggerZenithLog('MIGRATE_COL_DEL', 'Removed metadata column field.', 'WARNING');
+                                        }}
+                                        className="text-rose-400 font-bold ml-auto cursor-pointer text-[9px] hover:text-white"
+                                      >
+                                        ×
+                                      </button>
+                                    </div>
+                                  ))}
+                                </div>
+
+                                <button
+                                  onClick={async () => {
+                                    const sub = { ...zenithState.migrator, loading: true };
+                                    updateZenithState('migrator', sub);
+                                    triggerZenithLog('MIGRATING_COMPILER', 'Calling backend relational schema migrator compiler...', 'PENDING');
+                                    const results = await triggerApiCall('migrate', {
+                                      tableName: zenithState.migrator.tableName,
+                                      columns: zenithState.migrator.columns
+                                    });
+                                    updateZenithState('migrator', { ...zenithState.migrator, loading: false, results });
+                                    if (results.success) {
+                                      triggerZenithLog('MIGRATOR_SUCCESS', `DDL generated for "${zenithState.migrator.tableName}" successfully.`, 'OK');
+                                    } else {
+                                      triggerZenithLog('MIGRATOR_FAIL', 'Relational compiler failed to build schema queries.', 'CONFLICT');
+                                    }
+                                  }}
+                                  disabled={zenithState.migrator.loading}
+                                  className="w-full bg-emerald-500 hover:bg-emerald-400 disabled:bg-slate-800 text-slate-950 font-black text-[9px] py-1.5 uppercase transition-all cursor-pointer"
+                                >
+                                  {zenithState.migrator.loading ? 'COMPILING RELATIONAL DIAGRAMS...' : 'COMPILE SCHEMA & GENERATE DDL'}
+                                </button>
+                              </div>
+
+                              {zenithState.migrator.results && (
+                                <div className="border border-slate-800 bg-black/40 p-2 rounded text-[8px] space-y-1.5">
+                                  <div className="flex justify-between border-b border-slate-800 pb-1">
+                                    <span className="text-emerald-400 font-bold">SQL Queries Formatted:</span>
+                                    <span className="text-slate-500">PostgreSQL Schema Syntax</span>
+                                  </div>
+                                  <pre className="text-slate-300 font-mono text-[7.5px] whitespace-pre-wrap overflow-x-auto max-h-24 bg-slate-950/80 p-1.5 border border-slate-900 leading-normal">
+                                    {zenithState.migrator.results?.queries?.up}
+                                  </pre>
+                                  <div className="grid grid-cols-2 gap-2 text-[7px] text-slate-400 bg-slate-900/60 p-1 border border-slate-800/40">
+                                    <div>STATUS: <span className="text-emerald-400">{zenithState.migrator.results?.diagnostics?.tableStatus}</span></div>
+                                    <div>COMPATIBILITY: <span className="text-slate-200">{zenithState.migrator.results?.diagnostics?.engineCompatibility}</span></div>
+                                  </div>
+                                </div>
+                              )}
+                            </div>
+                          )}
+
+                          {/* Tab 2: AST Diff / Syntax Comparison */}
+                          {zenithState.activeTab === 'ast_diff' && (
+                            <div className="space-y-3">
+                              <div className="flex items-center justify-between border-b border-slate-800 pb-1.5">
+                                <span className="text-[10px] font-bold text-emerald-400 uppercase">Abstract Syntax Tree (AST) Diff Viewer</span>
+                                <span className="text-[8px] bg-emerald-950 px-1.5 py-0.5 text-emerald-300 rounded border border-emerald-900/40">Markdown Diff compiler</span>
+                              </div>
+                              <p className="text-[9px] text-slate-400 font-sans">
+                                Compare block tokens or text configurations. The parser generates semantic token representations and highlights structural revisions.
+                              </p>
+
+                              <div className="grid grid-cols-2 gap-2">
+                                <div>
+                                  <span className="text-[8px] text-slate-500 block font-bold uppercase mb-1">Original Node Content:</span>
+                                  <textarea
+                                    value={zenithState.astDiff.originalText}
+                                    onChange={(e) => {
+                                      updateZenithState('astDiff', { ...zenithState.astDiff, originalText: e.target.value });
+                                    }}
+                                    className="w-full h-20 bg-slate-900 border border-slate-800 text-slate-100 p-1 text-[8.5px] font-mono outline-none resize-none"
+                                  />
+                                </div>
+                                <div>
+                                  <span className="text-[8px] text-slate-500 block font-bold uppercase mb-1">Modified Node Content:</span>
+                                  <textarea
+                                    value={zenithState.astDiff.modifiedText}
+                                    onChange={(e) => {
+                                      updateZenithState('astDiff', { ...zenithState.astDiff, modifiedText: e.target.value });
+                                    }}
+                                    className="w-full h-20 bg-slate-900 border border-slate-800 text-slate-100 p-1 text-[8.5px] font-mono outline-none resize-none"
+                                  />
+                                </div>
+                              </div>
+
+                              <button
+                                onClick={async () => {
+                                  updateZenithState('astDiff', { ...zenithState.astDiff, loading: true });
+                                  triggerZenithLog('AST_DIFF_EXECUTE', 'Submitting nodes to serverless semantic diff parser...', 'PENDING');
+                                  const results = await triggerApiCall('ast_diff', {
+                                    originalText: zenithState.astDiff.originalText,
+                                    modifiedText: zenithState.astDiff.modifiedText
+                                  });
+                                  updateZenithState('astDiff', { ...zenithState.astDiff, loading: false, results });
+                                  triggerZenithLog('AST_DIFF_DONE', `Compared blocks successfully. Found ${results.diffReport?.filter((x: any) => x.status !== 'UNTOUCHED').length} revisions.`, 'OK');
+                                }}
+                                disabled={zenithState.astDiff.loading}
+                                className="w-full bg-emerald-500 hover:bg-emerald-400 disabled:bg-slate-800 text-slate-950 font-black text-[9px] py-1.5 uppercase cursor-pointer"
+                              >
+                                {zenithState.astDiff.loading ? 'ANALYZING AST TOKEN ALIGNMENT...' : 'EXECUTE SEMANTIC AST COMPARISON'}
+                              </button>
+
+                              {zenithState.astDiff.results && (
+                                <div className="border border-slate-800 bg-black/40 p-2 rounded text-[8px] space-y-1.5">
+                                  <div className="flex justify-between border-b border-slate-800 pb-1">
+                                    <span className="text-emerald-400 font-bold">Semantic Diff Map:</span>
+                                    <span className="text-slate-500">Token Level Analysis</span>
+                                  </div>
+
+                                  <div className="max-h-24 overflow-y-auto space-y-1 pr-1 font-mono text-[7.5px]">
+                                    {zenithState.astDiff.results.diffReport?.map((node: any, idx: number) => {
+                                      const isAdd = node.status === 'ADDED';
+                                      const isDel = node.status === 'DELETED';
+                                      const isMod = node.status === 'MODIFIED';
+                                      const colorClass = isAdd ? 'border-l-2 border-emerald-500 bg-emerald-950/20 text-emerald-300' :
+                                                         isDel ? 'border-l-2 border-rose-500 bg-rose-950/20 text-rose-300 line-through' :
+                                                         isMod ? 'border-l-2 border-amber-500 bg-amber-950/20 text-amber-300' : 'text-slate-400';
+                                      return (
+                                        <div key={idx} className={`p-1.5 border border-slate-900 rounded-sm flex items-center justify-between ${colorClass}`}>
+                                          <div className="truncate flex-1">
+                                            <span className="text-[7px] text-slate-500 font-bold mr-1.5">L.{node.line}</span>
+                                            <span className="text-[7.5px] uppercase font-black mr-2 bg-slate-900 px-1 py-0.2 rounded text-slate-400 border border-slate-850">
+                                              {node.status}
+                                            </span>
+                                            <span>
+                                              {isDel ? node.original?.text : isAdd ? node.modified?.text : isMod ? `${node.original?.text} ➔ ${node.modified?.text}` : node.original?.text}
+                                            </span>
+                                          </div>
+                                          <span className="text-[7px] text-slate-600 uppercase font-bold ml-1.5 bg-black/40 px-1 py-0.1 border border-slate-900">
+                                            {isDel ? node.original?.type : node.modified?.type}
+                                          </span>
+                                        </div>
+                                      );
+                                    })}
+                                  </div>
+                                </div>
+                              )}
+                            </div>
+                          )}
+
+                          {/* Tab 3: API Sandbox & Echo Test */}
+                          {zenithState.activeTab === 'api_sandbox' && (
+                            <div className="space-y-3">
+                              <div className="flex items-center justify-between border-b border-slate-800 pb-1.5">
+                                <span className="text-[10px] font-bold text-emerald-400 uppercase">DevOps API Request Sandbox & Header Inspector</span>
+                                <span className="text-[8px] bg-emerald-950 px-1.5 py-0.5 text-emerald-300 rounded border border-emerald-900/40">HTTP PROBE GATEWAY</span>
+                              </div>
+                              <p className="text-[9px] text-slate-400 font-sans">
+                                Build mock requests. The backend echoes details, including authentication claims, client request structures, and simulated response durations.
+                              </p>
+
+                              <div className="space-y-2 text-[8px]">
+                                <div className="grid grid-cols-3 gap-2">
+                                  <div>
+                                    <span className="text-slate-500 font-bold block uppercase mb-0.5">HTTP METHOD:</span>
+                                    <select
+                                      value={zenithState.apiSandbox.method}
+                                      onChange={(e) => {
+                                        updateZenithState('apiSandbox', { ...zenithState.apiSandbox, method: e.target.value });
+                                      }}
+                                      className="w-full bg-slate-900 border border-slate-800 text-emerald-400 p-1 outline-none cursor-pointer"
+                                    >
+                                      <option value="GET">GET</option>
+                                      <option value="POST">POST</option>
+                                      <option value="PUT">PUT</option>
+                                      <option value="DELETE">DELETE</option>
+                                    </select>
+                                  </div>
+                                  <div className="col-span-2">
+                                    <span className="text-slate-500 font-bold block uppercase mb-0.5">TARGET ENDPOINT:</span>
+                                    <input
+                                      type="text"
+                                      value={zenithState.apiSandbox.url}
+                                      onChange={(e) => {
+                                        updateZenithState('apiSandbox', { ...zenithState.apiSandbox, url: e.target.value });
+                                      }}
+                                      className="w-full bg-slate-900 border border-slate-800 text-slate-200 p-1.5 text-[8.5px] outline-none"
+                                    />
+                                  </div>
+                                </div>
+
+                                <div>
+                                  <span className="text-slate-500 font-bold block uppercase mb-1">MOCK PAYLOAD OBJECT (JSON):</span>
+                                  <textarea
+                                    value={zenithState.apiSandbox.requestBody}
+                                    onChange={(e) => {
+                                      updateZenithState('apiSandbox', { ...zenithState.apiSandbox, requestBody: e.target.value });
+                                    }}
+                                    className="w-full h-14 bg-slate-900 border border-slate-800 text-emerald-300 p-1 font-mono text-[8px] outline-none resize-none"
+                                  />
+                                </div>
+
+                                <button
+                                  onClick={async () => {
+                                    updateZenithState('apiSandbox', { ...zenithState.apiSandbox, loading: true });
+                                    triggerZenithLog('HTTP_PROBE_SEND', `Dispatching simulated ${zenithState.apiSandbox.method} probe payload...`, 'PENDING');
+                                    const results = await triggerApiCall('request', {
+                                      method: zenithState.apiSandbox.method,
+                                      url: zenithState.apiSandbox.url,
+                                      headers: zenithState.apiSandbox.headers,
+                                      requestBody: zenithState.apiSandbox.requestBody
+                                    });
+                                    updateZenithState('apiSandbox', { ...zenithState.apiSandbox, loading: false, results });
+                                    triggerZenithLog('HTTP_PROBE_OK', `Serverless response compiled. Latency: ${results.responseInfo?.latencyMs}ms. Status: ${results.responseInfo?.status}`, 'OK');
+                                  }}
+                                  disabled={zenithState.apiSandbox.loading}
+                                  className="w-full bg-emerald-500 hover:bg-emerald-400 disabled:bg-slate-800 text-slate-950 font-black text-[9px] py-1.5 uppercase cursor-pointer"
+                                >
+                                  {zenithState.apiSandbox.loading ? 'FIRING MOCK HTTP PROBE...' : 'FIRE HTTP SANDBOX PROBE'}
+                                </button>
+                              </div>
+
+                              {zenithState.apiSandbox.results && (
+                                <div className="grid grid-cols-1 md:grid-cols-2 gap-2 text-[8px]">
+                                  <div className="border border-slate-800 bg-black/40 p-2 rounded">
+                                    <span className="text-emerald-400 font-bold block border-b border-slate-850 pb-1 mb-1">CLIENT HEADER MAP:</span>
+                                    <pre className="text-slate-400 font-mono text-[7px] leading-tight overflow-x-auto">
+                                      {JSON.stringify(zenithState.apiSandbox.results?.requestInfo?.clientHeaders, null, 2)}
+                                    </pre>
+                                  </div>
+                                  <div className="border border-slate-800 bg-black/40 p-2 rounded">
+                                    <div className="flex justify-between border-b border-slate-850 pb-1 mb-1 text-[7.5px]">
+                                      <span className="text-emerald-400 font-bold">RESPONSE STATUS: {zenithState.apiSandbox.results?.responseInfo?.status}</span>
+                                      <span className="text-amber-400">{zenithState.apiSandbox.results?.responseInfo?.latencyMs}ms</span>
+                                    </div>
+                                    <pre className="text-slate-300 font-mono text-[7px] leading-tight overflow-x-auto max-h-16">
+                                      {JSON.stringify(zenithState.apiSandbox.results?.responseInfo?.body, null, 2)}
+                                    </pre>
+                                  </div>
+                                </div>
+                              )}
+                            </div>
+                          )}
+
+                          {/* Tab 4: Sync Conflict Resolution */}
+                          {zenithState.activeTab === 'conflict' && (
+                            <div className="space-y-3">
+                              <div className="flex items-center justify-between border-b border-slate-800 pb-1.5">
+                                <span className="text-[10px] font-bold text-emerald-400 uppercase">State Sync & OT Peer Conflict Simulator</span>
+                                <span className="text-[8px] bg-emerald-950 px-1.5 py-0.5 text-emerald-300 rounded border border-emerald-900/40">3-way merge</span>
+                              </div>
+                              <p className="text-[9px] text-slate-400 font-sans">
+                                Test sync conflict cases between peer systems. The algorithm runs a Last-Write-Wins (LWW) resolution mapping vector coordinate timestamps.
+                              </p>
+
+                              <div className="grid grid-cols-2 gap-2 text-[8px]">
+                                <div>
+                                  <span className="text-slate-500 font-bold block uppercase mb-1">LOCAL USER VALUE:</span>
+                                  <input
+                                    type="text"
+                                    value={zenithState.conflict.localStateText}
+                                    onChange={(e) => {
+                                      updateZenithState('conflict', { ...zenithState.conflict, localStateText: e.target.value });
+                                    }}
+                                    className="w-full bg-slate-900 border border-slate-800 text-slate-200 p-1.5 outline-none font-mono"
+                                  />
+                                </div>
+                                <div>
+                                  <span className="text-slate-500 font-bold block uppercase mb-1">REMOTE PEER VALUE:</span>
+                                  <input
+                                    type="text"
+                                    value={zenithState.conflict.remoteStateText}
+                                    onChange={(e) => {
+                                      updateZenithState('conflict', { ...zenithState.conflict, remoteStateText: e.target.value });
+                                    }}
+                                    className="w-full bg-slate-900 border border-slate-800 text-slate-200 p-1.5 outline-none font-mono"
+                                  />
+                                </div>
+                              </div>
+
+                              <button
+                                onClick={async () => {
+                                  updateZenithState('conflict', { ...zenithState.conflict, loading: true });
+                                  triggerZenithLog('CONFLICT_MERGE_ATTEMPT', 'Running simulated 3-way synchronization algorithm on serverless worker...', 'PENDING');
+                                  
+                                  const localObj = [{ id: 'block-node-main', type: 'text', content: zenithState.conflict.localStateText, properties: { updatedAt: new Date().toISOString() } }];
+                                  const remoteObj = [{ id: 'block-node-main', type: 'text', content: zenithState.conflict.remoteStateText, properties: { updatedAt: new Date().toISOString() } }];
+
+                                  const results = await triggerApiCall('sync_conflict', {
+                                    localState: localObj,
+                                    remoteState: remoteObj
+                                  });
+                                  updateZenithState('conflict', { ...zenithState.conflict, loading: false, results });
+                                  triggerZenithLog('CONFLICT_RESOLVED', 'Calculated non-blocking unified merge matrix successfully.', 'OK');
+                                }}
+                                disabled={zenithState.conflict.loading}
+                                className="w-full bg-emerald-500 hover:bg-emerald-400 disabled:bg-slate-800 text-slate-950 font-black text-[9px] py-1.5 uppercase cursor-pointer"
+                              >
+                                {zenithState.conflict.loading ? 'COMPUTING RESOLUTION GRAPHS...' : 'RUN CONFLICT RESOLUTION SIMULATION'}
+                              </button>
+
+                              {zenithState.conflict.results && (
+                                <div className="border border-slate-800 bg-black/40 p-2 rounded text-[8px] space-y-1.5">
+                                  <div className="flex justify-between border-b border-slate-850 pb-1">
+                                    <span className="text-emerald-400 font-bold uppercase">Merge Audit Report:</span>
+                                    <span className="text-slate-500">Vector Clock Sequence: {zenithState.conflict.results.clocks?.serverSequence}</span>
+                                  </div>
+                                  <div className="space-y-1 max-h-24 overflow-y-auto text-[7.5px] pr-1">
+                                    {zenithState.conflict.results.conflictLogs?.map((log: any, idx: number) => (
+                                      <div key={idx} className="bg-slate-900 p-1.5 border border-slate-800 rounded-sm leading-normal">
+                                        <div className="flex justify-between text-slate-500 font-sans mb-0.5">
+                                          <span>Conflict Type: <span className="text-amber-400">{log.conflictType}</span></span>
+                                          <span className="text-emerald-400 font-bold bg-emerald-950/40 px-1 border border-emerald-900/20">{log.resolution}</span>
+                                        </div>
+                                        <div className="grid grid-cols-2 gap-1 text-slate-400">
+                                          <div>Local: <span className="text-rose-300">{log.localValue}</span></div>
+                                          <div>Remote: <span className="text-emerald-300">{log.remoteValue}</span></div>
+                                        </div>
+                                      </div>
+                                    ))}
+                                    <div className="bg-emerald-950/20 text-emerald-300 p-1 border border-emerald-900/30 rounded-sm">
+                                      Unified Canvas State Resulting Content: <span className="font-bold">"{zenithState.conflict.results.resolvedList?.[0]?.content}"</span>
+                                    </div>
+                                  </div>
+                                </div>
+                              )}
+                            </div>
+                          )}
+
+                          {/* Tab 5: Git Version Ledger */}
+                          {zenithState.activeTab === 'git_ledger' && (
+                            <div className="space-y-3">
+                              <div className="flex items-center justify-between border-b border-slate-800 pb-1.5">
+                                <span className="text-[10px] font-bold text-emerald-400 uppercase">Git-Style Version Ledger Logs</span>
+                                <span className="text-[8px] bg-emerald-950 px-1.5 py-0.5 text-emerald-300 rounded border border-emerald-900/40">SHA snapshot branches</span>
+                              </div>
+                              <p className="text-[9px] text-slate-400 font-sans">
+                                Snapshot and commit the active canvas block state tree. Zenith hashes nodes sequentially, establishing local backup points you can track.
+                              </p>
+
+                              <div className="grid grid-cols-2 gap-2 text-[8px]">
+                                <div>
+                                  <span className="text-slate-500 font-bold block uppercase mb-1">COMMIT SNAPSHOT MESSAGE:</span>
+                                  <input
+                                    type="text"
+                                    value={zenithState.gitLedger.commitMessage}
+                                    onChange={(e) => {
+                                      updateZenithState('gitLedger', { ...zenithState.gitLedger, commitMessage: e.target.value });
+                                    }}
+                                    className="w-full bg-slate-900 border border-slate-800 text-slate-200 p-1.5 outline-none font-mono"
+                                  />
+                                </div>
+                                <div>
+                                  <span className="text-slate-500 font-bold block uppercase mb-1">AUTHOR SIGN-OFF:</span>
+                                  <input
+                                    type="text"
+                                    value={zenithState.gitLedger.author}
+                                    onChange={(e) => {
+                                      updateZenithState('gitLedger', { ...zenithState.gitLedger, author: e.target.value });
+                                    }}
+                                    className="w-full bg-slate-900 border border-slate-800 text-slate-200 p-1.5 outline-none font-mono"
+                                  />
+                                </div>
+                              </div>
+
+                              <div className="grid grid-cols-2 gap-2 text-[9px]">
+                                <button
+                                  onClick={async () => {
+                                    updateZenithState('gitLedger', { ...zenithState.gitLedger, loading: true });
+                                    triggerZenithLog('COMMIT_SNAPSHOT', 'Packing active element canvas state structure...', 'PENDING');
+                                    
+                                    const mockState = elements.map(el => ({ id: el.id, type: el.type, preview: (el.content || '').substring(0, 15) }));
+                                    const results = await triggerApiCall('git_commit', {
+                                      message: zenithState.gitLedger.commitMessage,
+                                      author: zenithState.gitLedger.author,
+                                      canvasState: mockState
+                                    });
+
+                                    // Refresh commit log immediately
+                                    const freshLog = await triggerApiCall('git_log', {});
+                                    updateZenithState('gitLedger', { ...zenithState.gitLedger, loading: false, commits: freshLog.logs || [] });
+                                    triggerZenithLog('COMMIT_OK', `Saved local checkpoint ${results.commit?.hash} under "main" branch context.`, 'OK');
+                                  }}
+                                  disabled={zenithState.gitLedger.loading}
+                                  className="bg-emerald-500 hover:bg-emerald-400 disabled:bg-slate-800 text-slate-950 font-black p-1.5 uppercase cursor-pointer text-center"
+                                >
+                                  COMMIT ACTIVE STATE
+                                </button>
+                                <button
+                                  onClick={async () => {
+                                    updateZenithState('gitLedger', { ...zenithState.gitLedger, loading: true });
+                                    triggerZenithLog('FETCHING_REVISIONS', 'Reading serverless ledger database commit-history...', 'PENDING');
+                                    const freshLog = await triggerApiCall('git_log', {});
+                                    updateZenithState('gitLedger', { ...zenithState.gitLedger, loading: false, commits: freshLog.logs || [] });
+                                    triggerZenithLog('LEDGER_SYNC', `Fetched ${freshLog.logs?.length || 0} historic revisions from backup ledger.`, 'OK');
+                                  }}
+                                  className="bg-slate-800 hover:bg-slate-700 text-slate-200 border border-slate-750 font-bold p-1.5 uppercase cursor-pointer text-center"
+                                >
+                                  SYNC HISTORICAL LOGS
+                                </button>
+                              </div>
+
+                              {zenithState.gitLedger.commits && zenithState.gitLedger.commits.length > 0 && (
+                                <div className="border border-slate-800 bg-black/40 p-2 rounded text-[8px] space-y-1">
+                                  <div className="flex justify-between border-b border-slate-850 pb-1 mb-1 text-slate-400 font-sans">
+                                    <span>COMMIT LOG REVISION RAILS:</span>
+                                    <span>BRANCH: MAIN</span>
+                                  </div>
+                                  <div className="max-h-24 overflow-y-auto space-y-1 pr-1">
+                                    {zenithState.gitLedger.commits.map((commit: any, idx: number) => (
+                                      <div key={commit.hash || idx} className="bg-slate-900/80 p-1.5 border border-slate-850 rounded flex items-center justify-between text-[7.5px] leading-tight">
+                                        <div>
+                                          <span className="text-emerald-400 font-black mr-2 font-mono">{commit.hash}</span>
+                                          <span className="text-slate-100 font-sans font-bold">{commit.message}</span>
+                                          <div className="text-[7px] text-slate-500 mt-0.5">Author: {commit.author} | Time: {commit.timestamp}</div>
+                                        </div>
+                                        <span className="text-[6.5px] bg-slate-950 px-1 py-0.5 text-slate-500 border border-slate-800">
+                                          {commit.canvasState?.length} NODES
+                                        </span>
+                                      </div>
+                                    ))}
+                                  </div>
+                                </div>
+                              )}
+                            </div>
+                          )}
+
+                          {/* Tab 6: EXPLAIN SQL Path Optimizer */}
+                          {zenithState.activeTab === 'sql_optimizer' && (
+                            <div className="space-y-3">
+                              <div className="flex items-center justify-between border-b border-slate-800 pb-1.5">
+                                <span className="text-[10px] font-bold text-emerald-400 uppercase">SQL Query Path & Cost Optimizer</span>
+                                <span className="text-[8px] bg-emerald-950 px-1.5 py-0.5 text-emerald-300 rounded border border-emerald-900/40">Query Planner Analyzer</span>
+                              </div>
+                              <p className="text-[9px] text-slate-400 font-sans">
+                                Paste relational database queries below. Zenith parses scan nodes, measures table join conditions, and maps ideal index specifications to optimize read sequences.
+                              </p>
+
+                              <div className="space-y-2 text-[8px]">
+                                <div>
+                                  <span className="text-slate-500 font-bold block uppercase mb-1">TARGET SQL STATEMENT:</span>
+                                  <textarea
+                                    value={zenithState.sqlOptimizer.query}
+                                    onChange={(e) => {
+                                      updateZenithState('sqlOptimizer', { ...zenithState.sqlOptimizer, query: e.target.value });
+                                    }}
+                                    className="w-full h-16 bg-slate-900 border border-slate-800 text-emerald-300 p-1 font-mono text-[8.5px] outline-none resize-none"
+                                  />
+                                </div>
+
+                                <button
+                                  onClick={async () => {
+                                    updateZenithState('sqlOptimizer', { ...zenithState.sqlOptimizer, loading: true });
+                                    triggerZenithLog('OPTIMIZER_PLAN', 'Compiling execution path tree blocks...', 'PENDING');
+                                    const results = await triggerApiCall('sql_optimize', {
+                                      query: zenithState.sqlOptimizer.query
+                                    });
+                                    updateZenithState('sqlOptimizer', { ...zenithState.sqlOptimizer, loading: false, results });
+                                    triggerZenithLog('OPTIMIZER_DONE', `Parsed SQL queries successfully. Saved cost reduction estimate: ${results.costReduction}`, 'OK');
+                                  }}
+                                  disabled={zenithState.sqlOptimizer.loading}
+                                  className="w-full bg-emerald-500 hover:bg-emerald-400 disabled:bg-slate-800 text-slate-950 font-black text-[9px] py-1.5 uppercase cursor-pointer"
+                                >
+                                  {zenithState.sqlOptimizer.loading ? 'ANALYZING SCANS & JOINS...' : 'OPTIMIZE QUERY PATH'}
+                                </button>
+                              </div>
+
+                              {zenithState.sqlOptimizer.results && (
+                                <div className="border border-slate-800 bg-black/40 p-2 rounded text-[8px] space-y-1.5 font-mono">
+                                  <div className="grid grid-cols-2 gap-2 text-[7.5px] bg-slate-900 p-1.5 border border-slate-800">
+                                    <div>COST BEFORE: <span className="text-rose-400">{zenithState.sqlOptimizer.results.estimatedCostBefore}</span></div>
+                                    <div>COST AFTER: <span className="text-emerald-400">{zenithState.sqlOptimizer.results.estimatedCostAfter}</span></div>
+                                  </div>
+
+                                  <div className="space-y-1 text-[7.5px]">
+                                    <span className="text-emerald-400 font-bold block uppercase">Planner Recommendations:</span>
+                                    {zenithState.sqlOptimizer.results.recommendations?.map((rec: string, rIdx: number) => (
+                                      <div key={rIdx} className="bg-slate-950/60 p-1 border-l border-emerald-500 pl-1.5 text-slate-300 leading-normal">
+                                        {rec}
+                                      </div>
+                                    ))}
+                                  </div>
+                                </div>
+                              )}
+                            </div>
+                          )}
+
+                          {/* Tab 7: Bento Grid Composer */}
+                          {zenithState.activeTab === 'bento' && (
+                            <div className="space-y-3">
+                              <div className="flex items-center justify-between border-b border-slate-800 pb-1.5">
+                                <span className="text-[10px] font-bold text-emerald-400 uppercase">Visual Bento Grid Dashboard Composer</span>
+                                <span className="text-[8px] bg-emerald-950 px-1.5 py-0.5 text-emerald-300 rounded border border-emerald-900/40">CSS GRID COMPILeR</span>
+                              </div>
+                              <p className="text-[9px] text-slate-400 font-sans">
+                                Arrange and compile responsive layout grids below. Drag options or click to expand cells, instantly compiling perfect Tailwind layouts.
+                              </p>
+
+                              <div className="grid grid-cols-2 gap-2 text-[8px]">
+                                <div>
+                                  <span className="text-slate-500 font-bold block uppercase mb-1">GRID COLUMNS COUNT:</span>
+                                  <select
+                                    value={zenithState.bento.cols}
+                                    onChange={(e) => {
+                                      updateZenithState('bento', { ...zenithState.bento, cols: parseInt(e.target.value) });
+                                      triggerZenithLog('BENTO_RESIZE', `Updated CSS layout columns: grid-cols-${e.target.value}`, 'OK');
+                                    }}
+                                    className="w-full bg-slate-900 border border-slate-800 text-slate-200 p-1 outline-none cursor-pointer"
+                                  >
+                                    <option value="2">2 Columns</option>
+                                    <option value="3">3 Columns</option>
+                                    <option value="4">4 Columns</option>
+                                    <option value="6">6 Columns</option>
+                                  </select>
+                                </div>
+                                <div className="flex items-end">
+                                  <button
+                                    onClick={() => {
+                                      const items = [...zenithState.bento.items, { id: `b-${Math.random().toString(36).substring(2, 6)}`, title: `Grid Card ${zenithState.bento.items.length + 1}`, colSpan: 2 }];
+                                      updateZenithState('bento', { ...zenithState.bento, items });
+                                      triggerZenithLog('BENTO_ADD_CARD', 'Inserted new visual cell in bento dashboard scope.', 'OK');
+                                    }}
+                                    className="px-2 py-1 bg-slate-800 hover:bg-slate-700 text-slate-200 text-[8px] font-bold border border-slate-700 cursor-pointer w-full"
+                                  >
+                                    + ADD BENTO BOX CARD
+                                  </button>
+                                </div>
+                              </div>
+
+                              {/* Live Bento Composer Matrix */}
+                              <div className="border border-slate-800 bg-black/40 p-2 text-[9px] space-y-1.5">
+                                <span className="text-[8px] text-slate-500 font-bold uppercase block font-sans">Active Sandbox Layout Grid Preview:</span>
+                                <div 
+                                  className="grid gap-2 p-1.5 bg-slate-950/60 border border-slate-900"
+                                  style={{ gridTemplateColumns: `repeat(${zenithState.bento.cols}, minmax(0, 1fr))` }}
+                                >
+                                  {zenithState.bento.items.map((item: any, idx: number) => (
+                                    <div 
+                                      key={item.id} 
+                                      className="border border-slate-800 bg-slate-900/90 p-2 text-center rounded-sm flex flex-col justify-between"
+                                      style={{ gridColumn: `span ${item.colSpan} / span ${item.colSpan}` }}
+                                    >
+                                      <div className="text-[8.5px] font-bold text-slate-300 truncate">{item.title}</div>
+                                      <div className="text-[7px] text-emerald-400 font-mono mt-1 font-bold">col-span-{item.colSpan}</div>
+                                      <div className="flex justify-between items-center mt-2 border-t border-slate-800/40 pt-1 text-[7px]">
+                                        <button
+                                          onClick={() => {
+                                            const items = [...zenithState.bento.items];
+                                            items[idx].colSpan = Math.max(1, items[idx].colSpan - 1);
+                                            updateZenithState('bento', { ...zenithState.bento, items });
+                                            triggerZenithLog('BENTO_WIDTH_REDUCED', `Shrank bento card "${item.title}" cell width.`, 'OK');
+                                          }}
+                                          className="text-slate-400 hover:text-white px-1 border border-slate-800/40"
+                                        >
+                                          ◄
+                                        </button>
+                                        <button
+                                          onClick={() => {
+                                            const items = [...zenithState.bento.items];
+                                            items[idx].colSpan = Math.min(zenithState.bento.cols, items[idx].colSpan + 1);
+                                            updateZenithState('bento', { ...zenithState.bento, items });
+                                            triggerZenithLog('BENTO_WIDTH_EXPANDED', `Stretched bento card "${item.title}" cell width.`, 'OK');
+                                          }}
+                                          className="text-slate-400 hover:text-white px-1 border border-slate-800/40"
+                                        >
+                                          ►
+                                        </button>
+                                        <button
+                                          onClick={() => {
+                                            const items = zenithState.bento.items.filter((_: any, bIdx: number) => bIdx !== idx);
+                                            updateZenithState('bento', { ...zenithState.bento, items });
+                                            triggerZenithLog('BENTO_CARD_REMOVED', `Evicted bento cell "${item.title}" from dash.`, 'WARNING');
+                                          }}
+                                          className="text-rose-400 hover:text-white font-bold ml-1"
+                                        >
+                                          ×
+                                        </button>
+                                      </div>
+                                    </div>
+                                  ))}
+                                </div>
+                              </div>
+                            </div>
+                          )}
+
+                          {/* Tab 8: Acoustic Synth Waves Soundboard */}
+                          {zenithState.activeTab === 'audio_synth' && (
+                            <div className="space-y-3">
+                              <div className="flex items-center justify-between border-b border-slate-800 pb-1.5">
+                                <span className="text-[10px] font-bold text-emerald-400 uppercase">Acoustic Waveform Frequency Soundboard</span>
+                                <span className="text-[8px] bg-emerald-950 px-1.5 py-0.5 text-emerald-300 rounded border border-emerald-900/40">Web Audio API Synth</span>
+                              </div>
+                              <p className="text-[9px] text-slate-400 font-sans">
+                                Synthesize pitch and acoustics directly inside your browser. Tweak oscillators to design responsive sonic feedback indicators for save, error, and deletion events.
+                              </p>
+
+                              <div className="grid grid-cols-2 gap-2 text-[8px] bg-slate-900/20 p-2.5 border border-slate-850">
+                                <div>
+                                  <span className="text-slate-500 font-bold block uppercase mb-1">Oscillator Shape:</span>
+                                  <select
+                                    value={zenithState.audioSynth.type}
+                                    onChange={(e) => {
+                                      updateZenithState('audioSynth', { ...zenithState.audioSynth, type: e.target.value });
+                                      triggerZenithLog('SYNTH_WAVEFORM', `Selected oscillator wave format: ${e.target.value}`, 'OK');
+                                    }}
+                                    className="w-full bg-slate-900 border border-slate-800 text-slate-200 p-1 outline-none cursor-pointer"
+                                  >
+                                    <option value="sine">Sine Wave (Pure Ambient)</option>
+                                    <option value="triangle">Triangle Wave (Classic 8-Bit)</option>
+                                    <option value="sawtooth">Sawtooth Wave (Aggressive Lead)</option>
+                                    <option value="square">Square Wave (Hollow Arcade)</option>
+                                  </select>
+                                </div>
+
+                                <div>
+                                  <span className="text-slate-500 font-bold block uppercase mb-1">Pitch Frequency (Hz): {zenithState.audioSynth.frequency} Hz</span>
+                                  <input
+                                    type="range"
+                                    min="100"
+                                    max="1800"
+                                    step="10"
+                                    value={zenithState.audioSynth.frequency}
+                                    onChange={(e) => {
+                                      updateZenithState('audioSynth', { ...zenithState.audioSynth, frequency: parseInt(e.target.value) });
+                                    }}
+                                    className="w-full h-1 bg-slate-850 rounded-lg appearance-none cursor-pointer accent-emerald-400 mt-2"
+                                  />
+                                </div>
+                              </div>
+
+                              <div className="grid grid-cols-2 gap-2">
+                                <button
+                                  onClick={() => {
+                                    playAcousticWave(
+                                      zenithState.audioSynth.frequency,
+                                      zenithState.audioSynth.type,
+                                      zenithState.audioSynth.duration,
+                                      zenithState.audioSynth.sustain
+                                    );
+                                    triggerZenithLog('SONIC_PLAYBACK', `Played signature synth: ${zenithState.audioSynth.frequency}Hz [${zenithState.audioSynth.type}]`, 'OK');
+                                  }}
+                                  className="w-full bg-emerald-500 hover:bg-emerald-400 text-slate-950 font-black text-[9px] py-1.5 uppercase cursor-pointer"
+                                >
+                                  TEST SONIC SIGNATURE
+                                </button>
+                                <button
+                                  onClick={() => {
+                                    playAcousticWave(600, 'triangle', 0.1, 0.05);
+                                    triggerZenithLog('SONIC_PRESET_SAVE', 'Synthesized system save validation tone (600Hz Triangle).', 'OK');
+                                  }}
+                                  className="w-full bg-slate-800 hover:bg-slate-700 text-slate-200 border border-slate-750 font-bold py-1.5 uppercase cursor-pointer"
+                                >
+                                  PRESET: SAVE VALIDATION
+                                </button>
+                              </div>
+                            </div>
+                          )}
+
+                          {/* Tab 9: JWT Signer & Security Auditor */}
+                          {zenithState.activeTab === 'jwt' && (
+                            <div className="space-y-3">
+                              <div className="flex items-center justify-between border-b border-slate-800 pb-1.5">
+                                <span className="text-[10px] font-bold text-emerald-400 uppercase">JWT Authenticator Signer & Payload Auditor</span>
+                                <span className="text-[8px] bg-emerald-950 px-1.5 py-0.5 text-emerald-300 rounded border border-emerald-900/40">Secure Token verification</span>
+                              </div>
+                              <p className="text-[9px] text-slate-400 font-sans">
+                                Cryptographically sign user states into encrypted tokens. Verify claims block parameters and inspect headers to simulate real OAuth sign-offs.
+                              </p>
+
+                              <div className="grid grid-cols-2 gap-2 text-[8px]">
+                                <div>
+                                  <span className="text-slate-500 font-bold block uppercase mb-1">SIGNATURE SECRET:</span>
+                                  <input
+                                    type="text"
+                                    value={zenithState.jwt.secretKey}
+                                    onChange={(e) => {
+                                      updateZenithState('jwt', { ...zenithState.jwt, secretKey: e.target.value });
+                                    }}
+                                    className="w-full bg-slate-900 border border-slate-800 text-slate-200 p-1.5 outline-none font-mono"
+                                  />
+                                </div>
+                                <div>
+                                  <span className="text-slate-500 font-bold block uppercase mb-1">ALGORITHM:</span>
+                                  <select
+                                    value={zenithState.jwt.algorithm}
+                                    onChange={(e) => {
+                                      updateZenithState('jwt', { ...zenithState.jwt, algorithm: e.target.value });
+                                    }}
+                                    className="w-full bg-slate-900 border border-slate-800 text-emerald-400 p-1 outline-none cursor-pointer"
+                                  >
+                                    <option value="HS256">HMAC SHA-256 (Symmetric)</option>
+                                    <option value="RS256">RSA SHA-256 (Asymmetric mock)</option>
+                                  </select>
+                                </div>
+                              </div>
+
+                              <div className="space-y-2 text-[8px]">
+                                <div>
+                                  <span className="text-slate-500 font-bold block uppercase mb-1">PAYLOAD CLAIMS (JSON):</span>
+                                  <textarea
+                                    value={zenithState.jwt.payloadFieldsJson}
+                                    onChange={(e) => {
+                                      updateZenithState('jwt', { ...zenithState.jwt, payloadFieldsJson: e.target.value });
+                                    }}
+                                    className="w-full h-14 bg-slate-900 border border-slate-800 text-emerald-300 p-1 font-mono text-[8px] outline-none resize-none"
+                                  />
+                                </div>
+
+                                <button
+                                  onClick={async () => {
+                                    updateZenithState('jwt', { ...zenithState.jwt, loading: true });
+                                    triggerZenithLog('JWT_SIGNING', 'Hashing security header configurations...', 'PENDING');
+                                    let fields = {};
+                                    try {
+                                      fields = JSON.parse(zenithState.jwt.payloadFieldsJson);
+                                    } catch (e) {
+                                      triggerZenithLog('JWT_PARSE_ERROR', 'Payload JSON format is invalid.', 'WARNING');
+                                    }
+                                    const results = await triggerApiCall('jwt_sign', {
+                                      payloadFields: fields,
+                                      secretKey: zenithState.jwt.secretKey,
+                                      algorithm: zenithState.jwt.algorithm
+                                    });
+                                    updateZenithState('jwt', { ...zenithState.jwt, loading: false, results });
+                                    triggerZenithLog('JWT_SUCCESS', 'Signed token cryptographically. HMAC claims generated.', 'OK');
+                                  }}
+                                  disabled={zenithState.jwt.loading}
+                                  className="w-full bg-emerald-500 hover:bg-emerald-400 disabled:bg-slate-800 text-slate-950 font-black text-[9px] py-1.5 uppercase cursor-pointer"
+                                >
+                                  {zenithState.jwt.loading ? 'CRYPTOGRAPHICALLY HARNESSING KEY...' : 'SIGN WORKSPACE CLAIMS & EMIT JWT'}
+                                </button>
+                              </div>
+
+                              {zenithState.jwt.results && (
+                                <div className="border border-slate-800 bg-black/40 p-2 rounded text-[8px] space-y-1">
+                                  <span className="text-emerald-400 font-bold block border-b border-slate-850 pb-1 mb-1">JWT SECURE TOKEN STRING:</span>
+                                  <div className="bg-slate-950 p-1.5 text-rose-300 text-[7px] font-mono whitespace-normal break-all select-all leading-normal border border-slate-900">
+                                    {zenithState.jwt.results?.token}
+                                  </div>
+                                </div>
+                              )}
+                            </div>
+                          )}
+
+                          {/* Tab 10: AI Ingestion Grounding context */}
+                          {zenithState.activeTab === 'prompt_optimizer' && (
+                            <div className="space-y-3">
+                              <div className="flex items-center justify-between border-b border-slate-800 pb-1.5">
+                                <span className="text-[10px] font-bold text-emerald-400 uppercase">AI Grounding & Token Context Optimizer</span>
+                                <span className="text-[8px] bg-emerald-950 px-1.5 py-0.5 text-emerald-300 rounded border border-emerald-900/40">AI Token Ingestion</span>
+                              </div>
+                              <p className="text-[9px] text-slate-400 font-sans">
+                                Format and bundle active canvas nodes into a streamlined token context block. Zenith measures character weight, structures schemas, and compiles prompts.
+                              </p>
+
+                              <div className="space-y-2 text-[8px]">
+                                <div>
+                                  <span className="text-slate-500 font-bold block uppercase mb-1">SYSTEM ROLE INSTRUCTIONS:</span>
+                                  <textarea
+                                    value={zenithState.promptOptimizer.promptRole}
+                                    onChange={(e) => {
+                                      updateZenithState('promptOptimizer', { ...zenithState.promptOptimizer, promptRole: e.target.value });
+                                    }}
+                                    className="w-full h-14 bg-slate-900 border border-slate-800 text-slate-200 p-1.5 outline-none font-mono text-[8.5px] resize-none"
+                                  />
+                                </div>
+
+                                <button
+                                  onClick={() => {
+                                    triggerZenithLog('AI_GROUNDING_COMPRESS', 'Extracting and parsing structural element node parameters...', 'PENDING');
+                                    
+                                    // Compile local character counts
+                                    const totalChars = elements.reduce((acc, current) => acc + (current.content || '').length, 0);
+                                    const estimatedTokens = Math.ceil(totalChars / 4) + 120; // char to token rough formula + system weight
+                                    
+                                    const formattedPrompt = `// SYSTEM BLUEPRINT\nROLE: ${zenithState.promptOptimizer.promptRole}\n\n// CONTEXT BOUNDARIES\nACTIVE_CANVAS_ID: ${canvasId}\nBLOCK_NODES_COUNT: ${elements.length}\n\n// INGESTED BLOCKS\n${elements.map((el, i) => `NODE #${i+1} [${el.type}]: ${el.content}`).join('\n')}`;
+
+                                    updateZenithState('promptOptimizer', {
+                                      ...zenithState.promptOptimizer,
+                                      results: {
+                                        estimatedTokens,
+                                        totalChars,
+                                        formattedPrompt
+                                      }
+                                    });
+
+                                    triggerZenithLog('AI_GROUNDING_READY', `Grounding payload constructed successfully. Context: ${estimatedTokens} tokens.`, 'OK');
+                                  }}
+                                  className="w-full bg-emerald-500 hover:bg-emerald-400 text-slate-950 font-black text-[9px] py-1.5 uppercase cursor-pointer"
+                                >
+                                  ANALYZE CANVAS CONTEXT & MAP PROMPT
+                                </button>
+                              </div>
+
+                              {zenithState.promptOptimizer.results && (
+                                <div className="border border-slate-800 bg-black/40 p-2 rounded text-[8px] space-y-1.5">
+                                  <div className="grid grid-cols-2 gap-2 text-[7px] text-slate-400 font-sans border-b border-slate-850 pb-1">
+                                    <div>ESTIMATED CONTEXT TOKENS: <span className="text-emerald-400 font-bold">{zenithState.promptOptimizer.results.estimatedTokens}</span></div>
+                                    <div>TOTAL RAW CHARACTERS: <span className="text-slate-200">{zenithState.promptOptimizer.results.totalChars} chars</span></div>
+                                  </div>
+                                  <pre className="text-slate-300 font-mono text-[7px] whitespace-pre-wrap overflow-y-auto max-h-24 bg-slate-950/80 p-1.5 border border-slate-900 leading-tight">
+                                    {zenithState.promptOptimizer.results.formattedPrompt}
+                                  </pre>
+                                </div>
+                              )}
+                            </div>
+                          )}
+
+                        </div>
+
+                        {/* Logs Side Terminal */}
+                        <div className="border border-slate-800 bg-slate-950 p-3 flex flex-col justify-between text-[9px]">
+                          <div>
+                            <div className="border-b border-slate-800 pb-1.5 mb-2.5 flex items-center justify-between font-sans">
+                              <span className="text-[10px] font-bold text-slate-400 uppercase">DEVOPS LEDGER AUDITS</span>
+                              <span className="w-1.5 h-1.5 rounded-full bg-emerald-400 mr-1 animate-ping" />
+                            </div>
+
+                            <div className="space-y-1.5 max-h-[220px] overflow-y-auto pr-1">
+                              {(zenithState.logs || []).map((log: any, lIdx: number) => (
+                                <div key={lIdx} className="text-[8px] py-1 border-b border-slate-900 leading-tight">
+                                  <div className="flex justify-between text-slate-500">
+                                    <span>[{log.time}]</span>
+                                    <span className={`font-black uppercase ${
+                                      log.status === 'OK' ? 'text-emerald-400' :
+                                      log.status === 'WARNING' ? 'text-amber-400' :
+                                      log.status === 'CONFLICT' ? 'text-rose-400' : 'text-blue-400'
+                                    }`}>{log.op}</span>
+                                  </div>
+                                  <p className="text-slate-300 mt-0.5">{log.payload}</p>
+                                </div>
+                              ))}
+                            </div>
+                          </div>
+
+                          <div className="border-t border-slate-800 pt-2 flex justify-between text-[8px] text-slate-500 uppercase mt-2 font-sans font-black">
+                            <span>COCKPIT CONSOLE V1.2</span>
+                            <span>ACTIVE LOG FEED: {(zenithState.logs || []).length}</span>
+                          </div>
+                        </div>
+                      </div>
+
+                    </div>
+                  );
+                })()
+              )}
+
               {/* AERONAV 10-TIER WORKSPACE NAVIGATION DECK */}
               {el.type === 'productivity_nav_deck' && (
                 (() => {
