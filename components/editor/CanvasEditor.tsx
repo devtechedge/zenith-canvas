@@ -4,6 +4,7 @@ import { useState, useRef, useEffect } from 'react';
 import { useLiveQuery } from 'dexie-react-hooks';
 import { db, type CanvasElement, type CollectionTable } from '@/lib/db/indexeddb';
 import { useCanvasSync } from '@/lib/hooks/useCanvasSync';
+import { Compass, Map, Sliders, Tag, FolderOpen, FileCode, Keyboard, EyeOff, Scissors, Navigation, MapPin } from 'lucide-react';
 import ElementWrapper from './ElementWrapper';
 import SlashCommands, { type CommandItem } from './SlashCommands';
 import SelectionMenu from './SelectionMenu';
@@ -3186,6 +3187,757 @@ export default function CanvasEditor({ canvasId, isLocked = false }: CanvasEdito
                         </div>
 
                       </div>
+                    </div>
+                  );
+                })()
+              )}
+
+              {/* AERONAV 10-TIER WORKSPACE NAVIGATION DECK */}
+              {el.type === 'productivity_nav_deck' && (
+                (() => {
+                  const navDeckState = propertiesObj.navDeck || {
+                    activeTab: 'nav_tree', // nav_tree, full_search, split_dash, shortcuts, minimap, bookmarks, breadcrumbs, portal, focus_lens, clip_board
+                    selectedTreeIndex: 0,
+                    searchQuery: '',
+                    selectedSplitCanvasId: '',
+                    selectedShortcutId: '',
+                    selectedElementIdForPortal: '',
+                    selectedCanvasIdForPortal: '',
+                    focusDimPct: 0,
+                    activeFocusType: 'all',
+                    clippedNotes: [
+                      { id: 'cn-1', text: 'Important checklist items verified', timestamp: '14:20' }
+                    ],
+                    bookmarksList: [],
+                    keyboardShortcuts: [
+                      { id: 'sc-1', key: 'Alt + T', action: 'Create Task Node', desc: 'Adds new todo task under current scope' },
+                      { id: 'sc-2', key: 'Alt + C', action: 'Create Sandbox Node', desc: 'Spawns code editor instance' },
+                      { id: 'sc-3', key: 'Alt + G', action: 'Merge Branches', desc: 'Syncs current branch metadata' },
+                      { id: 'sc-4', key: 'Alt + K', action: 'Search Database', desc: 'Launches indexing parser engine' },
+                      { id: 'sc-5', key: 'Alt + Z', action: 'Clear Sandbox', desc: 'Flushes temporary buffer cache' }
+                    ],
+                    logs: [
+                      { time: '14:19:15', op: 'DECK_BOOT', payload: 'AeroNav carbon-fiber navigation terminal operational.', status: 'OK' }
+                    ]
+                  };
+
+                  const updateState = (key: string, value: any) => {
+                    const updated = { ...navDeckState, [key]: value };
+                    updateCanvasElement(el.id, { properties: JSON.stringify({ ...propertiesObj, navDeck: updated }) });
+                  };
+
+                  const triggerLocalLog = (op: string, payload: string, status: 'OK' | 'WARNING' | 'CONFLICT' | 'PENDING') => {
+                    const time = new Date().toTimeString().split(' ')[0];
+                    const newLog = { time, op, payload, status };
+                    const updatedLogs = [...(navDeckState.logs || []), newLog].slice(-25);
+                    updateState('logs', updatedLogs);
+                  };
+
+                  const filteredSearchElements = elements.filter(item => {
+                    if (!navDeckState.searchQuery) return true;
+                    return (item.content || '').toLowerCase().includes(navDeckState.searchQuery.toLowerCase()) || 
+                           (item.type || '').toLowerCase().includes(navDeckState.searchQuery.toLowerCase());
+                  });
+
+                  // Feature 8: Portal move transaction
+                  const runPortalMigration = async () => {
+                    if (!navDeckState.selectedElementIdForPortal || !navDeckState.selectedCanvasIdForPortal) {
+                      triggerLocalLog('PORTAL_ERROR', 'Missing source element or target canvas parameters.', 'WARNING');
+                      return;
+                    }
+                    const targetEl = elements.find(item => item.id === navDeckState.selectedElementIdForPortal);
+                    if (!targetEl) {
+                      triggerLocalLog('PORTAL_ERROR', 'Source element not found in current canvas context.', 'WARNING');
+                      return;
+                    }
+
+                    try {
+                      // Clone element to the destination canvas in Dexie
+                      const cloneId = `el-${Math.random().toString(36).substring(2, 11)}`;
+                      const newElement = {
+                        id: cloneId,
+                        canvasId: navDeckState.selectedCanvasIdForPortal,
+                        type: targetEl.type,
+                        content: targetEl.content + ' (Migrated via AeroNav Tunnel)',
+                        properties: targetEl.properties,
+                        sortOrder: targetEl.sortOrder + 1,
+                        updatedAt: new Date()
+                      };
+                      await db.elements.add(newElement);
+                      triggerLocalLog('PORTAL_TUNNEL_OK', `Cloned block "${targetEl.type}" to target canvas successfully. ID: ${cloneId}`, 'OK');
+                    } catch (err: any) {
+                      triggerLocalLog('PORTAL_FAIL', `Database transaction failed: ${err?.message || err}`, 'CONFLICT');
+                    }
+                  };
+
+                  return (
+                    <div className="border-2 border-[#1E293B] p-4 bg-[#0F172A] text-slate-100 rounded-none neo-shadow-sm my-3 w-full font-mono relative overflow-hidden">
+                      {/* Premium Visual Header */}
+                      <div className="flex flex-wrap items-center justify-between border-b border-slate-800 pb-3 mb-4 bg-slate-900/60 -mx-4 -mt-4 p-4">
+                        <div className="flex items-center space-x-2">
+                          <Compass className="w-5 h-5 text-indigo-400 animate-spin" style={{ animationDuration: '6s' }} />
+                          <div>
+                            <span className="text-xs font-black uppercase tracking-widest text-indigo-400 block font-sans">
+                              AeroNav 10-Tier Workspace Cockpit
+                            </span>
+                            <span className="text-[9px] text-slate-400 block">
+                              Keyboard Trees, Real-Time Index Search, Multi-Canvas Dashboards, Portal Gateways & Focus Rails
+                            </span>
+                          </div>
+                        </div>
+                        <div className="flex items-center space-x-2 mt-2 sm:mt-0 font-sans text-[8px] font-extrabold">
+                          <span className="text-indigo-400 bg-indigo-950/60 border border-indigo-800/60 px-1.5 py-0.5 rounded-sm uppercase">
+                            NAVIGATION UNIT: v1.0.4
+                          </span>
+                        </div>
+                      </div>
+
+                      {/* 10-Tier Navigation Core Tab Selection */}
+                      <div className="flex flex-wrap gap-1 border-b border-slate-800 pb-3 mb-4 text-[8px] font-sans font-bold">
+                        {[
+                          { id: 'nav_tree', label: '1. KEYBOARD TREE', icon: Keyboard },
+                          { id: 'full_search', label: '2. SEARCH INDEX', icon: Search },
+                          { id: 'split_dash', label: '3. SPLIT DASHBOARD', icon: Layout },
+                          { id: 'shortcuts', label: '4. COMMANDER', icon: FileCode },
+                          { id: 'minimap', label: '5. COORDINATE MINIMAP', icon: Map },
+                          { id: 'bookmarks', label: '6. TAG CLOUD & BOOKMARKS', icon: Tag },
+                          { id: 'breadcrumbs', label: '7. BREADCRUMBS', icon: MapPin },
+                          { id: 'portal', label: '8. PORTAL GATEWAY', icon: Shuffle },
+                          { id: 'focus_lens', label: '9. FOCUS LENS', icon: EyeOff },
+                          { id: 'clip_board', label: '10. CLIPPING BANK', icon: Scissors }
+                        ].map((tab) => {
+                          const Icon = tab.icon;
+                          const isActive = navDeckState.activeTab === tab.id;
+                          return (
+                            <button
+                              key={tab.id}
+                              onClick={() => {
+                                updateState('activeTab', tab.id);
+                                triggerLocalLog('TAB_SWITCH', `Activated index tier: ${tab.label}`, 'OK');
+                              }}
+                              className={`px-2 py-1.5 border flex items-center gap-1 transition-all cursor-pointer ${isActive ? 'bg-indigo-500 text-slate-950 border-indigo-400 font-extrabold' : 'bg-slate-900/60 text-slate-400 border-slate-800 hover:text-white hover:bg-slate-800'}`}
+                            >
+                              <Icon className="w-3 h-3" />
+                              <span>{tab.label}</span>
+                            </button>
+                          );
+                        })}
+                      </div>
+
+                      {/* Main Workspace Frame */}
+                      <div className="grid grid-cols-1 md:grid-cols-3 gap-4 mb-4">
+                        <div className="md:col-span-2 border border-slate-800 bg-slate-950/60 p-3 min-h-[260px] flex flex-col justify-between">
+                          
+                          {/* 1. Keyboard Tree */}
+                          {navDeckState.activeTab === 'nav_tree' && (
+                            <div className="space-y-3">
+                              <div className="flex items-center justify-between border-b border-slate-800 pb-1.5">
+                                <span className="text-[10px] font-bold text-indigo-400 uppercase">Interactive Keyboard Navigation Tree</span>
+                                <span className="text-[8px] bg-slate-800 px-1 py-0.5 text-slate-400 rounded">DFS Traversal</span>
+                              </div>
+                              <p className="text-[9px] text-slate-400 font-sans">
+                                Select and traverse nodes on the current canvas. Keyboard hotkeys are simulated dynamically via the manual trigger console below.
+                              </p>
+
+                              <div className="border border-slate-800 bg-black/40 p-2 text-[9px] space-y-1 max-h-36 overflow-y-auto">
+                                {elements.length === 0 ? (
+                                  <span className="text-slate-500 italic block py-2">No nodes present on the active canvas.</span>
+                                ) : (
+                                  elements.map((item, idx) => {
+                                    const isSelected = navDeckState.selectedTreeIndex === idx;
+                                    return (
+                                      <div
+                                        key={item.id}
+                                        onClick={() => {
+                                          updateState('selectedTreeIndex', idx);
+                                          triggerLocalLog('TREE_SELECT', `Focused tree node index: ${idx} (${item.type})`, 'OK');
+                                        }}
+                                        className={`p-1 flex items-center justify-between transition-all cursor-pointer ${isSelected ? 'bg-indigo-500/15 border-l-2 border-indigo-400 text-white font-extrabold' : 'hover:bg-slate-900 text-slate-400 border-l border-transparent'}`}
+                                      >
+                                        <div className="flex items-center space-x-2 truncate">
+                                          <span className="text-[8px] text-slate-600 font-bold">[{idx + 1}]</span>
+                                          <span className="text-[9px] text-indigo-400 uppercase font-black">[{item.type}]</span>
+                                          <span className="truncate text-slate-300">{item.content || '(empty block content)'}</span>
+                                        </div>
+                                        <span className="text-[7px] text-slate-500 font-mono">ID: {item.id}</span>
+                                      </div>
+                                    );
+                                  })
+                                )}
+                              </div>
+
+                              {/* Simulation Controller */}
+                              <div className="flex flex-wrap gap-1.5 items-center bg-slate-900/40 p-2 border border-slate-800">
+                                <span className="text-[8px] text-slate-500 font-bold uppercase block mr-1">Simulate Keys:</span>
+                                <button
+                                  onClick={() => {
+                                    const nextIdx = Math.max(0, navDeckState.selectedTreeIndex - 1);
+                                    updateState('selectedTreeIndex', nextIdx);
+                                    triggerLocalLog('KEY_TRAVERSE_UP', `Simulated [↑] Up key. Index: ${nextIdx}`, 'OK');
+                                  }}
+                                  className="px-1.5 py-0.5 bg-slate-800 hover:bg-slate-700 text-slate-200 text-[8px] font-bold border border-slate-700 cursor-pointer"
+                                >
+                                  [↑] PREV
+                                </button>
+                                <button
+                                  onClick={() => {
+                                    const nextIdx = Math.min(elements.length - 1, navDeckState.selectedTreeIndex + 1);
+                                    updateState('selectedTreeIndex', nextIdx);
+                                    triggerLocalLog('KEY_TRAVERSE_DOWN', `Simulated [↓] Down key. Index: ${nextIdx}`, 'OK');
+                                  }}
+                                  className="px-1.5 py-0.5 bg-slate-800 hover:bg-slate-700 text-slate-200 text-[8px] font-bold border border-slate-700 cursor-pointer"
+                                >
+                                  [↓] NEXT
+                                </button>
+                                <button
+                                  onClick={() => {
+                                    const selectedNode = elements[navDeckState.selectedTreeIndex];
+                                    if (selectedNode) {
+                                      triggerLocalLog('KEY_ENTER_SELECT', `Triggered [Enter] Action on node ${selectedNode.id}. Scroll target activated.`, 'OK');
+                                      const elDom = document.getElementById(`textarea-${selectedNode.id}`);
+                                      if (elDom) {
+                                        elDom.scrollIntoView({ behavior: 'smooth', block: 'center' });
+                                        elDom.focus();
+                                      }
+                                    }
+                                  }}
+                                  className="px-1.5 py-0.5 bg-indigo-500/20 hover:bg-indigo-500/30 text-indigo-300 text-[8px] font-bold border border-indigo-500/40 cursor-pointer"
+                                >
+                                  [Enter] FOCUS NODE
+                                </button>
+                              </div>
+                            </div>
+                          )}
+
+                          {/* 2. Search Index */}
+                          {navDeckState.activeTab === 'full_search' && (
+                            <div className="space-y-3">
+                              <div className="flex items-center justify-between border-b border-slate-800 pb-1.5">
+                                <span className="text-[10px] font-bold text-indigo-400 uppercase">Full-Text In-Memory Node Indexer</span>
+                                <span className="text-[8px] bg-slate-800 px-1 py-0.5 text-slate-400 rounded">B-Tree Parser</span>
+                              </div>
+                              
+                              <div className="flex gap-2">
+                                <input
+                                  type="text"
+                                  value={navDeckState.searchQuery}
+                                  onChange={(e) => {
+                                    updateState('searchQuery', e.target.value);
+                                    triggerLocalLog('INDEX_SEARCH', `Parsed raw query: "${e.target.value}"`, 'OK');
+                                  }}
+                                  placeholder="Type keywords or node types to index..."
+                                  className="flex-1 bg-slate-900 border border-slate-800 text-white p-1.5 text-[9px] outline-none"
+                                />
+                                {navDeckState.searchQuery && (
+                                  <button
+                                    onClick={() => {
+                                      updateState('searchQuery', '');
+                                      triggerLocalLog('SEARCH_CLEAR', 'Cleared query buffers.', 'OK');
+                                    }}
+                                    className="px-2 bg-slate-800 text-[8px] text-slate-300 border border-slate-700 cursor-pointer font-bold"
+                                  >
+                                    RESET
+                                  </button>
+                                )}
+                              </div>
+
+                              <div className="border border-slate-800 bg-black/40 p-2 text-[9px] space-y-1.5 max-h-32 overflow-y-auto">
+                                {filteredSearchElements.length === 0 ? (
+                                  <div className="text-slate-500 italic py-2 text-center">No nodes matched the specified query.</div>
+                                ) : (
+                                  filteredSearchElements.map((item, idx) => (
+                                    <div
+                                      key={item.id}
+                                      onClick={() => {
+                                        triggerLocalLog('MATCH_PAN', `Navigated viewport coordinate center to matching node: ${item.id}`, 'OK');
+                                        const elDom = document.getElementById(`textarea-${item.id}`);
+                                        if (elDom) {
+                                          elDom.scrollIntoView({ behavior: 'smooth', block: 'center' });
+                                          elDom.focus();
+                                        }
+                                      }}
+                                      className="p-1.5 bg-slate-900/60 border border-slate-800 hover:border-indigo-500/50 cursor-pointer transition-all flex items-center justify-between"
+                                    >
+                                      <div>
+                                        <span className="text-[8px] bg-indigo-950 text-indigo-300 border border-indigo-900/40 px-1.5 py-0.5 rounded mr-1.5 uppercase font-bold text-[7px]">
+                                          {item.type}
+                                        </span>
+                                        <span className="text-slate-200">
+                                          {item.content || <span className="italic text-slate-600">(empty block)</span>}
+                                        </span>
+                                      </div>
+                                      <span className="text-[7px] text-slate-500 font-mono">#{idx + 1}</span>
+                                    </div>
+                                  ))
+                                )}
+                              </div>
+                            </div>
+                          )}
+
+                          {/* 3. Split Dashboard */}
+                          {navDeckState.activeTab === 'split_dash' && (
+                            <div className="space-y-3">
+                              <div className="flex items-center justify-between border-b border-slate-800 pb-1.5">
+                                <span className="text-[10px] font-bold text-indigo-400 uppercase">Multi-Canvas Split-Dashboard Simulator</span>
+                                <span className="text-[8px] bg-slate-800 px-1 py-0.5 text-slate-400 rounded">Pane Splitter</span>
+                              </div>
+                              <p className="text-[9px] text-slate-400 font-sans">
+                                Select a peer canvas from the active project workspace to load its node list side-by-side. Useful for comparing structure drafts.
+                              </p>
+
+                              <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
+                                <div>
+                                  <span className="text-[8px] text-slate-500 font-bold block uppercase mb-1">Select Split Peer Canvas:</span>
+                                  <select
+                                    value={navDeckState.selectedSplitCanvasId}
+                                    onChange={(e) => {
+                                      updateState('selectedSplitCanvasId', e.target.value);
+                                      triggerLocalLog('SPLIT_SELECT', `Coupled peer workspace ID: ${e.target.value}`, 'OK');
+                                    }}
+                                    className="w-full bg-slate-900 border border-slate-800 text-indigo-400 text-[10px] font-black p-1.5 outline-none rounded cursor-pointer"
+                                  >
+                                    <option value="">-- Choose Peer Canvas --</option>
+                                    {canvasesList.filter(c => c.id !== canvasId).map(c => (
+                                      <option key={c.id} value={c.id}>{c.icon || '📄'} {c.title}</option>
+                                    ))}
+                                  </select>
+                                </div>
+
+                                <div className="border border-slate-800 bg-slate-900/10 p-2 rounded text-[8px] space-y-1 flex flex-col justify-between">
+                                  <div>
+                                    <span className="text-slate-500 font-bold uppercase block text-[7px] mb-1">Coupled Node Status:</span>
+                                    {navDeckState.selectedSplitCanvasId ? (
+                                      <span className="text-emerald-400 font-bold">READY TO STREAM SPLIT VIEW</span>
+                                    ) : (
+                                      <span className="text-amber-400">WAITING FOR PEER SELECTION</span>
+                                    )}
+                                  </div>
+                                </div>
+                              </div>
+
+                              {navDeckState.selectedSplitCanvasId && (
+                                <div className="border border-slate-800 bg-slate-900/50 p-2 rounded text-[8px] space-y-1.5 max-h-24 overflow-y-auto">
+                                  <span className="text-[7px] text-indigo-400 font-black uppercase tracking-wider block">Peer Live Node Elements (Simulated Read):</span>
+                                  <div className="space-y-1">
+                                    <div className="flex items-center justify-between py-0.5 border-b border-slate-800 text-slate-300">
+                                      <span>[HEADING_1] Workspace Executive Briefing</span>
+                                      <span className="text-slate-600">v14</span>
+                                    </div>
+                                    <div className="flex items-center justify-between py-0.5 border-b border-slate-800 text-slate-300">
+                                      <span>[TEXT] Primary design guidelines defined for next-gen models</span>
+                                      <span className="text-slate-600">v19</span>
+                                    </div>
+                                    <div className="flex items-center justify-between py-0.5 text-slate-300">
+                                      <span>[TODO] Finalize metadata layout definitions</span>
+                                      <span className="text-emerald-400 font-bold">DONE</span>
+                                    </div>
+                                  </div>
+                                </div>
+                              )}
+                            </div>
+                          )}
+
+                          {/* 4. Commander Shortcuts */}
+                          {navDeckState.activeTab === 'shortcuts' && (
+                            <div className="space-y-3">
+                              <div className="flex items-center justify-between border-b border-slate-800 pb-1.5">
+                                <span className="text-[10px] font-bold text-indigo-400 uppercase">Shortcut Commander Shortcut Binder</span>
+                                <span className="text-[8px] bg-slate-800 px-1 py-0.5 text-slate-400 rounded">Key Binder</span>
+                              </div>
+                              <p className="text-[9px] text-slate-400 font-sans">
+                                Set of active productivity hotkeys. Click a trigger button to simulate the execution of a keybinding transaction immediately.
+                              </p>
+
+                              <div className="space-y-1 max-h-32 overflow-y-auto">
+                                {navDeckState.keyboardShortcuts.map((sc: any) => (
+                                  <div
+                                    key={sc.id}
+                                    className="p-1.5 border border-slate-800 bg-slate-900/40 flex items-center justify-between text-[9px] hover:border-slate-700 transition-all"
+                                  >
+                                    <div>
+                                      <span className="bg-indigo-950 text-indigo-400 px-1.5 py-0.5 border border-indigo-900 rounded font-bold text-[8px] mr-2">
+                                        {sc.key}
+                                      </span>
+                                      <span className="font-extrabold text-slate-200">{sc.action}</span>
+                                      <span className="text-slate-500 ml-2 block sm:inline text-[8px]">{sc.desc}</span>
+                                    </div>
+                                    <button
+                                      onClick={() => {
+                                        triggerLocalLog('SHORTCUT_EXECUTE', `Simulated command trigger: ${sc.action} via binder.`, 'OK');
+                                        if (sc.id === 'sc-1') {
+                                          createCanvasElement(canvasId, 'todo', 'New Task spawned via AeroNav trigger', 9.9);
+                                        } else if (sc.id === 'sc-2') {
+                                          createCanvasElement(canvasId, 'code_sandbox', '// Spawned from AeroNav Shortcut', 9.9);
+                                        }
+                                      }}
+                                      className="px-2 py-0.5 bg-indigo-500 hover:bg-indigo-400 text-slate-950 font-black text-[8px] uppercase cursor-pointer"
+                                    >
+                                      FIRE
+                                    </button>
+                                  </div>
+                                ))}
+                              </div>
+                            </div>
+                          )}
+
+                          {/* 5. Coordinate Minimap */}
+                          {navDeckState.activeTab === 'minimap' && (
+                            <div className="space-y-3">
+                              <div className="flex items-center justify-between border-b border-slate-800 pb-1.5">
+                                <span className="text-[10px] font-bold text-indigo-400 uppercase">Interactive Coordinate Minimap Locator</span>
+                                <span className="text-[8px] bg-slate-800 px-1 py-0.5 text-slate-400 rounded">2D Mesh Spatial Map</span>
+                              </div>
+                              <p className="text-[9px] text-slate-400 font-sans">
+                                Spatial representation of element coordinates on the viewport canvas. Colored blocks correlate to node density.
+                              </p>
+
+                              <div className="border border-slate-800 bg-black/50 p-2 h-28 relative rounded flex flex-col justify-between">
+                                <div className="absolute inset-0 opacity-10 bg-[linear-gradient(to_right,#808080_1px,transparent_1px),linear-gradient(to_bottom,#808080_1px,transparent_1px)] bg-[size:10px_10px]" />
+                                
+                                <div className="relative flex flex-wrap gap-1.5">
+                                  {elements.map((item, idx) => {
+                                    const colorsMap: any = {
+                                      heading_1: 'bg-red-500',
+                                      heading_2: 'bg-orange-500',
+                                      todo: 'bg-emerald-500',
+                                      code_sandbox: 'bg-purple-500',
+                                      productivity_nav_deck: 'bg-indigo-500'
+                                    };
+                                    const bgColor = colorsMap[item.type] || 'bg-slate-600';
+                                    return (
+                                      <div
+                                        key={item.id}
+                                        onClick={() => {
+                                          triggerLocalLog('MINIMAP_NAV', `Centering spatial lens on node [${item.type}] #${idx+1}`, 'OK');
+                                          const elDom = document.getElementById(`textarea-${item.id}`);
+                                          if (elDom) {
+                                            elDom.scrollIntoView({ behavior: 'smooth', block: 'center' });
+                                          }
+                                        }}
+                                        className={`w-6 h-4 ${bgColor} border border-slate-950/60 flex items-center justify-center text-[6px] font-black cursor-pointer hover:scale-110 transition-transform`}
+                                        title={`${item.type}: ${item.content}`}
+                                      >
+                                        #{idx+1}
+                                      </div>
+                                    );
+                                  })}
+                                </div>
+
+                                <div className="text-[7px] text-slate-500 flex justify-between relative z-10">
+                                  <span>COORDINATE MESH RANGE: 0,0 → 1000,1000</span>
+                                  <span>DENSITY: {elements.length} BLOCKS ACTIVE</span>
+                                </div>
+                              </div>
+                            </div>
+                          )}
+
+                          {/* 6. Tag Cloud & Bookmarks */}
+                          {navDeckState.activeTab === 'bookmarks' && (
+                            <div className="space-y-3">
+                              <div className="flex items-center justify-between border-b border-slate-800 pb-1.5">
+                                <span className="text-[10px] font-bold text-indigo-400 uppercase">AeroNav Workspace Bookmark & Tag Cloud</span>
+                                <span className="text-[8px] bg-slate-800 px-1 py-0.5 text-slate-400 rounded">Taxonomy Engine</span>
+                              </div>
+                              
+                              <span className="text-[8px] text-slate-500 font-bold block uppercase font-sans">1. Simulated Workspace Tag Cloud (Click to Filter Logs):</span>
+                              <div className="flex flex-wrap gap-1.5 py-1">
+                                {[
+                                  { tag: '#milestone-1', count: 12, color: 'text-indigo-400 border-indigo-900 bg-indigo-950/40' },
+                                  { tag: '#draft', count: 5, color: 'text-slate-400 border-slate-800 bg-slate-900/40' },
+                                  { tag: '#critical', count: 8, color: 'text-rose-400 border-rose-900 bg-rose-950/40' },
+                                  { tag: '#meeting-notes', count: 14, color: 'text-amber-400 border-amber-900 bg-amber-950/40' },
+                                  { tag: '#code-sprint', count: 9, color: 'text-emerald-400 border-emerald-900 bg-emerald-950/40' }
+                                ].map((t) => (
+                                  <button
+                                    key={t.tag}
+                                    onClick={() => triggerLocalLog('TAG_FILTER', `Filtered workspace query buffer using taxonomy: "${t.tag}"`, 'OK')}
+                                    className={`px-2 py-1 text-[8px] font-black border uppercase cursor-pointer rounded-sm hover:scale-105 transition-transform ${t.color}`}
+                                  >
+                                    {t.tag} ({t.count})
+                                  </button>
+                                ))}
+                              </div>
+
+                              <span className="text-[8px] text-slate-500 font-bold block uppercase font-sans pt-1">2. Fast Bookmarks Register:</span>
+                              <div className="flex gap-1.5">
+                                <select
+                                  onChange={(e) => {
+                                    if (!e.target.value) return;
+                                    const updated = [...(navDeckState.bookmarksList || []), e.target.value];
+                                    updateState('bookmarksList', updated);
+                                    triggerLocalLog('BOOKMARK_ADD', `Bookmarked element node ID: ${e.target.value}`, 'OK');
+                                  }}
+                                  className="flex-1 bg-slate-900 border border-slate-800 text-[9px] text-indigo-300 p-1 outline-none cursor-pointer"
+                                >
+                                  <option value="">-- Add Current Node Bookmark --</option>
+                                  {elements.map((item, idx) => (
+                                    <option key={item.id} value={item.id}>#{idx+1} [{item.type}] - {item.content.substring(0, 30)}...</option>
+                                  ))}
+                                </select>
+                              </div>
+
+                              {(navDeckState.bookmarksList || []).length > 0 && (
+                                <div className="flex flex-wrap gap-1 max-h-20 overflow-y-auto bg-black/25 p-1.5 border border-slate-800">
+                                  {(navDeckState.bookmarksList || []).map((bId: string, bIdx: number) => (
+                                    <div key={bId} className="flex items-center gap-1.5 bg-slate-900 border border-slate-800 px-1.5 py-0.5 text-[8px] text-slate-300">
+                                      <span>Bookmark: {bId.substring(0, 8)}</span>
+                                      <button
+                                        onClick={() => {
+                                          const filtered = (navDeckState.bookmarksList || []).filter((_: any, idx: number) => idx !== bIdx);
+                                          updateState('bookmarksList', filtered);
+                                          triggerLocalLog('BOOKMARK_DELETE', `Removed bookmark: ${bId}`, 'WARNING');
+                                        }}
+                                        className="text-rose-400 font-black cursor-pointer ml-1 hover:text-white"
+                                      >
+                                        ×
+                                      </button>
+                                    </div>
+                                  ))}
+                                </div>
+                              )}
+                            </div>
+                          )}
+
+                          {/* 7. Breadcrumbs Lineage */}
+                          {navDeckState.activeTab === 'breadcrumbs' && (
+                            <div className="space-y-3">
+                              <div className="flex items-center justify-between border-b border-slate-800 pb-1.5">
+                                <span className="text-[10px] font-bold text-indigo-400 uppercase">Structural Breadcrumb Lineage Resolver</span>
+                                <span className="text-[8px] bg-slate-800 px-1 py-0.5 text-slate-400 rounded">Node Hierarchy</span>
+                              </div>
+                              <p className="text-[9px] text-slate-400 font-sans">
+                                Traces physical parent-child directory lineage in database schema. Click breadcrumb keys to update simulated traversal state.
+                              </p>
+
+                              <div className="flex flex-wrap items-center bg-slate-900/60 p-2.5 border border-slate-800 text-[9px] gap-1 rounded">
+                                <span className="text-slate-500 font-bold uppercase block mr-1 font-sans">Active Lineage:</span>
+                                <button
+                                  onClick={() => triggerLocalLog('BREADCRUMB_TRAVERSE', 'Jumped to Workspace scope.', 'OK')}
+                                  className="text-indigo-400 hover:underline cursor-pointer font-extrabold"
+                                >
+                                  WORKSPACE ROOT
+                                </button>
+                                <span className="text-slate-600 font-extrabold">/</span>
+                                <button
+                                  onClick={() => triggerLocalLog('BREADCRUMB_TRAVERSE', 'Jumped to Active Canvas scope.', 'OK')}
+                                  className="text-indigo-400 hover:underline cursor-pointer font-extrabold"
+                                >
+                                  📄 active-canvas-{canvasId.substring(0, 8)}
+                                </button>
+                                <span className="text-slate-600 font-extrabold">/</span>
+                                <span className="text-slate-200 bg-slate-800 px-1.5 rounded text-[8px]">
+                                  🚀 aero-nav-cockpit-{el.id.substring(0, 8)}
+                                </span>
+                              </div>
+
+                              <div className="text-[8px] text-slate-500 border border-slate-800/40 p-2 bg-slate-900/25">
+                                <strong>Lineage Depth Index:</strong> Depth: 3, Database Tree Convergence: Checked.
+                              </div>
+                            </div>
+                          )}
+
+                          {/* 8. Portal Gateway */}
+                          {navDeckState.activeTab === 'portal' && (
+                            <div className="space-y-3">
+                              <div className="flex items-center justify-between border-b border-slate-800 pb-1.5">
+                                <span className="text-[10px] font-bold text-indigo-400 uppercase">Cross-Canvas Portal Transfer Gateway</span>
+                                <span className="text-[8px] bg-slate-800 px-1 py-0.5 text-slate-400 rounded">Dexie Bridge</span>
+                              </div>
+                              <p className="text-[9px] text-slate-400 font-sans">
+                                Transfer a node element physically to another canvas workspace. This performs a clone operation on the specified target database table.
+                              </p>
+
+                              <div className="grid grid-cols-1 sm:grid-cols-2 gap-3.5">
+                                <div>
+                                  <span className="text-[8px] text-slate-500 font-bold block uppercase mb-1">Source Node:</span>
+                                  <select
+                                    value={navDeckState.selectedElementIdForPortal}
+                                    onChange={(e) => updateState('selectedElementIdForPortal', e.target.value)}
+                                    className="w-full bg-slate-900 border border-slate-800 text-slate-300 text-[9px] p-1.5 outline-none cursor-pointer"
+                                  >
+                                    <option value="">-- Choose Element --</option>
+                                    {elements.map((item, idx) => (
+                                      <option key={item.id} value={item.id}>#{idx+1} [{item.type}] - {item.content.substring(0, 25)}</option>
+                                    ))}
+                                  </select>
+                                </div>
+
+                                <div>
+                                  <span className="text-[8px] text-slate-500 font-bold block uppercase mb-1">Destination Workspace:</span>
+                                  <select
+                                    value={navDeckState.selectedCanvasIdForPortal}
+                                    onChange={(e) => updateState('selectedCanvasIdForPortal', e.target.value)}
+                                    className="w-full bg-slate-900 border border-slate-800 text-slate-300 text-[9px] p-1.5 outline-none cursor-pointer"
+                                  >
+                                    <option value="">-- Choose Target Canvas --</option>
+                                    {canvasesList.filter(c => c.id !== canvasId).map(c => (
+                                      <option key={c.id} value={c.id}>{c.icon || '📄'} {c.title}</option>
+                                    ))}
+                                  </select>
+                                </div>
+                              </div>
+
+                              <button
+                                onClick={runPortalMigration}
+                                className="w-full py-1.5 bg-gradient-to-r from-indigo-600 to-purple-600 hover:from-indigo-500 hover:to-purple-500 text-slate-950 font-black uppercase text-[9px] tracking-wider cursor-pointer transition-all"
+                              >
+                                INITIATE PORTAL TUNNEL TRANSMISSION
+                              </button>
+                            </div>
+                          )}
+
+                          {/* 9. Focus Lens */}
+                          {navDeckState.activeTab === 'focus_lens' && (
+                            <div className="space-y-3">
+                              <div className="flex items-center justify-between border-b border-slate-800 pb-1.5">
+                                <span className="text-[10px] font-bold text-indigo-400 uppercase">Ambient Focus Mode Focal Lens Controller</span>
+                                <span className="text-[8px] bg-slate-800 px-1 py-0.5 text-slate-400 rounded">UI Dimmer</span>
+                              </div>
+                              <p className="text-[9px] text-slate-400 font-sans">
+                                Selectively dim everything in the workspace editor except the selected type of node. Ideal for focused sprint cycles.
+                              </p>
+
+                              <div className="space-y-3">
+                                <div className="grid grid-cols-2 gap-3">
+                                  <div>
+                                    <span className="text-[8px] text-slate-500 font-bold block uppercase mb-1">Highlight Focus Scope:</span>
+                                    <select
+                                      value={navDeckState.activeFocusType}
+                                      onChange={(e) => {
+                                        updateState('activeFocusType', e.target.value);
+                                        triggerLocalLog('FOCUS_TYPE_ADJUST', `Focus scope targeted to: ${e.target.value.toUpperCase()}`, 'OK');
+                                      }}
+                                      className="w-full bg-slate-900 border border-slate-800 text-slate-300 text-[9px] p-1.5 outline-none cursor-pointer"
+                                    >
+                                      <option value="all">Unfocused (Highlight All)</option>
+                                      <option value="todo">Tasks & TODOs Only</option>
+                                      <option value="code_sandbox">Code Sandboxes Only</option>
+                                      <option value="heading">Headers Only</option>
+                                    </select>
+                                  </div>
+
+                                  <div className="border border-slate-800 bg-slate-900/10 p-2 text-[8px] space-y-1">
+                                    <span className="text-slate-500 font-bold uppercase block text-[7px]">Focus Calibration:</span>
+                                    {navDeckState.activeFocusType !== 'all' ? (
+                                      <span className="text-indigo-400 font-black animate-pulse">DISTRACTION-FREE HIGHLIGHT ON</span>
+                                    ) : (
+                                      <span className="text-slate-500 font-bold">AMBIENT LIGHTING MODE</span>
+                                    )}
+                                  </div>
+                                </div>
+                              </div>
+                            </div>
+                          )}
+
+                          {/* 10. Quick Clipping Bank */}
+                          {navDeckState.activeTab === 'clip_board' && (
+                            <div className="space-y-3">
+                              <div className="flex items-center justify-between border-b border-slate-800 pb-1.5">
+                                <span className="text-[10px] font-bold text-indigo-400 uppercase">Workspace Quick-Notes Clipping Bank</span>
+                                <span className="text-[8px] bg-slate-800 px-1 py-0.5 text-slate-400 rounded">Scrapbook Clipboard</span>
+                              </div>
+                              <p className="text-[9px] text-slate-400 font-sans">
+                                Draft summaries or combine text elements from the active canvas into a single cohesive persistent clipping memo.
+                              </p>
+
+                              <div className="flex gap-2">
+                                <select
+                                  id="element-clipping-select"
+                                  className="flex-1 bg-slate-900 border border-slate-800 text-[9px] text-slate-300 p-1.5 outline-none cursor-pointer"
+                                >
+                                  <option value="">-- Select Element To Clip Content --</option>
+                                  {elements.map((item, idx) => (
+                                    <option key={item.id} value={item.id}>#{idx+1} [{item.type}] - {item.content.substring(0, 35)}</option>
+                                  ))}
+                                </select>
+                                <button
+                                  onClick={() => {
+                                    const selectEl = document.getElementById('element-clipping-select') as HTMLSelectElement;
+                                    const val = selectEl?.value;
+                                    if (!val) {
+                                      triggerLocalLog('CLIP_ERROR', 'No element selected for clipping.', 'WARNING');
+                                      return;
+                                    }
+                                    const item = elements.find(el => el.id === val);
+                                    if (item) {
+                                      const text = item.content || '(Empty content)';
+                                      const updated = [...(navDeckState.clippedNotes || []), {
+                                        id: `cn-${Math.random().toString(36).substring(2, 7)}`,
+                                        text: text.substring(0, 80),
+                                        timestamp: new Date().toTimeString().split(' ')[0].substring(0, 5)
+                                      }];
+                                      navDeckState.clippedNotes = updated;
+                                      updateState('clippedNotes', updated);
+                                      triggerLocalLog('CLIPPED_ITEM', `Successfully clipped content from element #${val.substring(0, 6)}`, 'OK');
+                                    }
+                                  }}
+                                  className="px-3 bg-indigo-500 hover:bg-indigo-400 text-slate-950 font-black text-[8px] uppercase cursor-pointer"
+                                >
+                                  CLIP
+                                </button>
+                              </div>
+
+                              <div className="border border-slate-800 bg-black/40 p-2 text-[9px] space-y-1 max-h-24 overflow-y-auto">
+                                {(!navDeckState.clippedNotes || navDeckState.clippedNotes.length === 0) ? (
+                                  <div className="text-slate-500 italic py-1">No clippings captured in the scrapbook bank.</div>
+                                ) : (
+                                  navDeckState.clippedNotes.map((note: any, nIdx: number) => (
+                                    <div key={note.id} className="flex justify-between items-center bg-slate-900/60 p-1 rounded text-[8px] border border-slate-800">
+                                      <span>
+                                        <span className="text-indigo-400 font-bold mr-1.5">[{note.timestamp}]</span>
+                                        <span className="text-slate-200">{note.text}</span>
+                                      </span>
+                                      <button
+                                        onClick={() => {
+                                          const filtered = navDeckState.clippedNotes.filter((_: any, idx: number) => idx !== nIdx);
+                                          updateState('clippedNotes', filtered);
+                                          triggerLocalLog('CLIP_REMOVED', 'Removed scrap item.', 'WARNING');
+                                        }}
+                                        className="text-rose-400 font-black hover:text-white cursor-pointer ml-1.5"
+                                      >
+                                        ×
+                                      </button>
+                                    </div>
+                                  ))
+                                )}
+                              </div>
+                            </div>
+                          )}
+
+                        </div>
+
+                        {/* Logs Side Terminal */}
+                        <div className="border border-slate-800 bg-slate-950/60 p-3 flex flex-col justify-between text-[9px]">
+                          <div>
+                            <div className="border-b border-slate-800 pb-1.5 mb-2.5 flex items-center justify-between font-sans">
+                              <span className="text-[10px] font-bold text-slate-400 uppercase">COCKPIT LEDGER LOGS</span>
+                              <span className="w-1.5 h-1.5 rounded-full bg-indigo-400 mr-1 animate-ping" />
+                            </div>
+
+                            <div className="space-y-1.5 max-h-[190px] overflow-y-auto pr-1">
+                              {(navDeckState.logs || []).map((log: any, lIdx: number) => (
+                                <div key={lIdx} className="text-[8px] py-1 border-b border-slate-900/50 leading-tight">
+                                  <div className="flex justify-between text-slate-500">
+                                    <span>[{log.time}]</span>
+                                    <span className={`font-black uppercase ${
+                                      log.status === 'OK' ? 'text-indigo-400' :
+                                      log.status === 'WARNING' ? 'text-amber-400' :
+                                      log.status === 'CONFLICT' ? 'text-rose-400' : 'text-blue-400'
+                                    }`}>{log.op}</span>
+                                  </div>
+                                  <p className="text-slate-300 mt-0.5">{log.payload}</p>
+                                </div>
+                              ))}
+                            </div>
+                          </div>
+
+                          <div className="border-t border-slate-800 pt-2 flex justify-between text-[8px] text-slate-500 uppercase mt-2 font-sans">
+                            <span>COCKPIT CONSOLE</span>
+                            <span>ACTIVE LOGS: {(navDeckState.logs || []).length}</span>
+                          </div>
+                        </div>
+                      </div>
+
                     </div>
                   );
                 })()

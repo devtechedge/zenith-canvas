@@ -51,11 +51,12 @@ import {
   Fingerprint,
   Eye,
   Key,
-  FileCheck
+  FileCheck,
+  Navigation
 } from 'lucide-react';
 
 export interface CommandItem {
-  id: 'heading_1' | 'heading_2' | 'text' | 'todo' | 'callout' | 'code_sandbox' | 'collection_ref' | 'toggle_list' | 'quote' | 'page_link' | 'acoustic_wave' | 'matrix_view' | 'node_router' | 'spectrogram' | 'layout_sandbox' | 'ast_parser' | 'cycle_timeline' | 'telemetry_deck' | 'markdown_ast' | 'relation_graph' | 'search_matrix' | 'formula_grid' | 'vector_diagram' | 'sql_schema_visualizer' | 'conflict_sync_simulator' | 'audio_sampler' | 'ast_query_builder' | 'theme_engine_sandbox' | 'revision_ledger' | 'bento_composer' | 'ai_grounding_workspace' | 'uml_studio' | 'cron_scheduler' | 'db_migrator' | 'api_request_builder' | 'regex_tester' | 'kanban_orchestrator' | 'math_mesh' | 'format_converter' | 'ast_diff_viewer' | 'state_machine_designer' | 'packet_analyzer' | 'sql_optimizer' | 'color_auditor' | 'jwt_inspector' | 'git_simulator' | 'crypto_lab' | 'schema_validator' | 'css_sandbox' | 'markdown_tokenizer' | 'sys_topology' | 'formula_compiler' | 'cross_node_linker' | 'filter_matrix' | 'schema_dependency_visualizer' | 'rollup_aggregator' | 'schema_migrator' | 'graph_router' | 'db_join_inspector' | 'cascading_states' | 'index_sandbox';
+  id: 'heading_1' | 'heading_2' | 'text' | 'todo' | 'callout' | 'code_sandbox' | 'collection_ref' | 'toggle_list' | 'quote' | 'page_link' | 'acoustic_wave' | 'matrix_view' | 'node_router' | 'spectrogram' | 'layout_sandbox' | 'ast_parser' | 'cycle_timeline' | 'telemetry_deck' | 'markdown_ast' | 'relation_graph' | 'search_matrix' | 'formula_grid' | 'vector_diagram' | 'sql_schema_visualizer' | 'conflict_sync_simulator' | 'audio_sampler' | 'ast_query_builder' | 'theme_engine_sandbox' | 'revision_ledger' | 'bento_composer' | 'ai_grounding_workspace' | 'uml_studio' | 'cron_scheduler' | 'db_migrator' | 'api_request_builder' | 'regex_tester' | 'kanban_orchestrator' | 'math_mesh' | 'format_converter' | 'ast_diff_viewer' | 'state_machine_designer' | 'packet_analyzer' | 'sql_optimizer' | 'color_auditor' | 'jwt_inspector' | 'git_simulator' | 'crypto_lab' | 'schema_validator' | 'css_sandbox' | 'markdown_tokenizer' | 'sys_topology' | 'formula_compiler' | 'cross_node_linker' | 'filter_matrix' | 'schema_dependency_visualizer' | 'rollup_aggregator' | 'schema_migrator' | 'graph_router' | 'db_join_inspector' | 'cascading_states' | 'index_sandbox' | 'productivity_nav_deck';
   title: string;
   description: string;
   icon: React.ComponentType<any>;
@@ -211,6 +212,12 @@ const COMMANDS: CommandItem[] = [
     title: 'Conflict Sync & Merge Terminal',
     description: 'Offline state conflict resolution simulation ledger',
     icon: GitCompare,
+  },
+  {
+    id: 'productivity_nav_deck',
+    title: 'AeroNav 10-Tier Workspace Deck',
+    description: 'Keyboard trees, full-text node search, and split-dashboard optimizer',
+    icon: Navigation,
   },
   {
     id: 'audio_sampler',
