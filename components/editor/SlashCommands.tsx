@@ -15,11 +15,12 @@ import {
   FolderLock,
   Quote,
   Link,
-  ChevronDown
+  ChevronDown,
+  Volume2
 } from 'lucide-react';
 
 export interface CommandItem {
-  id: 'heading_1' | 'heading_2' | 'text' | 'todo' | 'callout' | 'code_sandbox' | 'collection_ref' | 'toggle_list' | 'quote' | 'page_link';
+  id: 'heading_1' | 'heading_2' | 'text' | 'todo' | 'callout' | 'code_sandbox' | 'collection_ref' | 'toggle_list' | 'quote' | 'page_link' | 'acoustic_wave';
   title: string;
   description: string;
   icon: React.ComponentType<any>;
@@ -67,6 +68,12 @@ const COMMANDS: CommandItem[] = [
     title: 'Alert Callout',
     description: 'High-contrast info callout with accent presets',
     icon: Info,
+  },
+  {
+    id: 'acoustic_wave',
+    title: 'Acoustic Synthesizer',
+    description: 'Interactive browser-synthesized audio node',
+    icon: Volume2,
   },
   {
     id: 'page_link',

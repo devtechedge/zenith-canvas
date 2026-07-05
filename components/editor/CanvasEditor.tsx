@@ -17,7 +17,8 @@ import {
   Info,
   ChevronRight,
   Quote,
-  Link as LinkIcon
+  Link as LinkIcon,
+  Volume2
 } from 'lucide-react';
 
 const playTypewriterSound = (isSpace: boolean) => {
@@ -828,6 +829,91 @@ export default function CanvasEditor({ canvasId, isLocked = false }: CanvasEdito
                       </button>
                     </div>
                   )}
+                </div>
+              )}
+
+              {/* ACOUSTIC SYNTHESIZER OSCILLATOR NODE */}
+              {el.type === 'acoustic_wave' && (
+                <div className="border-2 border-[#1A1A1A] p-4 bg-white rounded-none neo-shadow-sm my-2 w-full">
+                  <div className="flex items-center justify-between border-b border-gray-100 pb-2 mb-3">
+                    <div className="flex items-center space-x-2">
+                      <Volume2 className="w-4 h-4 text-indigo-600" />
+                      <span className="text-[11px] font-mono font-bold uppercase tracking-wider text-gray-500">
+                        Interactive Acoustic Wave Oscillator
+                      </span>
+                    </div>
+                    <span className="text-[9px] font-mono border border-indigo-200 px-1.5 py-0.5 bg-indigo-50 text-indigo-600 font-extrabold uppercase rounded-sm">
+                      Web Audio Synthesizer
+                    </span>
+                  </div>
+
+                  <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
+                    <div className="space-y-1">
+                      <div className="flex items-center space-x-1.5">
+                        <span className="text-xs font-black text-gray-700">OSCILLATOR FREQUENCY:</span>
+                        <span className="text-xs font-mono font-black text-indigo-600 bg-indigo-50 px-1 rounded">{(propertiesObj.pitch || 440)} Hz</span>
+                      </div>
+                      <p className="text-[10px] text-gray-500 leading-relaxed max-w-md">
+                        Synthesizes clean browser-generated wave frequencies. Slide the frequency tuner or click trigger to audibly evaluate the layer audio-harmonic wave form.
+                      </p>
+                    </div>
+
+                    <div className="flex items-center space-x-3 self-end sm:self-auto flex-shrink-0">
+                      <input 
+                        type="range"
+                        min="120"
+                        max="1800"
+                        step="10"
+                        value={propertiesObj.pitch || 440}
+                        onChange={(e) => updateCanvasElement(el.id, {
+                          properties: JSON.stringify({ ...propertiesObj, pitch: parseInt(e.target.value) })
+                        })}
+                        className="w-32 accent-indigo-600 cursor-pointer"
+                      />
+
+                      <button
+                        onClick={() => {
+                          const ctx = new (window.AudioContext || (window as any).webkitAudioContext)();
+                          const osc = ctx.createOscillator();
+                          const gain = ctx.createGain();
+                          
+                          osc.type = propertiesObj.waveform || 'sine';
+                          osc.frequency.setValueAtTime(propertiesObj.pitch || 440, ctx.currentTime);
+                          
+                          gain.gain.setValueAtTime(0.2, ctx.currentTime);
+                          gain.gain.exponentialRampToValueAtTime(0.001, ctx.currentTime + 0.8);
+                          
+                          osc.connect(gain);
+                          gain.connect(ctx.destination);
+                          
+                          osc.start();
+                          osc.stop(ctx.currentTime + 0.8);
+                        }}
+                        className="px-4 py-2 border-2 border-[#1A1A1A] bg-[#FFB703] text-[#1a1a1a] text-xs font-bold uppercase neo-shadow-sm hover:translate-x-[1px] hover:translate-y-[1px] hover:shadow-none transition-all cursor-pointer flex items-center space-x-1.5"
+                      >
+                        <Volume2 className="w-3.5 h-3.5" />
+                        <span>TRIGGER TONE</span>
+                      </button>
+                    </div>
+                  </div>
+
+                  {/* Waveform Selector */}
+                  <div className="flex items-center space-x-2 mt-3 pt-2 border-t border-dashed border-[#1A1A1A]/10 text-[9px] font-mono font-bold text-gray-400">
+                    <span>WAVE FORM:</span>
+                    {['sine', 'square', 'sawtooth', 'triangle'].map(wf => (
+                      <button
+                        key={wf}
+                        onClick={() => updateCanvasElement(el.id, {
+                          properties: JSON.stringify({ ...propertiesObj, waveform: wf })
+                        })}
+                        className={`px-1.5 py-0.5 border border-[#1A1A1A] rounded-none bg-white hover:bg-slate-50 transition-all text-[#1A1A1A] uppercase ${
+                          (propertiesObj.waveform || 'sine') === wf ? 'bg-indigo-500 text-white border-2 border-black font-extrabold' : ''
+                        }`}
+                      >
+                        {wf}
+                      </button>
+                    ))}
+                  </div>
                 </div>
               )}
             </ElementWrapper>

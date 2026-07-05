@@ -252,6 +252,7 @@ export default function OpsControlDeck({
     
     const sandboxes = elements.filter(el => el.type === 'code_sandbox').length;
     const inlineGrids = elements.filter(el => el.type === 'collection_ref').length;
+    const synthesizers = elements.filter(el => el.type === 'acoustic_wave').length;
     const readingTime = Math.max(1, Math.ceil(wordCount / 200));
     
     // Readability Estimate
@@ -271,6 +272,7 @@ export default function OpsControlDeck({
       completedTodos,
       sandboxes,
       inlineGrids,
+      synthesizers,
       readingTime,
       readability
     };
@@ -726,6 +728,17 @@ export default function OpsControlDeck({
                         </div>
                         <div className="w-full h-2 bg-gray-100 border border-[#1A1A1A]">
                           <div className="h-full bg-indigo-500" style={{ width: `${astStats.totalBlocks > 0 ? (astStats.inlineGrids / astStats.totalBlocks) * 100 : 0}%` }} />
+                        </div>
+                      </div>
+
+                      {/* Acoustic Wave Synthesizers */}
+                      <div className="space-y-1">
+                        <div className="flex justify-between text-xs font-bold">
+                          <span>Acoustic Wave Oscillators ({astStats.synthesizers})</span>
+                          <span>{astStats.totalBlocks > 0 ? Math.round((astStats.synthesizers / astStats.totalBlocks) * 100) : 0}%</span>
+                        </div>
+                        <div className="w-full h-2 bg-gray-100 border border-[#1A1A1A]">
+                          <div className="h-full bg-[#E040FB]" style={{ width: `${astStats.totalBlocks > 0 ? (astStats.synthesizers / astStats.totalBlocks) * 100 : 0}%` }} />
                         </div>
                       </div>
 

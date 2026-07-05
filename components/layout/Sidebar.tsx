@@ -156,6 +156,7 @@ export default function Sidebar({ onOpenCommandPalette, mobileOpen = false, onCl
               </button>
 
               <span className="text-sm select-none">{canvas.icon || '📄'}</span>
+              <span className="text-[8px] font-mono font-black border border-[#1A1A1A] px-1 bg-[#1A1A1A] text-[#FFB703] rounded-sm uppercase tracking-tighter select-none flex-shrink-0">LYR-{depth + 1}</span>
               <span className="text-sm font-medium truncate select-none">{canvas.title || 'Untitled'}</span>
             </div>
 
@@ -208,11 +209,11 @@ export default function Sidebar({ onOpenCommandPalette, mobileOpen = false, onCl
           <div className="p-4 border-b-2 border-[#1A1A1A] bg-white flex items-center justify-between">
             <div className="flex items-center space-x-2">
               <div className="w-8 h-8 bg-[#FFB703] border-2 border-[#1A1A1A] neo-shadow-sm flex items-center justify-center font-bold text-sm">
-                ZC
+                ZN
               </div>
               <div>
-                <h1 className="text-sm font-extrabold tracking-tight">ZENITH CANVAS</h1>
-                <p className="text-[10px] font-mono text-gray-500">v1.2.0-distributed</p>
+                <h1 className="text-sm font-extrabold tracking-tight">ZENITH WORKSPACE</h1>
+                <p className="text-[10px] font-mono text-gray-500">v1.5.0-distributed</p>
               </div>
             </div>
             {/* Mobile close button */}
@@ -244,10 +245,10 @@ export default function Sidebar({ onOpenCommandPalette, mobileOpen = false, onCl
         {/* Navigation Section */}
         <div className="flex-1 py-2">
           <div className="flex items-center justify-between px-4 py-1.5 text-[11px] font-bold text-gray-500 uppercase tracking-wider">
-            <span>Canvases</span>
+            <span>Node Layers</span>
             <button 
               onClick={handleCreateRootCanvas}
-              title="New Canvas"
+              title="New Node Layer"
               className="p-1 border border-[#1A1A1A] bg-[#FFB703] text-[#1A1A1A] neo-shadow-sm rounded hover:bg-amber-400"
             >
               <Plus className="w-3 h-3" />
@@ -306,7 +307,7 @@ export default function Sidebar({ onOpenCommandPalette, mobileOpen = false, onCl
         <Link href="/">
           <div className="w-full flex items-center justify-center space-x-2 py-2 border-2 border-[#1A1A1A] bg-[#FFB703] neo-shadow-sm text-xs font-bold uppercase hover:translate-x-[2px] hover:translate-y-[2px] hover:shadow-none transition-all cursor-pointer">
             <Layout className="w-3.5 h-3.5" />
-            <span>Workspace Hub</span>
+            <span>Cluster Console</span>
           </div>
         </Link>
       </div>

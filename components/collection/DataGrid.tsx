@@ -447,20 +447,27 @@ export default function DataGrid({ tableId }: DataGridProps) {
                       {columns.map(col => {
                         const val = cellData[col.id] || '';
                         return (
-                          <td key={col.id} className="p-1 border-r-2 border-[#1A1A1A]">
+                          <td key={col.id} className="p-1 border-r-2 border-[#1A1A1A] align-middle">
                             {col.type === 'Select' ? (
-                              <select
-                                value={val}
-                                onChange={(e) => handleCellChange(row.id, col.id, e.target.value)}
-                                className="w-full bg-transparent outline-none focus:bg-white p-1 rounded font-medium text-emerald-800"
-                              >
-                                <option value="Backlog">Backlog</option>
-                                <option value="In Progress">In Progress</option>
-                                <option value="Completed">Completed</option>
-                                <option value="High">High</option>
-                                <option value="Medium">Medium</option>
-                                <option value="Low">Low</option>
-                              </select>
+                              <div className={`border border-[#1A1A1A] px-1.5 py-0.5 font-bold text-[10px] uppercase inline-flex rounded-none transition-colors ${
+                                val === 'Completed' || val === 'Low' ? 'bg-[#D8F3DC] text-[#1B4332]' :
+                                val === 'In Progress' || val === 'Medium' ? 'bg-[#CAF0F8] text-[#03045E]' :
+                                val === 'High' ? 'bg-[#FFCCD5] text-[#A70000]' :
+                                'bg-[#FFE5EC] text-[#590D22]'
+                              }`}>
+                                <select
+                                  value={val}
+                                  onChange={(e) => handleCellChange(row.id, col.id, e.target.value)}
+                                  className="bg-transparent outline-none p-0.5 rounded font-black uppercase text-[10px] cursor-pointer"
+                                >
+                                  <option value="Backlog" className="bg-white text-gray-700 font-sans">Backlog</option>
+                                  <option value="In Progress" className="bg-white text-gray-700 font-sans">In Progress</option>
+                                  <option value="Completed" className="bg-white text-gray-700 font-sans">Completed</option>
+                                  <option value="High" className="bg-white text-gray-700 font-sans">High</option>
+                                  <option value="Medium" className="bg-white text-gray-700 font-sans">Medium</option>
+                                  <option value="Low" className="bg-white text-gray-700 font-sans">Low</option>
+                                </select>
+                              </div>
                             ) : (
                               <input
                                 type={col.type === 'Number' ? 'number' : col.type === 'Date' ? 'date' : 'text'}

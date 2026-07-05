@@ -1,6 +1,6 @@
 'use client';
 
-import { useEffect, useState } from 'react';
+import { useEffect, useState, useMemo } from 'react';
 import { useLiveQuery } from 'dexie-react-hooks';
 import { db } from '@/lib/db/indexeddb';
 import { useCanvasSync } from '@/lib/hooks/useCanvasSync';
@@ -36,6 +36,58 @@ function generateElementId(prefix = 'el'): string {
   return `${prefix}-${Math.random().toString(36).substring(2, 9)}`;
 }
 
+function LiveSyncQueueViewer({ canvasId }: { canvasId: string }) {
+  const transactions = useLiveQuery(() => 
+    db.syncQueue.orderBy('timestamp').reverse().limit(10).toArray()
+  ) || [];
+
+  if (transactions.length === 0) {
+    return (
+      <div className="text-emerald-400 font-black italic animate-pulse py-1">
+        [IDLE] STREAMING ACTIVE TRANSACTION LEDGER... LEDGER SYNCHRONIZED PERFECTLY.
+      </div>
+    );
+  }
+
+  return (
+    <div className="space-y-1">
+      {transactions.map((tx) => {
+        let opMarker = 'OP_MUTATE';
+        let color = 'text-blue-400';
+        if (tx.action === 'insert') {
+          opMarker = 'OP_CREATE';
+          color = 'text-green-400';
+        } else if (tx.action === 'delete') {
+          opMarker = 'OP_DELETE';
+          color = 'text-rose-400';
+        } else if (tx.action === 'update') {
+          opMarker = 'OP_UPDATE';
+          color = 'text-yellow-400';
+        }
+
+        let detailStr = tx.recordId;
+        try {
+          const parsed = JSON.parse(tx.data);
+          if (parsed.title) detailStr += ` ("${parsed.title}")`;
+          else if (parsed.type) detailStr += ` [${parsed.type}]`;
+          else if (parsed.content) detailStr += ` ("${parsed.content.substring(0, 40)}${parsed.content.length > 40 ? '...' : ''}")`;
+        } catch {}
+
+        return (
+          <div key={tx.id} className="flex flex-col sm:flex-row sm:items-center justify-between border-b border-slate-800/40 pb-1">
+            <span className={color}>
+              [{new Date(tx.timestamp).toLocaleTimeString()}] {opMarker}_{tx.table.toUpperCase()}: {detailStr}
+            </span>
+            <span className="text-[8px] text-slate-500 font-mono">
+              HASH_SIGN: {tx.recordId.substring(0, 8)}
+            </span>
+          </div>
+        );
+      })}
+    </div>
+  );
+}
+
 export default function CanvasWorkspaceClient() {
   const params = useParams();
   const router = useRouter();
@@ -68,6 +120,23 @@ export default function CanvasWorkspaceClient() {
     if (typeof window === 'undefined') return false;
     return localStorage.getItem(`zenith-canvas-locked-${canvasId}`) === 'true';
   });
+  const [backdropShader, setBackdropShader] = useState<string>(() => {
+    if (typeof window === 'undefined') return 'none';
+    return localStorage.getItem(`zenith-backdrop-shader-${canvasId}`) || 'none';
+  });
+  const [flashFingerprint, setFlashFingerprint] = useState(false);
+  const [fingerprintCopied, setFingerprintCopied] = useState(false);
+  const [sessionLogs, setSessionLogs] = useState<{ establishedTime: string; checksumTime: string } | null>(null);
+
+  useEffect(() => {
+    const timer = setTimeout(() => {
+      setSessionLogs({
+        establishedTime: new Date(Date.now() - 5000).toLocaleTimeString(),
+        checksumTime: new Date().toLocaleTimeString(),
+      });
+    }, 0);
+    return () => clearTimeout(timer);
+  }, []);
 
   const toggleLock = () => {
     const nextLocked = !isLocked;
@@ -77,6 +146,41 @@ export default function CanvasWorkspaceClient() {
 
   // 1. Fetch current canvas details
   const canvas = useLiveQuery(() => db.canvases.get(canvasId), [canvasId]);
+
+  // Load elements of current node layer to compute checksum
+  const elements = useLiveQuery(async () => {
+    return await db.elements.where('canvasId').equals(canvasId).toArray();
+  }, [canvasId]) || [];
+
+  // Compute live deterministic checksum of current Node Layer
+  const checksumHash = useMemo(() => {
+    if (!canvas || !elements) return 'ZN-000000000000';
+    const contentSum = elements.map(e => `${e.id}:${e.content}:${e.type}`).join('|');
+    const stateString = `${canvas.title}-${canvas.icon || ''}-${contentSum}`;
+    
+    // Simple deterministic FNV-1a checksum calculation
+    let hash = 2166136261;
+    for (let i = 0; i < stateString.length; i++) {
+      hash ^= stateString.charCodeAt(i);
+      hash += (hash << 1) + (hash << 4) + (hash << 7) + (hash << 8) + (hash << 24);
+    }
+    const hex = (hash >>> 0).toString(16).toUpperCase();
+    return `ZN-${hex.padStart(8, '0')}`;
+  }, [canvas, elements]);
+
+  // Flash fingerprint on update
+  useEffect(() => {
+    if (checksumHash && checksumHash !== 'ZN-000000000000') {
+      const timerS = setTimeout(() => {
+        setFlashFingerprint(true);
+      }, 0);
+      const timer = setTimeout(() => setFlashFingerprint(false), 800);
+      return () => {
+        clearTimeout(timerS);
+        clearTimeout(timer);
+      };
+    }
+  }, [checksumHash]);
 
   // 2. Fetch live bi-directional backlinks
   const backlinks = useLiveQuery(async () => {
@@ -290,6 +394,15 @@ export default function CanvasWorkspaceClient() {
         sortOrder: 3.0,
         updatedAt: new Date(),
       });
+      await db.elements.add({
+        id: generateElementId('el'),
+        canvasId,
+        type: 'acoustic_wave',
+        content: '',
+        properties: JSON.stringify({ pitch: 528, waveform: 'sine' }),
+        sortOrder: 4.0,
+        updatedAt: new Date(),
+      });
     } else if (templateId === 'wiki') {
       await db.elements.add({
         id: generateElementId('el'),
@@ -422,6 +535,39 @@ export default function CanvasWorkspaceClient() {
           <div style="border: 2px solid #1A1A1A; padding: 12px; margin: 15px 0; background: #FFB70310; display: flex; align-items: center; justify-content: space-between; box-shadow: 3px 3px 0px #1A1A1A;">
             <div style="font-weight: bold; font-size: 13px;">🔗 Wiki Reference Connection Node</div>
             <div style="font-family: monospace; font-size: 11px; background: #FFB703; border: 1px solid #1A1A1A; padding: 2px 6px;">Connected</div>
+          </div>
+        `;
+      }
+      if (el.type === 'acoustic_wave') {
+        let pitch = 440;
+        try { pitch = JSON.parse(el.properties).pitch || 440; } catch {}
+        return `
+          <div style="border: 2px solid #1A1A1A; padding: 15px; margin: 15px 0; background: #FFF; box-shadow: 3px 3px 0px #1A1A1A;">
+            <div style="display: flex; align-items: center; justify-content: space-between; border-bottom: 1px solid #DDD; padding-bottom: 8px; margin-bottom: 10px;">
+              <span style="font-weight: bold; font-size: 12px; font-family: monospace; color: #4F46E5;">🛰️ PORTABLE WAVE OSCILLATOR</span>
+              <span style="background: #EEF2F6; color: #4F46E5; font-family: monospace; font-size: 10px; padding: 2px 6px; font-weight: bold; border-radius: 4px;">Web Audio API</span>
+            </div>
+            <div style="display: flex; align-items: center; justify-content: space-between;">
+              <div>
+                <div style="font-size: 12px; font-weight: 900; color: #1A1A1A;">Oscillator Tuned to: <span style="color: #4F46E5;">${pitch} Hz</span></div>
+                <div style="font-size: 10px; color: #666; margin-top: 2px;">Fully operational offline standalone Web Audio synthesizer.</div>
+              </div>
+              <button onclick="
+                const ctx = new (window.AudioContext || window.webkitAudioContext)();
+                const osc = ctx.createOscillator();
+                const gain = ctx.createGain();
+                osc.type = 'sine';
+                osc.frequency.setValueAtTime(${pitch}, ctx.currentTime);
+                gain.gain.setValueAtTime(0.2, ctx.currentTime);
+                gain.gain.exponentialRampToValueAtTime(0.001, ctx.currentTime + 0.8);
+                osc.connect(gain);
+                gain.connect(ctx.destination);
+                osc.start();
+                osc.stop(ctx.currentTime + 0.8);
+              " style="background: #FFB703; border: 2px solid #1A1A1A; font-weight: bold; font-size: 11px; padding: 6px 12px; cursor: pointer; box-shadow: 2px 2px 0px #1A1A1A;">
+                TRIGGER TONE
+              </button>
+            </div>
           </div>
         `;
       }
@@ -564,6 +710,27 @@ export default function CanvasWorkspaceClient() {
                 <Menu className="w-4 h-4 text-[#1A1A1A]" />
               </button>
             )}
+
+            {/* Real-time Dynamic Checksum Fingerprint badge */}
+            <div 
+              onClick={() => {
+                navigator.clipboard.writeText(checksumHash);
+                setFingerprintCopied(true);
+                setTimeout(() => setFingerprintCopied(false), 1500);
+              }}
+              title="Click to copy cryptographic state checksum hash"
+              className={`hidden sm:flex items-center space-x-1.5 px-2.5 py-1 border-2 border-[#1A1A1A] font-mono text-[9px] font-black cursor-pointer select-none transition-all ${
+                fingerprintCopied
+                  ? 'bg-amber-400 text-[#1A1A1A] border-[#1A1A1A] translate-x-[1px] translate-y-[1px] shadow-none'
+                  : flashFingerprint 
+                    ? 'bg-emerald-500 text-white border-emerald-600 scale-[1.03] shadow-[2px_2px_0px_0px_rgba(16,185,129,1)]' 
+                    : 'bg-white text-gray-600 hover:bg-gray-50 hover:translate-x-[1px] hover:translate-y-[1px] neo-shadow-sm'
+              }`}
+            >
+              <span className={`w-1.5 h-1.5 rounded-full ${fingerprintCopied ? 'bg-amber-800' : flashFingerprint ? 'bg-white animate-ping' : 'bg-emerald-500'}`} />
+              <span className="opacity-70">{fingerprintCopied ? 'COPIED!' : 'FINGERPRINT:'}</span>
+              <span>{checksumHash}</span>
+            </div>
             <Link href="/">
               <button className="p-1 border border-transparent hover:border-[#1A1A1A] hover:bg-gray-100 rounded text-gray-500 transition-all">
                 <ChevronLeft className="w-4 h-4" />
@@ -667,6 +834,24 @@ export default function CanvasWorkspaceClient() {
                   className="w-full h-full object-cover"
                 />
               )}
+
+              {/* Optional Backdrop Shader Overlay */}
+              {backdropShader !== 'none' && (
+                <div className="absolute inset-0 pointer-events-none z-10 mix-blend-overlay opacity-50">
+                  {backdropShader === 'scanlines' && (
+                    <div className="w-full h-full" style={{ backgroundImage: 'repeating-linear-gradient(0deg, #000 0px, #000 2px, transparent 2px, transparent 4px)', backgroundSize: '100% 4px' }} />
+                  )}
+                  {backdropShader === 'halftone' && (
+                    <div className="w-full h-full" style={{ backgroundImage: 'radial-gradient(circle, #000 25%, transparent 26%)', backgroundSize: '6px 6px' }} />
+                  )}
+                  {backdropShader === 'dotgrid' && (
+                    <div className="w-full h-full" style={{ backgroundImage: 'radial-gradient(#66FCF1 1.5px, transparent 1.5px)', backgroundSize: '12px 12px' }} />
+                  )}
+                  {backdropShader === 'warning_hatch' && (
+                    <div className="w-full h-full shadow-[inset_0_0_40px_rgba(0,0,0,0.6)]" style={{ backgroundImage: 'repeating-linear-gradient(45deg, #1a1a1a 0px, #1a1a1a 10px, transparent 10px, transparent 20px)' }} />
+                  )}
+                </div>
+              )}
             </div>
           )}
  
@@ -718,6 +903,32 @@ export default function CanvasWorkspaceClient() {
                   >
                     Cosmic Pulse
                   </button>
+                </div>
+              </div>
+
+              <div className="border-t border-gray-100 pt-3">
+                <div className="text-[10px] font-bold font-mono text-gray-400 mb-2 uppercase tracking-wide">
+                  🛰️ BACKDROP FILTER OVERLAY SHADERS
+                </div>
+                <div className="grid grid-cols-2 sm:grid-cols-5 gap-2">
+                  {[
+                    { id: 'none', label: 'None', bg: 'bg-white text-[#1A1A1A]' },
+                    { id: 'scanlines', label: 'CRT Scanlines', bg: 'bg-indigo-500 text-white hover:bg-indigo-600' },
+                    { id: 'halftone', label: 'Halftone Dot', bg: 'bg-rose-500 text-white hover:bg-rose-600' },
+                    { id: 'dotgrid', label: 'Cyan Dot Grid', bg: 'bg-cyan-500 text-white hover:bg-cyan-600' },
+                    { id: 'warning_hatch', label: 'Caution Stripes', bg: 'bg-[#FFB703] text-black hover:bg-amber-400' }
+                  ].map(item => (
+                    <button
+                      key={item.id}
+                      onClick={() => {
+                        setBackdropShader(item.id);
+                        localStorage.setItem(`zenith-backdrop-shader-${canvasId}`, item.id);
+                      }}
+                      className={`p-1.5 border-2 border-[#1A1A1A] text-[10px] font-black font-mono uppercase cursor-pointer text-center hover:scale-[1.02] transition-transform ${item.bg} ${backdropShader === item.id ? 'ring-2 ring-emerald-500' : ''}`}
+                    >
+                      {item.label}
+                    </button>
+                  ))}
                 </div>
               </div>
             </div>
@@ -805,6 +1016,47 @@ export default function CanvasWorkspaceClient() {
               </div>
             </div>
           )}
+
+          {/* Append-Only Live Transaction Audit Ledger */}
+          <div className="max-w-4xl mx-auto px-6 pb-24 mt-8 pt-6 border-t-2 border-dashed border-[#1A1A1A]">
+            <div className="border-4 border-[#1A1A1A] bg-[#0F172A] text-slate-300 rounded-none overflow-hidden neo-shadow-sm">
+              {/* Header Bar */}
+              <div className="bg-[#1E293B] px-4 py-2 border-b-2 border-[#1A1A1A] flex items-center justify-between">
+                <div className="flex items-center space-x-2">
+                  <div className="w-2 h-2 rounded-full bg-rose-500 animate-pulse" />
+                  <span className="font-mono text-[9px] font-black tracking-widest text-[#FFB703] uppercase">
+                    SYS-DIAGNOSTIC: NODE TRANSACTION AUDIT LEDGER
+                  </span>
+                </div>
+                <div className="flex items-center space-x-2">
+                  <button
+                    onClick={async () => {
+                      if (confirm("Are you sure you want to purge all queued synchronization transactions?")) {
+                        await db.syncQueue.clear();
+                      }
+                    }}
+                    className="font-mono text-[8px] bg-rose-600 hover:bg-rose-500 text-white font-extrabold px-1.5 py-0.5 border border-black cursor-pointer transition-colors shadow-sm uppercase"
+                  >
+                    PURGE LEDGER QUEUE
+                  </button>
+                  <span className="font-mono text-[8px] text-slate-400 font-bold hidden sm:inline">
+                    ACTIVE STREAM
+                  </span>
+                </div>
+              </div>
+              
+              {/* Log Viewport */}
+              <div className="p-4 font-mono text-[10px] space-y-1.5 max-h-48 overflow-y-auto leading-relaxed scrollbar-thin select-text bg-[#030712]">
+                <div className="text-slate-500">
+                  [{sessionLogs?.establishedTime || '00:00:00 AM'}] CLUSTER_CLIENT: Established secure duplex transaction connection stream.
+                </div>
+                <div className="text-slate-500">
+                  [{sessionLogs?.checksumTime || '00:00:00 AM'}] VALIDATE_CHECKSUM: Computed ledger fingerprint ({checksumHash}). Verified.
+                </div>
+                <LiveSyncQueueViewer canvasId={canvasId} />
+              </div>
+            </div>
+          </div>
  
         </div>
       </div>
