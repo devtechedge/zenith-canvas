@@ -22,7 +22,9 @@ import {
   CheckSquare, 
   Info,
   Clock,
-  Download
+  Download,
+  Volume2,
+  VolumeX
 } from 'lucide-react';
 import { motion, AnimatePresence } from 'motion/react';
 
@@ -33,6 +35,93 @@ function generateCheckpointId(): string {
 
 function getCurrentTimestamp(): number {
   return Date.now();
+}
+
+// --- Module-scoped Ambient focus noise engine ---
+let globalAudioCtx: AudioContext | null = null;
+let globalSoundNodes: { osc1?: OscillatorNode; osc2?: OscillatorNode; gainNode?: GainNode; noiseSource?: AudioBufferSourceNode } = {};
+
+function stopGlobalAmbient() {
+  try {
+    if (globalSoundNodes.noiseSource) {
+      globalSoundNodes.noiseSource.stop();
+      globalSoundNodes.noiseSource.disconnect();
+    }
+    if (globalSoundNodes.osc1) {
+      globalSoundNodes.osc1.stop();
+      globalSoundNodes.osc1.disconnect();
+    }
+    if (globalSoundNodes.osc2) {
+      globalSoundNodes.osc2.stop();
+      globalSoundNodes.osc2.disconnect();
+    }
+    if (globalSoundNodes.gainNode) {
+      globalSoundNodes.gainNode.disconnect();
+    }
+    if (globalAudioCtx) {
+      globalAudioCtx.close();
+    }
+  } catch {}
+  globalSoundNodes = {};
+  globalAudioCtx = null;
+}
+
+function playGlobalAmbient(type: 'hum' | 'pink_noise') {
+  stopGlobalAmbient();
+  try {
+    const AudioContextClass = window.AudioContext || (window as any).webkitAudioContext;
+    if (!AudioContextClass) return;
+    const ctx = new AudioContextClass();
+    globalAudioCtx = ctx;
+
+    const masterGain = ctx.createGain();
+    masterGain.gain.setValueAtTime(0.12, ctx.currentTime);
+    masterGain.connect(ctx.destination);
+    globalSoundNodes.gainNode = masterGain;
+
+    if (type === 'pink_noise') {
+      const bufferSize = 2 * ctx.sampleRate;
+      const noiseBuffer = ctx.createBuffer(1, bufferSize, ctx.sampleRate);
+      const output = noiseBuffer.getChannelData(0);
+      let b0 = 0, b1 = 0, b2 = 0, b3 = 0, b4 = 0, b5 = 0, b6 = 0;
+      for (let i = 0; i < bufferSize; i++) {
+        const white = Math.random() * 2 - 1;
+        b0 = 0.99886 * b0 + white * 0.0555179;
+        b1 = 0.99332 * b1 + white * 0.0750759;
+        b2 = 0.96900 * b2 + white * 0.1538520;
+        b3 = 0.86650 * b3 + white * 0.3104856;
+        b4 = 0.55000 * b4 + white * 0.5329522;
+        b5 = -0.7616 * b5 - white * 0.0168980;
+        output[i] = b0 + b1 + b2 + b3 + b4 + b5 + b6 + white * 0.5362;
+        output[i] *= 0.11;
+        b6 = white * 0.115926;
+      }
+
+      const source = ctx.createBufferSource();
+      source.buffer = noiseBuffer;
+      source.loop = true;
+      source.connect(masterGain);
+      source.start();
+      globalSoundNodes.noiseSource = source;
+    } else if (type === 'hum') {
+      const osc1 = ctx.createOscillator();
+      const osc2 = ctx.createOscillator();
+      osc1.type = 'sine';
+      osc1.frequency.setValueAtTime(110, ctx.currentTime);
+      osc2.type = 'triangle';
+      osc2.frequency.setValueAtTime(220, ctx.currentTime);
+
+      osc1.connect(masterGain);
+      osc2.connect(masterGain);
+      osc1.start();
+      osc2.start();
+
+      globalSoundNodes.osc1 = osc1;
+      globalSoundNodes.osc2 = osc2;
+    }
+  } catch (err) {
+    console.error('Ambient synthesis error:', err);
+  }
 }
 
 interface Checkpoint {
@@ -60,6 +149,37 @@ export default function OpsControlDeck({
 }: OpsControlDeckProps) {
   const [isOpen, setIsOpen] = useState(false);
   const [activeTab, setActiveTab] = useState<'ledger' | 'scratchpad' | 'ast' | 'snapshots' | 'themes'>('scratchpad');
+
+  const [activeAmbient, setActiveAmbient] = useState<'none' | 'hum' | 'pink_noise'>('none');
+  const [typewriterEnabled, setTypewriterEnabled] = useState(() => {
+    if (typeof window === 'undefined') return false;
+    return localStorage.getItem('zenith-typewriter-sound') === 'true';
+  });
+
+  const handleToggleTypewriter = () => {
+    const newVal = !typewriterEnabled;
+    setTypewriterEnabled(newVal);
+    localStorage.setItem('zenith-typewriter-sound', String(newVal));
+    addCliLog(`[SOUND] Typewriter key sounds turned ${newVal ? 'ON' : 'OFF'}.`);
+  };
+
+  const handleToggleAmbient = (type: 'none' | 'hum' | 'pink_noise') => {
+    if (type === 'none') {
+      stopGlobalAmbient();
+      setActiveAmbient('none');
+      addCliLog('[SOUND] Ambient soundtrack stopped.');
+    } else {
+      playGlobalAmbient(type);
+      setActiveAmbient(type);
+      addCliLog(`[SOUND] Playing synthesized ${type === 'hum' ? 'Deep Zen Hum' : 'Pink Focus Noise'}.`);
+    }
+  };
+
+  useEffect(() => {
+    return () => {
+      stopGlobalAmbient();
+    };
+  }, []);
 
   const { 
     createCanvasElement, 
@@ -824,6 +944,53 @@ export default function OpsControlDeck({
                           <span className="text-[9px] uppercase tracking-tighter">{t.name}</span>
                         </button>
                       ))}
+                    </div>
+                  </div>
+
+                  {/* Ambient focus sound controllers & typewriter toggle */}
+                  <div className="space-y-3 pt-3 border-t border-gray-300">
+                    <div>
+                      <h4 className="text-xs font-black uppercase text-[#1A1A1A]">Soundscape Calibration</h4>
+                      <p className="text-[9px] text-gray-500 leading-normal">
+                        Toggle high-polish synthesized key clicks and binaural ambient sounds to block outside clutter.
+                      </p>
+                    </div>
+
+                    <div className="flex flex-col space-y-2">
+                      {/* Typewriter Click */}
+                      <button
+                        onClick={handleToggleTypewriter}
+                        className={`border-2 border-[#1A1A1A] p-2 flex items-center justify-between rounded-none text-left transition-all ${
+                          typewriterEnabled ? 'bg-[#FFB703]/20 font-bold' : 'bg-white font-medium hover:bg-gray-50'
+                        }`}
+                      >
+                        <div className="flex items-center space-x-2">
+                          {typewriterEnabled ? <Volume2 className="w-4 h-4 text-emerald-600" /> : <VolumeX className="w-4 h-4 text-gray-400" />}
+                          <span className="text-[10px] uppercase font-bold text-[#1A1A1A]">Typewriter Key Clicks</span>
+                        </div>
+                        <span className="text-[9px] font-mono px-1.5 py-0.5 border border-[#1A1A1A] bg-white">
+                          {typewriterEnabled ? 'ACTIVE' : 'MUTED'}
+                        </span>
+                      </button>
+
+                      {/* Ambient Hum or Pink noise */}
+                      <div className="grid grid-cols-3 gap-1.5">
+                        {[
+                          { id: 'none', label: 'Mute Zen' },
+                          { id: 'hum', label: 'Zen Hum' },
+                          { id: 'pink_noise', label: 'Pink Noise' }
+                        ].map((ambientOpt) => (
+                          <button
+                            key={ambientOpt.id}
+                            onClick={() => handleToggleAmbient(ambientOpt.id as any)}
+                            className={`border-2 border-[#1A1A1A] p-2 flex flex-col items-center justify-center space-y-1 rounded-none text-center ${
+                              activeAmbient === ambientOpt.id ? 'bg-[#FFB703] font-black' : 'bg-white font-medium hover:bg-gray-50'
+                            }`}
+                          >
+                            <span className="text-[9px] uppercase tracking-tight">{ambientOpt.label}</span>
+                          </button>
+                        ))}
+                      </div>
                     </div>
                   </div>
                 </div>

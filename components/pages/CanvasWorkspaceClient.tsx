@@ -28,6 +28,10 @@ import OpsControlDeck from '@/components/layout/OpsControlDeck';
 
 const EMOJIS = ['📄', '🚀', '🎯', '📊', '💡', '🔥', '🎨', '⚙️', '📅', '📝', '🔒', '🛠️', '📣', '🌍'];
 
+function generateElementId(prefix = 'el'): string {
+  return `${prefix}-${Math.random().toString(36).substring(2, 9)}`;
+}
+
 export default function CanvasWorkspaceClient() {
   const params = useParams();
   const router = useRouter();
@@ -47,6 +51,7 @@ export default function CanvasWorkspaceClient() {
   const [showCoverInput, setShowCoverInput] = useState(false);
   const [coverUrl, setCoverUrl] = useState('');
   const [isConfirmOpen, setIsConfirmOpen] = useState(false);
+  const [showBlueprintModal, setShowBlueprintModal] = useState(false);
 
   // Focus & Accent Theme Settings
   const [accentTheme, setAccentTheme] = useState<string>(() => {
@@ -123,6 +128,137 @@ export default function CanvasWorkspaceClient() {
     router.push('/');
   };
 
+  const handleLoadTemplate = async (templateId: 'sprint' | 'playground' | 'wiki') => {
+    // Purge elements to replace with clean structure
+    const currentElements = await db.elements.where('canvasId').equals(canvasId).toArray();
+    for (const el of currentElements) {
+      await db.elements.delete(el.id);
+    }
+
+    if (templateId === 'sprint') {
+      await db.elements.add({
+        id: generateElementId('el'),
+        canvasId,
+        type: 'heading_1',
+        content: '🚀 Product Launch & Sprint Roadmap',
+        properties: '{}',
+        sortOrder: 1.0,
+        updatedAt: new Date(),
+      });
+      await db.elements.add({
+        id: generateElementId('el'),
+        canvasId,
+        type: 'callout',
+        content: 'Keep track of core engineering sprints and live developer tasks in this interactive ledger board.',
+        properties: JSON.stringify({ mood: 'success' }),
+        sortOrder: 2.0,
+        updatedAt: new Date(),
+      });
+      const tableId = generateElementId('table');
+      await db.elements.add({
+        id: generateElementId('el'),
+        canvasId,
+        type: 'collection_ref',
+        content: 'Data-Grid Table',
+        properties: JSON.stringify({ tableId, provisioned: true }),
+        sortOrder: 3.0,
+        updatedAt: new Date(),
+      });
+      
+      // Seed columns
+      const columns = [
+        { id: 'col-task', name: 'Milestone Task', type: 'Text' },
+        { id: 'col-status', name: 'Status', type: 'Select' },
+        { id: 'col-hours', name: 'Hours', type: 'Number' }
+      ];
+      await db.collections.add({
+        id: tableId,
+        canvasId,
+        name: 'Sprint Ledger',
+        schema: JSON.stringify(columns)
+      });
+      
+      // Seed rows
+      await db.collectionRows.add({
+        id: generateElementId('row'),
+        tableId,
+        cells: JSON.stringify({ 'col-task': 'Refactor offline Sync transactions', 'col-status': 'In Progress', 'col-hours': 12 }),
+        sortOrder: 1.0,
+      });
+      await db.collectionRows.add({
+        id: generateElementId('row'),
+        tableId,
+        cells: JSON.stringify({ 'col-task': 'Synthesize typewriter keystroke sounds', 'col-status': 'Completed', 'col-hours': 6 }),
+        sortOrder: 2.0,
+      });
+    } else if (templateId === 'playground') {
+      await db.elements.add({
+        id: generateElementId('el'),
+        canvasId,
+        type: 'heading_1',
+        content: '⚡ Live Javascript Playground Sanctuary',
+        properties: '{}',
+        sortOrder: 1.0,
+        updatedAt: new Date(),
+      });
+      await db.elements.add({
+        id: generateElementId('el'),
+        canvasId,
+        type: 'callout',
+        content: 'Write executable JS directly on your Canvas! Run logs inside the console box with execution latency timing statistics.',
+        properties: JSON.stringify({ mood: 'energy' }),
+        sortOrder: 2.0,
+        updatedAt: new Date(),
+      });
+      await db.elements.add({
+        id: generateElementId('el'),
+        canvasId,
+        type: 'code_sandbox',
+        content: `// Dynamic Fibonnaci sequence runner\nfunction fibonacci(n) {\n  if (n <= 1) return n;\n  return fibonacci(n - 1) + fibonacci(n - 2);\n}\n\nconst n = 15;\nconsole.log(\`Calculating Fibonacci value for: \${n}\`);\nconsole.log(\`Result:\`, fibonacci(n));`,
+        properties: '{}',
+        sortOrder: 3.0,
+        updatedAt: new Date(),
+      });
+    } else if (templateId === 'wiki') {
+      await db.elements.add({
+        id: generateElementId('el'),
+        canvasId,
+        type: 'heading_1',
+        content: '🔮 Zenith Wiki Knowledge Hub',
+        properties: '{}',
+        sortOrder: 1.0,
+        updatedAt: new Date(),
+      });
+      await db.elements.add({
+        id: generateElementId('el'),
+        canvasId,
+        type: 'quote',
+        content: 'Organizing information is not about storing documents; it is about building dynamic connections that ignite intelligence.',
+        properties: '{}',
+        sortOrder: 2.0,
+        updatedAt: new Date(),
+      });
+      await db.elements.add({
+        id: generateElementId('el'),
+        canvasId,
+        type: 'toggle_list',
+        content: '💡 Collaborative Best Practices Ledger',
+        properties: JSON.stringify({ open: true, body: '1. Keep document pages highly linked using [[]] syntax.\n2. Leverage the time travel ledger snapshots before deleting critical sections.\n3. Turn on focus ambient binaural beats to accelerate focus flow.' }),
+        sortOrder: 3.0,
+        updatedAt: new Date(),
+      });
+      await db.elements.add({
+        id: generateElementId('el'),
+        canvasId,
+        type: 'page_link',
+        content: 'Connected Node Link',
+        properties: '{}',
+        sortOrder: 4.0,
+        updatedAt: new Date(),
+      });
+    }
+  };
+
   // --- Feature 3: Portable Canvas Bundler Offline Export Engine ---
   const handleExportBundle = async () => {
     if (!canvas) return;
@@ -186,6 +322,38 @@ export default function CanvasWorkspaceClient() {
           ${el.content}
         </div>
       `;
+      if (el.type === 'toggle_list') {
+        let open = false;
+        let body = '';
+        try {
+          const props = JSON.parse(el.properties);
+          open = props.open;
+          body = props.body || '';
+        } catch {}
+        return `
+          <div style="border: 2px solid #1A1A1A; padding: 12px; margin: 15px 0; background: white; box-shadow: 3px 3px 0px #1A1A1A;">
+            <div style="display: flex; align-items: center; font-weight: bold; font-size: 14px;">
+              <span style="margin-right: 8px;">▶</span> ${el.content}
+            </div>
+            <div style="margin-top: 10px; padding-left: 20px; border-left: 2px solid #1A1A1A; color: #444; font-size: 12px; font-family: monospace; white-space: pre-wrap;">${body}</div>
+          </div>
+        `;
+      }
+      if (el.type === 'quote') {
+        return `
+          <div style="border-left: 4px solid #FFB703; padding: 10px 20px; margin: 15px 0; background: #FAF9F6; font-style: italic; font-family: serif; border: 2px solid #1A1A1A; border-left: 5px solid #FFB703;">
+            ${el.content}
+          </div>
+        `;
+      }
+      if (el.type === 'page_link') {
+        return `
+          <div style="border: 2px solid #1A1A1A; padding: 12px; margin: 15px 0; background: #FFB70310; display: flex; align-items: center; justify-content: space-between; box-shadow: 3px 3px 0px #1A1A1A;">
+            <div style="font-weight: bold; font-size: 13px;">🔗 Wiki Reference Connection Node</div>
+            <div style="font-family: monospace; font-size: 11px; background: #FFB703; border: 1px solid #1A1A1A; padding: 2px 6px;">Connected</div>
+          </div>
+        `;
+      }
       if (el.type === 'collection_ref') {
         return `<div style="margin: 20px 0;">${collectionsHtml}</div>`;
       }
@@ -329,6 +497,16 @@ export default function CanvasWorkspaceClient() {
               </span>
             </div>
  
+            {/* Structural Blueprints drawer */}
+            <button
+              onClick={() => setShowBlueprintModal(true)}
+              className="p-1.5 border-2 border-[#1A1A1A] bg-[#FFB703] hover:bg-amber-400 text-black rounded-none text-xs font-bold flex items-center space-x-1 transition-colors"
+              title="Apply Page Templates / Blueprints"
+            >
+              <Sparkles className="w-3.5 h-3.5 text-black" />
+              <span className="hidden sm:inline">Blueprints</span>
+            </button>
+
             {/* Portable Bundler HTML Exporter Button */}
             <button
               onClick={handleExportBundle}
@@ -490,6 +668,71 @@ export default function CanvasWorkspaceClient() {
         )}
       </AnimatePresence>
  
+      {/* Structural Blueprints Template Dialog */}
+      <AnimatePresence>
+        {showBlueprintModal && (
+          <div className="fixed inset-0 bg-black/60 backdrop-blur-sm z-50 flex items-center justify-center p-4">
+            <motion.div 
+              initial={{ scale: 0.95, opacity: 0 }}
+              animate={{ scale: 1, opacity: 1 }}
+              exit={{ scale: 0.95, opacity: 0 }}
+              className="bg-white border-4 border-[#1A1A1A] w-full max-w-2xl p-6 rounded-none neo-shadow-lg"
+            >
+              <div className="flex justify-between items-center pb-4 border-b-2 border-[#1A1A1A]">
+                <h3 className="text-sm font-black uppercase text-[#1A1A1A]">🌟 Choose Structural Blueprint Template</h3>
+                <button 
+                  onClick={() => setShowBlueprintModal(false)}
+                  className="px-2 py-1 text-xs font-bold border-2 border-[#1A1A1A] hover:bg-red-500 hover:text-white"
+                >
+                  ✕
+                </button>
+              </div>
+              <p className="text-[11px] text-gray-500 mt-2 leading-relaxed">
+                Applying a blueprint template will instantly seed standard modular nodes (Relational databases, Sandboxes, Callouts, Page references) into your current workspace. <strong className="text-red-600">WARNING: This will replace existing elements in this Canvas!</strong>
+              </p>
+
+              <div className="grid grid-cols-1 md:grid-cols-3 gap-4 mt-5">
+                {[
+                  {
+                    id: 'sprint',
+                    title: '🚀 Milestone Sprint Roadmap',
+                    desc: 'A full Agile-styled roadmap with status tracker, callouts, checklists and a relational data grid.',
+                    color: 'hover:bg-amber-50'
+                  },
+                  {
+                    id: 'playground',
+                    title: '⚡ Developer JS Playground',
+                    desc: 'An interactive coding workspace featuring executable sandbox runtimes and pre-written algorithms.',
+                    color: 'hover:bg-indigo-50'
+                  },
+                  {
+                    id: 'wiki',
+                    title: '🔮 Wiki Knowledge Hub',
+                    desc: 'A highly structured reference portal complete with blockquotes, collapsible lists, and Wiki page link nodes.',
+                    color: 'hover:bg-emerald-50'
+                  }
+                ].map((t) => (
+                  <button
+                    key={t.id}
+                    onClick={async () => {
+                      await handleLoadTemplate(t.id as 'sprint' | 'playground' | 'wiki');
+                      setShowBlueprintModal(false);
+                    }}
+                    className={`border-2 border-[#1A1A1A] p-4 text-left flex flex-col justify-between transition-all neo-shadow-sm cursor-pointer ${t.color}`}
+                  >
+                    <div>
+                      <h4 className="text-xs font-black text-[#1A1A1A] mb-2">{t.title}</h4>
+                      <p className="text-[10px] text-gray-500 leading-relaxed">{t.desc}</p>
+                    </div>
+                    <span className="text-[10px] font-mono font-bold uppercase text-[#1A1A1A] mt-4 block border-t border-[#1A1A1A]/10 pt-2">Load Blueprint →</span>
+                  </button>
+                ))}
+              </div>
+            </motion.div>
+          </div>
+        )}
+      </AnimatePresence>
+
       <ConfirmDialog
         isOpen={isConfirmOpen}
         onClose={() => setIsConfirmOpen(false)}

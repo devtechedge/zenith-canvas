@@ -14,8 +14,49 @@ import {
   Database, 
   HelpCircle,
   Sparkles,
-  Info
+  Info,
+  ChevronRight,
+  Quote,
+  Link as LinkIcon
 } from 'lucide-react';
+
+const playTypewriterSound = (isSpace: boolean) => {
+  if (typeof window === 'undefined') return;
+  const soundEnabled = localStorage.getItem('zenith-typewriter-sound') === 'true';
+  if (!soundEnabled) return;
+
+  try {
+    const AudioContextClass = window.AudioContext || (window as any).webkitAudioContext;
+    if (!AudioContextClass) return;
+    const ctx = new AudioContextClass();
+    
+    const osc = ctx.createOscillator();
+    const gain = ctx.createGain();
+    
+    osc.connect(gain);
+    gain.connect(ctx.destination);
+    
+    if (isSpace) {
+      osc.type = 'triangle';
+      osc.frequency.setValueAtTime(120, ctx.currentTime);
+      osc.frequency.exponentialRampToValueAtTime(40, ctx.currentTime + 0.08);
+      gain.gain.setValueAtTime(0.12, ctx.currentTime);
+      gain.gain.exponentialRampToValueAtTime(0.01, ctx.currentTime + 0.08);
+      osc.start();
+      osc.stop(ctx.currentTime + 0.08);
+    } else {
+      osc.type = 'sine';
+      osc.frequency.setValueAtTime(800, ctx.currentTime);
+      osc.frequency.exponentialRampToValueAtTime(100, ctx.currentTime + 0.04);
+      gain.gain.setValueAtTime(0.08, ctx.currentTime);
+      gain.gain.exponentialRampToValueAtTime(0.01, ctx.currentTime + 0.04);
+      osc.start();
+      osc.stop(ctx.currentTime + 0.04);
+    }
+  } catch (err) {
+    console.error('Failed to play click:', err);
+  }
+};
 
 interface CanvasEditorProps {
   canvasId: string;
@@ -34,6 +75,8 @@ export default function CanvasEditor({ canvasId }: CanvasEditorProps) {
     const list = await db.elements.where('canvasId').equals(canvasId).toArray();
     return list.sort((a, b) => a.sortOrder - b.sortOrder);
   }, [canvasId]) || [];
+
+  const canvasesList = useLiveQuery(() => db.canvases.where('isArchived').equals(0).toArray()) || [];
 
   // Local state for active slash command panel
   const [slashCommandState, setSlashCommandState] = useState<{
@@ -68,6 +111,9 @@ export default function CanvasEditor({ canvasId }: CanvasEditorProps) {
 
   // Handle slash command panel visibility
   const handleElementKeyDown = (e: React.KeyboardEvent<HTMLTextAreaElement>, el: CanvasElement) => {
+    // Play sound click
+    playTypewriterSound(e.key === ' ');
+
     const textarea = e.currentTarget;
     const value = textarea.value;
     const selectionStart = textarea.selectionStart;
@@ -181,10 +227,14 @@ export default function CanvasEditor({ canvasId }: CanvasEditorProps) {
       ).join(' '));
     };
 
+    const startTime = performance.now();
+
     try {
       // Simple eval in sandbox context
       const runner = new Function(code);
       runner();
+      const duration = (performance.now() - startTime).toFixed(2);
+      outputs.push(`\n✨ Execution Timing Metrics: ${duration}ms`);
     } catch (err: any) {
       outputs.push(`🚨 ERROR: ${err.message}`);
     } finally {
@@ -371,9 +421,19 @@ export default function CanvasEditor({ canvasId }: CanvasEditorProps) {
 
               {/* CALLOUT ELEMENT */}
               {el.type === 'callout' && (
-                <div className="flex items-start space-x-3 bg-white border-2 border-[#1A1A1A] neo-shadow-sm p-4 rounded-none">
-                  <div className="w-8 h-8 rounded-none border border-[#1A1A1A] bg-[#FFB703] flex items-center justify-center flex-shrink-0 text-lg">
-                    💡
+                <div className={`flex items-start space-x-3 bg-white border-2 border-[#1A1A1A] neo-shadow-sm p-4 rounded-none transition-all w-full ${
+                  propertiesObj.mood === 'warning' ? 'bg-red-50/70' : 
+                  propertiesObj.mood === 'success' ? 'bg-emerald-50/70' : 
+                  propertiesObj.mood === 'energy' ? 'bg-indigo-50/70' : 'bg-amber-50/70'
+                }`}>
+                  <div className={`w-8 h-8 rounded-none border border-[#1A1A1A] flex items-center justify-center flex-shrink-0 text-lg ${
+                    propertiesObj.mood === 'warning' ? 'bg-red-400' : 
+                    propertiesObj.mood === 'success' ? 'bg-emerald-400' : 
+                    propertiesObj.mood === 'energy' ? 'bg-indigo-400' : 'bg-[#FFB703]'
+                  }`}>
+                    {propertiesObj.mood === 'warning' ? '⚠️' : 
+                     propertiesObj.mood === 'success' ? '✅' : 
+                     propertiesObj.mood === 'energy' ? '⚡' : '💡'}
                   </div>
                   <div className="flex-1 min-w-0">
                     <textarea
@@ -385,7 +445,154 @@ export default function CanvasEditor({ canvasId }: CanvasEditorProps) {
                       rows={2}
                       className="w-full bg-transparent resize-none border-none outline-none font-bold text-xs text-[#1A1A1A] placeholder-gray-300 font-sans leading-relaxed"
                     />
+                    {/* Mood selection list */}
+                    <div className="flex flex-wrap items-center gap-1 mt-2 pt-1.5 border-t border-dashed border-[#1A1A1A]/10 text-[9px] font-mono font-bold text-gray-400">
+                      <span>ACCENT MOOD:</span>
+                      {[
+                        { id: 'info', emoji: '💡', label: 'Info' },
+                        { id: 'warning', emoji: '⚠️', label: 'Alert' },
+                        { id: 'success', emoji: '✅', label: 'Done' },
+                        { id: 'energy', emoji: '⚡', label: 'Power' }
+                      ].map(m => (
+                        <button
+                          key={m.id}
+                          onClick={() => updateCanvasElement(el.id, {
+                            properties: JSON.stringify({ ...propertiesObj, mood: m.id })
+                          })}
+                          className={`px-1.5 py-0.5 border border-[#1A1A1A] rounded-none bg-white hover:bg-slate-50 transition-all text-[#1A1A1A] ${
+                            (propertiesObj.mood || 'info') === m.id ? 'bg-[#FFB703] border-2 border-black font-extrabold' : ''
+                          }`}
+                        >
+                          {m.emoji} {m.label}
+                        </button>
+                      ))}
+                    </div>
                   </div>
+                </div>
+              )}
+
+              {/* TOGGLE / ACCORDION ELEMENT */}
+              {el.type === 'toggle_list' && (
+                <div className="border-2 border-[#1A1A1A] p-3.5 bg-white rounded-none neo-shadow-sm my-1 w-full">
+                  <div className="flex items-center space-x-2">
+                    <button
+                      onClick={async () => {
+                        await updateCanvasElement(el.id, {
+                          properties: JSON.stringify({ ...propertiesObj, open: !propertiesObj.open })
+                        });
+                      }}
+                      className="p-1 hover:bg-gray-100 border border-transparent hover:border-[#1A1A1A] rounded transition-all text-[#1A1A1A] flex items-center justify-center flex-shrink-0"
+                    >
+                      <ChevronRight className={`w-4 h-4 transition-transform duration-200 ${propertiesObj.open ? 'rotate-90' : ''}`} />
+                    </button>
+                    <textarea
+                      id={`textarea-${el.id}`}
+                      value={el.content}
+                      placeholder="Collapsible Accordion Header (Press '/' for insert commands...)"
+                      onChange={(e) => updateCanvasElement(el.id, { content: e.target.value })}
+                      onKeyDown={(e) => handleElementKeyDown(e, el)}
+                      rows={1}
+                      className="w-full bg-transparent resize-none border-none outline-none font-extrabold text-sm text-[#1A1A1A] placeholder-gray-300 font-sans"
+                    />
+                  </div>
+                  
+                  {propertiesObj.open && (
+                    <div className="mt-2.5 ml-8 pl-3.5 border-l-2 border-[#1A1A1A]/40">
+                      <textarea
+                        value={propertiesObj.body || ''}
+                        placeholder="Type collapsible ledger notes here..."
+                        onChange={(e) => updateCanvasElement(el.id, {
+                          properties: JSON.stringify({ ...propertiesObj, body: e.target.value })
+                        })}
+                        rows={3}
+                        className="w-full bg-transparent resize-none border-none outline-none font-medium text-xs text-gray-700 placeholder-gray-300 font-mono leading-relaxed"
+                      />
+                    </div>
+                  )}
+                </div>
+              )}
+
+              {/* QUOTE BLOCKQUOTE ELEMENT */}
+              {el.type === 'quote' && (
+                <div className="border-l-4 border-[#FFB703] bg-gray-50/60 p-4 rounded-none my-1 pl-4 w-full border-2 border-y-[#1A1A1A] border-r-[#1A1A1A]">
+                  <textarea
+                    id={`textarea-${el.id}`}
+                    value={el.content}
+                    placeholder="Blockquote statement (Press '/' for block insert...)"
+                    onChange={(e) => updateCanvasElement(el.id, { content: e.target.value })}
+                    onKeyDown={(e) => handleElementKeyDown(e, el)}
+                    rows={2}
+                    className="w-full bg-transparent resize-none border-none outline-none font-serif italic text-sm text-[#1A1A1A] placeholder-gray-300 leading-relaxed"
+                  />
+                </div>
+              )}
+
+              {/* WIKI PAGE REFERENCE LINK ELEMENT */}
+              {el.type === 'page_link' && (
+                <div className="border-2 border-[#1A1A1A] p-3.5 bg-[#FFB703]/5 rounded-none neo-shadow-sm my-1 flex items-center justify-between w-full">
+                  <div className="flex items-center space-x-3">
+                    <span className="text-2xl">🔗</span>
+                    <div className="min-w-0">
+                      <span className="text-[9px] font-mono font-bold text-gray-400 uppercase tracking-wider block">WIKI REFERENCE LINK</span>
+                      {propertiesObj.targetCanvasId ? (
+                        (() => {
+                          const linked = canvasesList.find(c => c.id === propertiesObj.targetCanvasId);
+                          return (
+                            <button
+                              onClick={() => {
+                                if (linked) {
+                                  window.location.href = `/canvas/${linked.id}`;
+                                }
+                              }}
+                              className="block text-sm font-black text-[#1A1A1A] hover:underline text-left cursor-pointer mt-0.5"
+                            >
+                              {linked ? `${linked.icon || '📄'} ${linked.title}` : 'Linked page deleted'}
+                            </button>
+                          );
+                        })()
+                      ) : (
+                        <div className="mt-1 flex flex-wrap items-center gap-2">
+                          <select
+                            onChange={(e) => {
+                              updateCanvasElement(el.id, {
+                                properties: JSON.stringify({ ...propertiesObj, targetCanvasId: e.target.value })
+                              });
+                            }}
+                            defaultValue=""
+                            className="text-xs font-mono font-bold border-2 border-[#1A1A1A] bg-white px-2 py-1 rounded-none"
+                          >
+                            <option value="" disabled>-- Connect Canvas Node --</option>
+                            {canvasesList.filter(c => c.id !== canvasId).map(c => (
+                              <option key={c.id} value={c.id}>{c.title}</option>
+                            ))}
+                          </select>
+                          <span className="text-[10px] text-gray-400 font-mono">or instantiate a clean page directly:</span>
+                        </div>
+                      )}
+                    </div>
+                  </div>
+                  
+                  {!propertiesObj.targetCanvasId && (
+                    <button
+                      onClick={async () => {
+                        const newId = `canvas-${Math.random().toString(36).substring(2, 9)}`;
+                        await db.canvases.add({
+                          id: newId,
+                          workspaceId: 'ws-enterprise-default',
+                          title: '🎯 New Connected Milestone',
+                          icon: '🎯',
+                          isArchived: false,
+                          updatedAt: new Date()
+                        });
+                        await updateCanvasElement(el.id, {
+                          properties: JSON.stringify({ ...propertiesObj, targetCanvasId: newId })
+                        });
+                      }}
+                      className="px-2.5 py-1 text-[10px] font-bold uppercase border-2 border-[#1A1A1A] bg-[#FFB703] hover:bg-amber-400 neo-shadow-sm transition-all"
+                    >
+                      + Instantiate Page
+                    </button>
+                  )}
                 </div>
               )}
 

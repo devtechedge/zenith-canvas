@@ -11,11 +11,15 @@ import {
   Grid,
   ChevronRight,
   ArrowDown,
-  ArrowUp
+  ArrowUp,
+  FolderLock,
+  Quote,
+  Link,
+  ChevronDown
 } from 'lucide-react';
 
 export interface CommandItem {
-  id: 'heading_1' | 'heading_2' | 'text' | 'todo' | 'callout' | 'code_sandbox' | 'collection_ref';
+  id: 'heading_1' | 'heading_2' | 'text' | 'todo' | 'callout' | 'code_sandbox' | 'collection_ref' | 'toggle_list' | 'quote' | 'page_link';
   title: string;
   description: string;
   icon: React.ComponentType<any>;
@@ -41,16 +45,34 @@ const COMMANDS: CommandItem[] = [
     icon: Heading2,
   },
   {
+    id: 'toggle_list',
+    title: 'Toggle Accordion',
+    description: 'Collapsible header with foldout content',
+    icon: ChevronDown,
+  },
+  {
     id: 'todo',
     title: 'To-do List',
     description: 'Interactive checklist with check states',
     icon: CheckSquare,
   },
   {
+    id: 'quote',
+    title: 'Blockquote',
+    description: 'Stylized quote container for key ideas',
+    icon: Quote,
+  },
+  {
     id: 'callout',
-    title: 'Callout',
-    description: 'High-contrast info callout container',
+    title: 'Alert Callout',
+    description: 'High-contrast info callout with accent presets',
     icon: Info,
+  },
+  {
+    id: 'page_link',
+    title: 'Wiki Page Link',
+    description: 'Hyperlink connection to another Canvas',
+    icon: Link,
   },
   {
     id: 'code_sandbox',
