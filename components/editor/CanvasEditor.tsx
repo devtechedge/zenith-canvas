@@ -2338,100 +2338,853 @@ export default function CanvasEditor({ canvasId, isLocked = false }: CanvasEdito
               {el.type === 'conflict_sync_simulator' && (
                 (() => {
                   const syncState = propertiesObj.syncSim || {
-                    clientRevision: 14,
-                    cloudRevision: 18,
-                    strategy: 'Last-Write-Wins',
+                    strategy: 'MVCC-Merge',
+                    activeTab: 'mvcc', // mvcc, delta, compact, crdt, network, batch, stash, clock, p2p, merkle
+                    clientRevision: 42,
+                    cloudRevision: 45,
+                    
+                    // Feature 1: MVCC Branch Merger
+                    branchClient: 'v42-local-sandbox-edits',
+                    branchCloud: 'v45-upstream-workspace-main',
+                    selectedBranchHead: 'Client',
+                    
+                    // Feature 2: Delta Frame Compressor
+                    deltaPackets: [
+                      { id: 'dp1', action: 'insert', table: 'elements', rawSize: 1240, compSize: 180, active: true },
+                      { id: 'dp2', action: 'update', table: 'canvases', rawSize: 850, compSize: 95, active: false },
+                      { id: 'dp3', action: 'update', table: 'collectionRows', rawSize: 3100, compSize: 450, active: false }
+                    ],
+                    
+                    // Feature 3: Ledger Vacuum Compactor
+                    ledgerRows: 1420,
+                    uncompressedSizeKB: 2450,
+                    isCompacting: false,
+                    
+                    // Feature 4: CRDT PN-Counter / LWW-Set
+                    crdtCounterA: 5,
+                    crdtCounterB: 3,
+                    
+                    // Feature 5: Jitter & Network Simulator
+                    packetLossPct: 15,
+                    jitterMs: 120,
+                    latencyMs: 150,
+                    
+                    // Feature 6: Throttling & Batching Regulator
+                    syncThrottleMs: 2000,
+                    batchSizeMax: 50,
+                    
+                    // Feature 7: Mutation Stash Ledger
+                    stashMutations: [
+                      { id: 'st1', action: 'update', target: 'el-7', prop: 'content', size: 120 },
+                      { id: 'st2', action: 'insert', target: 'el-14', prop: 'todo', size: 85 },
+                      { id: 'st3', action: 'update', target: 'canvas-root-1', prop: 'title', size: 64 }
+                    ],
+                    
+                    // Feature 8: Vector Clock Tracer
+                    vectorClock: { ClientA: 14, ClientB: 9, Server: 25 },
+                    
+                    // Feature 9: Local P2P Coupling Link
+                    p2pStatus: 'Coupled', // Idle, Coupled, Handshaking
+                    p2pThroughput: 12.4, // KB/s
+                    
+                    // Feature 10: Merkle Tree State Healer
+                    merkleNodes: [
+                      { id: 'root', hash: 'e3b0c442', status: 'valid' },
+                      { id: 'branch-1', hash: '8f43a9b1', status: 'valid' },
+                      { id: 'branch-2', hash: '1a2b3c4d', status: 'valid' },
+                      { id: 'leaf-1-1', hash: '4f92e8a1', status: 'valid' },
+                      { id: 'leaf-1-2', hash: '0d9c3b8a', status: 'valid' },
+                      { id: 'leaf-2-1', hash: '7e6d5c4b', status: 'valid' },
+                      { id: 'leaf-2-2', hash: '3a2b1c0d', status: 'valid' }
+                    ],
+
                     logs: [
-                      { time: '13:04:12', op: 'MUTATION_COMMIT', payload: 'Added todo element el-101', status: 'OK' },
-                      { time: '13:04:15', op: 'NETWORK_DISCONNECT', payload: 'Client went offline due to network tunnel closure', status: 'WARNING' },
-                      { time: '13:04:18', op: 'LOCAL_MUTATION', payload: 'Client edited code sandbox content locally', status: 'PENDING' },
-                      { time: '13:04:19', op: 'REMOTE_MUTATION', payload: 'Remote editor updated code sandbox online', status: 'CONFLICT' }
+                      { time: '14:10:02', op: 'LEDGER_INIT', payload: 'IndexedDB transaction buffer initialized.', status: 'OK' },
+                      { time: '14:11:15', op: 'PEER_CONNECTED', payload: 'P2P direct web socket coupled successfully.', status: 'OK' },
+                      { time: '14:12:00', op: 'MERKLE_SYNC', payload: 'State verification scan completed, 100% hash convergence.', status: 'OK' }
                     ]
                   };
 
+                  const updateState = (key: string, value: any) => {
+                    const updated = { ...syncState, [key]: value };
+                    updateCanvasElement(el.id, { properties: JSON.stringify({ ...propertiesObj, syncSim: updated }) });
+                  };
+
+                  const triggerLocalLog = (op: string, payload: string, status: 'OK' | 'WARNING' | 'CONFLICT' | 'PENDING') => {
+                    const time = new Date().toTimeString().split(' ')[0];
+                    const newLog = { time, op, payload, status };
+                    const updatedLogs = [...syncState.logs, newLog].slice(-25); // cap logs at 25
+                    updateState('logs', updatedLogs);
+                  };
+
+                  const executeCompaction = () => {
+                    updateState('isCompacting', true);
+                    triggerLocalLog('VACUUM_INIT', 'Beginning deep ledger vacuum and metadata rebuilding...', 'PENDING');
+                    setTimeout(() => {
+                      const finalRows = Math.round(syncState.ledgerRows * 0.42);
+                      const finalSize = Math.round(syncState.uncompressedSizeKB * 0.35);
+                      const time = new Date().toTimeString().split(' ')[0];
+                      const logs = [
+                        ...syncState.logs,
+                        { time, op: 'VACUUM_OK', payload: `Ledger rebuilt. Rows: ${syncState.ledgerRows} -> ${finalRows}. Size: ${syncState.uncompressedSizeKB}KB -> ${finalSize}KB. Reclaimed 65% of buffer.`, status: 'OK' }
+                      ];
+                      const updated = {
+                        ...syncState,
+                        ledgerRows: finalRows,
+                        uncompressedSizeKB: finalSize,
+                        isCompacting: false,
+                        logs
+                      };
+                      updateCanvasElement(el.id, { properties: JSON.stringify({ ...propertiesObj, syncSim: updated }) });
+                    }, 1200);
+                  };
+
+                  const healMerkleTree = () => {
+                    triggerLocalLog('HEAL_INIT', 'Starting Merkle verification and repairing corrupt leaves...', 'PENDING');
+                    setTimeout(() => {
+                      const healedNodes = syncState.merkleNodes.map((node: any) => ({ ...node, status: 'valid' }));
+                      const time = new Date().toTimeString().split(' ')[0];
+                      const logs = [
+                        ...syncState.logs,
+                        { time, op: 'HEAL_CONVERGED', payload: 'Merkle tree root matched cloud state. State healed successfully.', status: 'OK' }
+                      ];
+                      const updated = {
+                        ...syncState,
+                        merkleNodes: healedNodes,
+                        logs
+                      };
+                      updateCanvasElement(el.id, { properties: JSON.stringify({ ...propertiesObj, syncSim: updated }) });
+                    }, 1000);
+                  };
+
+                  const corruptLeaf = (nodeId: string) => {
+                    const updatedNodes = syncState.merkleNodes.map((node: any) => {
+                      if (node.id === nodeId) {
+                        return { ...node, status: 'corrupt', hash: Math.floor(Math.random() * 0xffffffff).toString(16) };
+                      }
+                      return node;
+                    });
+                    
+                    // Propagate corruption upstream
+                    const isLeafLeft = nodeId.startsWith('leaf-1');
+                    const isLeafRight = nodeId.startsWith('leaf-2');
+                    
+                    const finalNodes = updatedNodes.map((node: any) => {
+                      if (node.id === 'root') {
+                        return { ...node, status: 'corrupt', hash: 'mismatch_err_root' };
+                      }
+                      if (node.id === 'branch-1' && isLeafLeft) {
+                        return { ...node, status: 'corrupt', hash: 'mismatch_err_b1' };
+                      }
+                      if (node.id === 'branch-2' && isLeafRight) {
+                        return { ...node, status: 'corrupt', hash: 'mismatch_err_b2' };
+                      }
+                      return node;
+                    });
+
+                    const time = new Date().toTimeString().split(' ')[0];
+                    const logs = [
+                      ...syncState.logs,
+                      { time, op: 'STATE_CORRUPTION', payload: `Injected deliberate bit-flip corruption on leaf node "${nodeId}"`, status: 'CONFLICT' }
+                    ];
+
+                    const updated = {
+                      ...syncState,
+                      merkleNodes: finalNodes,
+                      logs
+                    };
+                    updateCanvasElement(el.id, { properties: JSON.stringify({ ...propertiesObj, syncSim: updated }) });
+                  };
+
                   return (
-                    <div className="border-2 border-[#1A1A1A] p-4 bg-[#111827] text-[#E5E7EB] rounded-none neo-shadow-sm my-2 w-full font-mono">
-                      <div className="flex items-center justify-between border-b border-slate-800 pb-2 mb-3">
-                        <div className="flex items-center space-x-2 font-sans">
-                          <GitCompare className="w-4 h-4 text-amber-400" />
-                          <span className="text-[11px] font-black uppercase tracking-wider text-amber-400">
-                            Offline Delta-Sync & Conflict Merger
+                    <div className="border-2 border-[#1A1A1A] p-4 bg-[#0A0F1D] text-slate-100 rounded-none neo-shadow-sm my-2 w-full font-mono relative overflow-hidden">
+                      {/* Control Deck Header */}
+                      <div className="flex flex-wrap items-center justify-between border-b-2 border-[#1A1A1A] pb-3 mb-4 bg-slate-900/40 -mx-4 -mt-4 p-4">
+                        <div className="flex items-center space-x-2">
+                          <GitCompare className="w-5 h-5 text-amber-400 animate-pulse" />
+                          <div>
+                            <span className="text-xs font-black uppercase tracking-wider text-amber-400 block font-sans">
+                              Zenith Offline Synchronization & State Deck
+                            </span>
+                            <span className="text-[9px] text-slate-400 block">
+                              10-Tier Decentralized Replication, Compression & Conflict-Free Resolution Sandbox
+                            </span>
+                          </div>
+                        </div>
+                        <div className="flex items-center space-x-2 mt-2 sm:mt-0 font-sans text-[8px] font-bold">
+                          <span className="flex items-center text-emerald-400 bg-emerald-950/60 border border-emerald-800 px-1.5 py-0.5 rounded-sm">
+                            <span className="w-1.5 h-1.5 rounded-full bg-emerald-400 mr-1 animate-ping" />
+                            CLIENT: ACTIVE
+                          </span>
+                          <span className="text-amber-400 bg-amber-950/60 border border-amber-800 px-1.5 py-0.5 rounded-sm uppercase">
+                            LEDGER REVISION: v{syncState.clientRevision}
                           </span>
                         </div>
-                        <span className="text-[9px] border border-amber-500/30 px-1.5 py-0.5 bg-amber-950 text-amber-400 font-extrabold uppercase rounded-sm font-sans">
-                          Sync Simulator
-                        </span>
                       </div>
 
-                      <div className="grid grid-cols-1 sm:grid-cols-3 gap-3 mb-3">
-                        <div className="border border-slate-800 bg-slate-900/50 p-2.5">
-                          <span className="text-[8px] text-slate-500 font-bold block uppercase font-sans">Client Ledger Rev</span>
-                          <span className="text-xl font-black text-[#60A5FA]">v{syncState.clientRevision}</span>
-                        </div>
-                        <div className="border border-slate-800 bg-slate-900/50 p-2.5">
-                          <span className="text-[8px] text-slate-500 font-bold block uppercase font-sans">Cloud Sync Rev</span>
-                          <span className="text-xl font-black text-[#34D399]">v{syncState.cloudRevision}</span>
-                        </div>
-                        <div className="border border-slate-800 bg-slate-900/50 p-2.5 flex flex-col justify-between">
-                          <span className="text-[8px] text-slate-500 font-bold block uppercase font-sans">Strategy</span>
-                          <select
-                            value={syncState.strategy}
-                            onChange={(e) => {
-                              const updated = { ...syncState, strategy: e.target.value };
-                              updateCanvasElement(el.id, { properties: JSON.stringify({ ...propertiesObj, syncSim: updated }) });
-                            }}
-                            className="bg-slate-800 border border-slate-700 text-amber-400 text-[10px] font-black py-0.5 outline-none rounded cursor-pointer text-xs"
-                          >
-                            <option value="Last-Write-Wins">Last-Write-Wins (LWW)</option>
-                            <option value="MVCC-Merge">Multi-Version Merger</option>
-                            <option value="Client-Override">Client Authority Only</option>
-                          </select>
-                        </div>
+                      {/* 10-Tier Feature Tab Rail */}
+                      <div className="flex flex-wrap gap-1 border-b border-slate-800 pb-3 mb-4 text-[9px] font-sans font-bold">
+                        <button
+                          onClick={() => updateState('activeTab', 'mvcc')}
+                          className={`px-2 py-1 border transition-all ${syncState.activeTab === 'mvcc' ? 'bg-amber-400 text-[#0A0F1D] border-amber-400 font-extrabold' : 'bg-slate-900/60 text-slate-400 border-slate-800 hover:text-white hover:bg-slate-800'}`}
+                        >
+                          1. MVCC BRANCHES
+                        </button>
+                        <button
+                          onClick={() => updateState('activeTab', 'delta')}
+                          className={`px-2 py-1 border transition-all ${syncState.activeTab === 'delta' ? 'bg-amber-400 text-[#0A0F1D] border-amber-400 font-extrabold' : 'bg-slate-900/60 text-slate-400 border-slate-800 hover:text-white hover:bg-slate-800'}`}
+                        >
+                          2. DELTA OPTIMIZER
+                        </button>
+                        <button
+                          onClick={() => updateState('activeTab', 'compact')}
+                          className={`px-2 py-1 border transition-all ${syncState.activeTab === 'compact' ? 'bg-amber-400 text-[#0A0F1D] border-amber-400 font-extrabold' : 'bg-slate-900/60 text-slate-400 border-slate-800 hover:text-white hover:bg-slate-800'}`}
+                        >
+                          3. VACUUM ENGINE
+                        </button>
+                        <button
+                          onClick={() => updateState('activeTab', 'crdt')}
+                          className={`px-2 py-1 border transition-all ${syncState.activeTab === 'crdt' ? 'bg-amber-400 text-[#0A0F1D] border-amber-400 font-extrabold' : 'bg-slate-900/60 text-slate-400 border-slate-800 hover:text-white hover:bg-slate-800'}`}
+                        >
+                          4. CRDT CONVERGER
+                        </button>
+                        <button
+                          onClick={() => updateState('activeTab', 'network')}
+                          className={`px-2 py-1 border transition-all ${syncState.activeTab === 'network' ? 'bg-amber-400 text-[#0A0F1D] border-amber-400 font-extrabold' : 'bg-slate-900/60 text-slate-400 border-slate-800 hover:text-white hover:bg-slate-800'}`}
+                        >
+                          5. JITTER TUNNEL
+                        </button>
+                        <button
+                          onClick={() => updateState('activeTab', 'batch')}
+                          className={`px-2 py-1 border transition-all ${syncState.activeTab === 'batch' ? 'bg-amber-400 text-[#0A0F1D] border-amber-400 font-extrabold' : 'bg-slate-900/60 text-slate-400 border-slate-800 hover:text-white hover:bg-slate-800'}`}
+                        >
+                          6. BATCH REGULATOR
+                        </button>
+                        <button
+                          onClick={() => updateState('activeTab', 'stash')}
+                          className={`px-2 py-1 border transition-all ${syncState.activeTab === 'stash' ? 'bg-amber-400 text-[#0A0F1D] border-amber-400 font-extrabold' : 'bg-slate-900/60 text-slate-400 border-slate-800 hover:text-white hover:bg-slate-800'}`}
+                        >
+                          7. MUTATION STASH
+                        </button>
+                        <button
+                          onClick={() => updateState('activeTab', 'clock')}
+                          className={`px-2 py-1 border transition-all ${syncState.activeTab === 'clock' ? 'bg-amber-400 text-[#0A0F1D] border-amber-400 font-extrabold' : 'bg-slate-900/60 text-slate-400 border-slate-800 hover:text-white hover:bg-slate-800'}`}
+                        >
+                          8. VECTOR CLOCK
+                        </button>
+                        <button
+                          onClick={() => updateState('activeTab', 'p2p')}
+                          className={`px-2 py-1 border transition-all ${syncState.activeTab === 'p2p' ? 'bg-amber-400 text-[#0A0F1D] border-amber-400 font-extrabold' : 'bg-slate-900/60 text-slate-400 border-slate-800 hover:text-white hover:bg-slate-800'}`}
+                        >
+                          9. LOCAL P2P LINK
+                        </button>
+                        <button
+                          onClick={() => updateState('activeTab', 'merkle')}
+                          className={`px-2 py-1 border transition-all ${syncState.activeTab === 'merkle' ? 'bg-amber-400 text-[#0A0F1D] border-amber-400 font-extrabold' : 'bg-slate-900/60 text-slate-400 border-slate-800 hover:text-white hover:bg-slate-800'}`}
+                        >
+                          10. MERKLE HEALER
+                        </button>
                       </div>
 
-                      <div className="border border-slate-800 bg-black/60 p-2.5 text-[9px] space-y-1 h-32 overflow-y-auto mb-3">
-                        <span className="font-bold text-slate-500 uppercase block border-b border-slate-800 pb-1 mb-1.5 font-sans">Simulation Log Stream:</span>
-                        {syncState.logs.map((log: any, lIdx: number) => (
-                          <div key={lIdx} className="flex justify-between items-center text-[8px] py-0.5 border-b border-slate-900 last:border-0">
-                            <span>
-                              <span className="text-slate-500 mr-1.5">[{log.time}]</span>
-                              <span className={`font-black uppercase mr-1.5 ${
-                                log.status === 'OK' ? 'text-emerald-400' :
-                                log.status === 'WARNING' ? 'text-amber-400' :
-                                log.status === 'CONFLICT' ? 'text-rose-400' : 'text-blue-400'
-                              }`}>{log.op}:</span>
-                              <span className="text-slate-300 font-mono font-medium">{log.payload}</span>
-                            </span>
-                            <span className="text-slate-600 bg-slate-950 px-1 border border-slate-800/40 font-sans text-[7px]">{log.status}</span>
+                      {/* Main Dynamic Panel Layout */}
+                      <div className="grid grid-cols-1 md:grid-cols-3 gap-4 mb-4">
+                        
+                        {/* Dynamic Interactive Panel Column (Left and Center spans) */}
+                        <div className="md:col-span-2 border-2 border-slate-800 bg-slate-950/40 p-3 relative min-h-[220px] flex flex-col justify-between">
+                          
+                          {/* 1. MVCC Branches View */}
+                          {syncState.activeTab === 'mvcc' && (
+                            <div className="space-y-3">
+                              <div className="flex items-center justify-between border-b border-slate-800 pb-1.5">
+                                <span className="text-[10px] font-bold text-amber-400 uppercase">Multi-Version Concurrency Control (MVCC)</span>
+                                <span className="text-[8px] bg-slate-800 px-1 py-0.5 text-slate-400 rounded">Branch Isolation</span>
+                              </div>
+                              <p className="text-[9px] text-slate-400 leading-relaxed font-sans">
+                                Select branching head nodes to resolve linear state mismatches. The common ancestor identifies initial mutations before branching divergence.
+                              </p>
+                              
+                              <div className="grid grid-cols-3 gap-2 py-2">
+                                <button
+                                  onClick={() => {
+                                    updateState('selectedBranchHead', 'Client');
+                                    triggerLocalLog('BRANCH_SELECT', 'Isolated head pointing to local Client edits branch.', 'OK');
+                                  }}
+                                  className={`p-2 border text-left flex flex-col justify-between ${syncState.selectedBranchHead === 'Client' ? 'border-amber-400 bg-amber-400/10' : 'border-slate-800 bg-slate-900/30'}`}
+                                >
+                                  <span className="text-[7px] text-slate-500 font-bold uppercase block font-sans">1. Client Local</span>
+                                  <span className="text-[9px] font-black text-blue-400 truncate mt-1">{syncState.branchClient}</span>
+                                  <span className="text-[7px] text-slate-400 mt-2">Active Mutator</span>
+                                </button>
+
+                                <button
+                                  onClick={() => {
+                                    updateState('selectedBranchHead', 'Cloud');
+                                    triggerLocalLog('BRANCH_SELECT', 'Isolated head pointing to remote Cloud master.', 'OK');
+                                  }}
+                                  className={`p-2 border text-left flex flex-col justify-between ${syncState.selectedBranchHead === 'Cloud' ? 'border-amber-400 bg-amber-400/10' : 'border-slate-800 bg-slate-900/30'}`}
+                                >
+                                  <span className="text-[7px] text-slate-500 font-bold uppercase block font-sans">2. Cloud Upstream</span>
+                                  <span className="text-[9px] font-black text-emerald-400 truncate mt-1">{syncState.branchCloud}</span>
+                                  <span className="text-[7px] text-slate-400 mt-2">Upstream Origin</span>
+                                </button>
+
+                                <button
+                                  onClick={() => {
+                                    updateState('selectedBranchHead', 'Ancestor');
+                                    triggerLocalLog('BRANCH_SELECT', 'Isolated head pointing to Common Ancestor baseline.', 'OK');
+                                  }}
+                                  className={`p-2 border text-left flex flex-col justify-between ${syncState.selectedBranchHead === 'Ancestor' ? 'border-amber-400 bg-amber-400/10' : 'border-slate-800 bg-slate-900/30'}`}
+                                >
+                                  <span className="text-[7px] text-slate-500 font-bold uppercase block font-sans">3. Common Ancestor</span>
+                                  <span className="text-[9px] font-black text-purple-400 truncate mt-1">v39-common-origin</span>
+                                  <span className="text-[7px] text-slate-400 mt-2">Base State</span>
+                                </button>
+                              </div>
+
+                              <div className="flex gap-2 pt-2">
+                                <button
+                                  onClick={() => {
+                                    const nextRev = syncState.cloudRevision;
+                                    const time = new Date().toTimeString().split(' ')[0];
+                                    const logs = [
+                                      ...syncState.logs,
+                                      { time, op: 'MVCC_FAST_FORWARD', payload: `Successfully fast-forwarded Client branch using ${syncState.selectedBranchHead} Head Authority.`, status: 'OK' }
+                                    ];
+                                    const updated = {
+                                      ...syncState,
+                                      clientRevision: nextRev,
+                                      logs
+                                    };
+                                    updateCanvasElement(el.id, { properties: JSON.stringify({ ...propertiesObj, syncSim: updated }) });
+                                  }}
+                                  className="px-2 py-1 bg-amber-400 hover:bg-amber-300 text-[#0A0F1D] text-[9px] font-black uppercase cursor-pointer"
+                                >
+                                  Reconcile Using Head [{syncState.selectedBranchHead.toUpperCase()}]
+                                </button>
+                              </div>
+                            </div>
+                          )}
+
+                          {/* 2. Delta Frame Compressor View */}
+                          {syncState.activeTab === 'delta' && (
+                            <div className="space-y-3">
+                              <div className="flex items-center justify-between border-b border-slate-800 pb-1.5">
+                                <span className="text-[10px] font-bold text-amber-400 uppercase">Delta Packet Optimizer & Compression</span>
+                                <span className="text-[8px] bg-slate-800 px-1 py-0.5 text-slate-400 rounded">D-RLE Encoder</span>
+                              </div>
+                              <p className="text-[9px] text-slate-400 leading-relaxed font-sans">
+                                Click on dynamic transaction frame chunks to test run-length delta encoding compression. Raw bytes are compacted dynamically before upstream transmission.
+                              </p>
+
+                              <div className="space-y-1.5 max-h-32 overflow-y-auto pr-1">
+                                {syncState.deltaPackets.map((dp: any) => {
+                                  const ratio = Math.round((1 - dp.compSize / dp.rawSize) * 100);
+                                  return (
+                                    <div
+                                      key={dp.id}
+                                      onClick={() => {
+                                        const updatedPackets = syncState.deltaPackets.map((p: any) => ({
+                                          ...p,
+                                          active: p.id === dp.id
+                                        }));
+                                        updateState('deltaPackets', updatedPackets);
+                                        triggerLocalLog('COMPRESSION_TEST', `Selected packet: ${dp.table} (${dp.action}). Simulated Huffman savings: ${ratio}% compacting.`, 'OK');
+                                      }}
+                                      className={`p-2 border cursor-pointer transition-all flex items-center justify-between text-[8px] ${dp.active ? 'border-amber-400 bg-amber-400/5' : 'border-slate-800 bg-slate-900/30 hover:border-slate-700'}`}
+                                    >
+                                      <div>
+                                        <span className="font-extrabold uppercase text-blue-400 mr-1.5">[{dp.action}]</span>
+                                        <span className="text-slate-300 font-mono">Table: {dp.table}</span>
+                                      </div>
+                                      <div className="flex items-center space-x-3">
+                                        <span className="text-slate-500 font-mono">Raw: {dp.rawSize}B → Delta: <span className="text-emerald-400 font-black">{dp.compSize}B</span></span>
+                                        <span className="bg-emerald-950 border border-emerald-900 text-emerald-400 font-black px-1.5 text-[7px] uppercase">
+                                          -{ratio}% Comp.
+                                        </span>
+                                      </div>
+                                    </div>
+                                  );
+                                })}
+                              </div>
+
+                              <div className="text-[8px] text-slate-400 border border-slate-800 p-2 bg-slate-900/40">
+                                <strong>Active Optimizer Algorithm:</strong> Adaptive Delta Huffman Pipeline + Local Indexed DB Diff Mapping.
+                              </div>
+                            </div>
+                          )}
+
+                          {/* 3. Ledger Vacuum Compactor View */}
+                          {syncState.activeTab === 'compact' && (
+                            <div className="space-y-3">
+                              <div className="flex items-center justify-between border-b border-slate-800 pb-1.5">
+                                <span className="text-[10px] font-bold text-amber-400 uppercase">Local Ledger Compaction & Database Vacuum</span>
+                                <span className="text-[8px] bg-slate-800 px-1 py-0.5 text-slate-400 rounded">Dexie Storage</span>
+                              </div>
+                              <p className="text-[9px] text-slate-400 leading-relaxed font-sans">
+                                Over time, local transaction streams in IndexedDB build overhead. Rebuild structural indices, clean tombstone rows, and reclaim disk space.
+                              </p>
+
+                              <div className="grid grid-cols-2 gap-3 py-1 text-[9px]">
+                                <div className="border border-slate-800 bg-slate-900/20 p-2.5">
+                                  <span className="text-slate-500 font-sans block uppercase text-[7px]">Log Records Stream</span>
+                                  <span className="text-base font-extrabold text-[#E5E7EB]">{syncState.ledgerRows} Rows</span>
+                                </div>
+                                <div className="border border-slate-800 bg-slate-900/20 p-2.5">
+                                  <span className="text-slate-500 font-sans block uppercase text-[7px]">Buffer Footprint Size</span>
+                                  <span className="text-base font-extrabold text-[#E5E7EB]">{syncState.uncompressedSizeKB} KB</span>
+                                </div>
+                              </div>
+
+                              <button
+                                onClick={executeCompaction}
+                                disabled={syncState.isCompacting}
+                                className={`w-full py-1.5 border border-amber-400 text-amber-400 font-black uppercase text-[9px] cursor-pointer transition-all ${syncState.isCompacting ? 'bg-amber-400/10 opacity-60' : 'bg-amber-400/20 hover:bg-amber-400 hover:text-[#0A0F1D]'}`}
+                              >
+                                {syncState.isCompacting ? 'COMPACTING LEDGER DIRECTLY...' : 'RUN DEEP STORAGE VACUUM'}
+                              </button>
+                            </div>
+                          )}
+
+                          {/* 4. CRDT View */}
+                          {syncState.activeTab === 'crdt' && (
+                            <div className="space-y-3">
+                              <div className="flex items-center justify-between border-b border-slate-800 pb-1.5">
+                                <span className="text-[10px] font-bold text-amber-400 uppercase">CRDT PN-Counter Convergence Sandbox</span>
+                                <span className="text-[8px] bg-slate-800 px-1 py-0.5 text-slate-400 rounded">Eventual Consistency</span>
+                              </div>
+                              <p className="text-[9px] text-slate-400 leading-relaxed font-sans">
+                                Demonstrate conflict-free replica data state convergence. Increment and decrement states independently in multiple nodes and watch them mathematically converge.
+                              </p>
+
+                              <div className="grid grid-cols-2 gap-3 py-1">
+                                <div className="border border-slate-800 bg-slate-900/30 p-2 text-center">
+                                  <span className="text-[7px] text-slate-500 font-black block uppercase font-sans">Peer A Instance</span>
+                                  <span className="text-lg font-black text-blue-400">{syncState.crdtCounterA}</span>
+                                  <div className="flex justify-center gap-1.5 mt-2">
+                                    <button
+                                      onClick={() => {
+                                        updateState('crdtCounterA', syncState.crdtCounterA + 1);
+                                        triggerLocalLog('CRDT_MUTATION_A', 'Incremented Peer A PN-Counter node state.', 'PENDING');
+                                      }}
+                                      className="px-1.5 py-0.5 bg-slate-800 border border-slate-700 text-slate-200 text-[8px] font-bold uppercase cursor-pointer hover:bg-slate-700"
+                                    >
+                                      +1
+                                    </button>
+                                    <button
+                                      onClick={() => {
+                                        updateState('crdtCounterA', syncState.crdtCounterA - 1);
+                                        triggerLocalLog('CRDT_MUTATION_A', 'Decremented Peer A PN-Counter node state.', 'PENDING');
+                                      }}
+                                      className="px-1.5 py-0.5 bg-slate-800 border border-slate-700 text-slate-200 text-[8px] font-bold uppercase cursor-pointer hover:bg-slate-700"
+                                    >
+                                      -1
+                                    </button>
+                                  </div>
+                                </div>
+
+                                <div className="border border-slate-800 bg-slate-900/30 p-2 text-center">
+                                  <span className="text-[7px] text-slate-500 font-black block uppercase font-sans">Peer B Instance</span>
+                                  <span className="text-lg font-black text-emerald-400">{syncState.crdtCounterB}</span>
+                                  <div className="flex justify-center gap-1.5 mt-2">
+                                    <button
+                                      onClick={() => {
+                                        updateState('crdtCounterB', syncState.crdtCounterB + 1);
+                                        triggerLocalLog('CRDT_MUTATION_B', 'Incremented Peer B PN-Counter node state.', 'PENDING');
+                                      }}
+                                      className="px-1.5 py-0.5 bg-slate-800 border border-slate-700 text-slate-200 text-[8px] font-bold uppercase cursor-pointer hover:bg-slate-700"
+                                    >
+                                      +1
+                                    </button>
+                                    <button
+                                      onClick={() => {
+                                        updateState('crdtCounterB', syncState.crdtCounterB - 1);
+                                        triggerLocalLog('CRDT_MUTATION_B', 'Decremented Peer B PN-Counter node state.', 'PENDING');
+                                      }}
+                                      className="px-1.5 py-0.5 bg-slate-800 border border-slate-700 text-slate-200 text-[8px] font-bold uppercase cursor-pointer hover:bg-slate-700"
+                                    >
+                                      -1
+                                    </button>
+                                  </div>
+                                </div>
+                              </div>
+
+                              <div className="py-2.5 px-3 border border-dashed border-amber-500/30 bg-amber-500/5 text-center">
+                                <span className="text-[8px] text-slate-500 font-bold uppercase block font-sans">Converged Replicated Global Value:</span>
+                                <span className="text-xl font-extrabold text-amber-400">{syncState.crdtCounterA + syncState.crdtCounterB}</span>
+                              </div>
+                            </div>
+                          )}
+
+                          {/* 5. Jitter Tunnel View */}
+                          {syncState.activeTab === 'network' && (
+                            <div className="space-y-3">
+                              <div className="flex items-center justify-between border-b border-slate-800 pb-1.5">
+                                <span className="text-[10px] font-bold text-amber-400 uppercase">Jitter Tunnel Network Simulator</span>
+                                <span className="text-[8px] bg-slate-800 px-1 py-0.5 text-slate-400 rounded">Tunnel Diagnostics</span>
+                              </div>
+                              <p className="text-[9px] text-slate-400 leading-relaxed font-sans">
+                                Dial in simulated flaky networking tunnels. High latency and connection packet loss trigger automatic Exponential Backoff and retry algorithms.
+                              </p>
+
+                              <div className="space-y-2 text-[8px] font-mono">
+                                <div>
+                                  <div className="flex justify-between uppercase text-slate-400 font-bold mb-1">
+                                    <span>Injected Packet Loss: {syncState.packetLossPct}%</span>
+                                    <span>Drop Rate</span>
+                                  </div>
+                                  <input
+                                    type="range"
+                                    min="0"
+                                    max="95"
+                                    value={syncState.packetLossPct}
+                                    onChange={(e) => {
+                                      const val = parseInt(e.target.value);
+                                      updateState('packetLossPct', val);
+                                      triggerLocalLog('NETWORK_JITTER_ADJUST', `Packet loss simulation updated to: ${val}%.`, 'WARNING');
+                                    }}
+                                    className="w-full cursor-pointer h-1 bg-slate-800 rounded outline-none accent-amber-400"
+                                  />
+                                </div>
+
+                                <div className="grid grid-cols-2 gap-2 text-[8px] pt-1">
+                                  <div className="border border-slate-800 p-2 bg-slate-900/40">
+                                    <span className="text-slate-500 font-bold block uppercase font-sans">Latency Delay</span>
+                                    <span className="text-xs font-black text-[#E5E7EB]">{syncState.latencyMs}ms</span>
+                                  </div>
+                                  <div className="border border-slate-800 p-2 bg-slate-900/40">
+                                    <span className="text-slate-500 font-bold block uppercase font-sans">Jitter Noise Amplitude</span>
+                                    <span className="text-xs font-black text-[#E5E7EB]">{syncState.jitterMs}ms</span>
+                                  </div>
+                                </div>
+                              </div>
+                            </div>
+                          )}
+
+                          {/* 6. Throttling & Batching Regulator View */}
+                          {syncState.activeTab === 'batch' && (
+                            <div className="space-y-3">
+                              <div className="flex items-center justify-between border-b border-slate-800 pb-1.5">
+                                <span className="text-[10px] font-bold text-amber-400 uppercase">Debounce Throttler & Batch Regulator</span>
+                                <span className="text-[8px] bg-slate-800 px-1 py-0.5 text-slate-400 rounded">Rate Limiter</span>
+                              </div>
+                              <p className="text-[9px] text-slate-400 leading-relaxed font-sans">
+                                Set how frequently mutations are batched and shipped upstream. Aggregating high-throughput keys prevents network serialization blockage.
+                              </p>
+
+                              <div className="space-y-3 text-[8px] font-mono">
+                                <div>
+                                  <div className="flex justify-between uppercase text-slate-400 font-bold mb-1">
+                                    <span>Synchronization Interval: {syncState.syncThrottleMs}ms</span>
+                                    <span>Shipping Gate</span>
+                                  </div>
+                                  <input
+                                    type="range"
+                                    min="500"
+                                    max="10000"
+                                    step="500"
+                                    value={syncState.syncThrottleMs}
+                                    onChange={(e) => {
+                                      const val = parseInt(e.target.value);
+                                      updateState('syncThrottleMs', val);
+                                      triggerLocalLog('THROTTLE_ADJUST', `Sync rate set to evaluate queue every ${val}ms.`, 'OK');
+                                    }}
+                                    className="w-full cursor-pointer h-1 bg-slate-800 rounded outline-none accent-amber-400"
+                                  />
+                                </div>
+
+                                <div>
+                                  <div className="flex justify-between uppercase text-slate-400 font-bold mb-1">
+                                    <span>Max Packets Per Batch Frame: {syncState.batchSizeMax} items</span>
+                                    <span>Batch Boundaries</span>
+                                  </div>
+                                  <input
+                                    type="range"
+                                    min="10"
+                                    max="250"
+                                    step="10"
+                                    value={syncState.batchSizeMax}
+                                    onChange={(e) => {
+                                      const val = parseInt(e.target.value);
+                                      updateState('batchSizeMax', val);
+                                      triggerLocalLog('BATCH_SIZE_ADJUST', `Max frame batch bounds expanded to ${val} records.`, 'OK');
+                                    }}
+                                    className="w-full cursor-pointer h-1 bg-slate-800 rounded outline-none accent-amber-400"
+                                  />
+                                </div>
+                              </div>
+                            </div>
+                          )}
+
+                          {/* 7. Mutation Stash View */}
+                          {syncState.activeTab === 'stash' && (
+                            <div className="space-y-3">
+                              <div className="flex items-center justify-between border-b border-slate-800 pb-1.5">
+                                <span className="text-[10px] font-bold text-amber-400 uppercase">Offline Mutation Stash Ledger</span>
+                                <span className="text-[8px] bg-slate-800 px-1 py-0.5 text-slate-400 rounded">Mutation Inspect</span>
+                              </div>
+                              <p className="text-[9px] text-slate-400 leading-relaxed font-sans">
+                                Inspect raw un-synced operations waiting in IndexedDB sync queue. Selectively discard or inspect before triggering high-throughput flush.
+                              </p>
+
+                              <div className="space-y-1 max-h-24 overflow-y-auto pr-1">
+                                {syncState.stashMutations.map((mut: any) => (
+                                  <div key={mut.id} className="border border-slate-800 bg-black/40 p-1.5 flex items-center justify-between text-[8px]">
+                                    <div>
+                                      <span className="text-amber-400 font-black mr-1 uppercase">[{mut.action}]</span>
+                                      <span className="text-slate-300 font-mono">Target: {mut.target} ({mut.prop})</span>
+                                    </div>
+                                    <div className="flex items-center space-x-2">
+                                      <span className="text-slate-500">{mut.size} Bytes</span>
+                                      <button
+                                        onClick={() => {
+                                          const updatedMutations = syncState.stashMutations.filter((m: any) => m.id !== mut.id);
+                                          updateState('stashMutations', updatedMutations);
+                                          triggerLocalLog('STASH_DISCARD', `Discarded isolated operation "${mut.id}" from local buffer pipeline.`, 'WARNING');
+                                        }}
+                                        className="text-rose-500 hover:underline cursor-pointer font-bold uppercase text-[7px]"
+                                      >
+                                        DISCARD
+                                      </button>
+                                    </div>
+                                  </div>
+                                ))}
+                                {syncState.stashMutations.length === 0 && (
+                                  <div className="text-center text-slate-500 py-3 text-[8px] uppercase">
+                                    No pending stashed mutations. Local state completely clean.
+                                  </div>
+                                )}
+                              </div>
+                            </div>
+                          )}
+
+                          {/* 8. Vector Clock View */}
+                          {syncState.activeTab === 'clock' && (
+                            <div className="space-y-3">
+                              <div className="flex items-center justify-between border-b border-slate-800 pb-1.5">
+                                <span className="text-[10px] font-bold text-amber-400 uppercase">Vector Clocks & Causality Ledger</span>
+                                <span className="text-[8px] bg-slate-800 px-1 py-0.5 text-slate-400 rounded">Causal Sequencing</span>
+                              </div>
+                              <p className="text-[9px] text-slate-400 leading-relaxed font-sans">
+                                Standard time is unreliable across decoupled clients. Vector Clocks track causality. Click a node to trigger a mutation event and witness vector incrementation.
+                              </p>
+
+                              <div className="grid grid-cols-3 gap-2 py-1 text-center text-[9px]">
+                                <div
+                                  onClick={() => {
+                                    const nextClock = { ...syncState.vectorClock, ClientA: syncState.vectorClock.ClientA + 1 };
+                                    updateState('vectorClock', nextClock);
+                                    triggerLocalLog('VECTOR_CLOCK_EVENT', 'Fired logical mutation on Client A. Clock incremented.', 'OK');
+                                  }}
+                                  className="border border-slate-800 bg-slate-900/30 p-2 cursor-pointer hover:border-slate-600 transition-all"
+                                >
+                                  <span className="text-blue-400 block font-black uppercase text-[7px]">Client Node A</span>
+                                  <span className="text-base font-black font-mono mt-1 block">{syncState.vectorClock.ClientA}</span>
+                                  <span className="text-[6px] text-slate-500 font-black uppercase mt-1.5 block">Trigger Event</span>
+                                </div>
+
+                                <div
+                                  onClick={() => {
+                                    const nextClock = { ...syncState.vectorClock, ClientB: syncState.vectorClock.ClientB + 1 };
+                                    updateState('vectorClock', nextClock);
+                                    triggerLocalLog('VECTOR_CLOCK_EVENT', 'Fired logical mutation on Client B. Clock incremented.', 'OK');
+                                  }}
+                                  className="border border-slate-800 bg-slate-900/30 p-2 cursor-pointer hover:border-slate-600 transition-all"
+                                >
+                                  <span className="text-emerald-400 block font-black uppercase text-[7px]">Client Node B</span>
+                                  <span className="text-base font-black font-mono mt-1 block">{syncState.vectorClock.ClientB}</span>
+                                  <span className="text-[6px] text-slate-500 font-black uppercase mt-1.5 block">Trigger Event</span>
+                                </div>
+
+                                <div
+                                  onClick={() => {
+                                    const nextClock = { ...syncState.vectorClock, Server: syncState.vectorClock.Server + 1 };
+                                    updateState('vectorClock', nextClock);
+                                    triggerLocalLog('VECTOR_CLOCK_EVENT', 'Fired authority database commit on Server. Clock incremented.', 'OK');
+                                  }}
+                                  className="border border-slate-800 bg-slate-900/30 p-2 cursor-pointer hover:border-slate-600 transition-all"
+                                >
+                                  <span className="text-purple-400 block font-black uppercase text-[7px]">Server Origin</span>
+                                  <span className="text-base font-black font-mono mt-1 block">{syncState.vectorClock.Server}</span>
+                                  <span className="text-[6px] text-slate-500 font-black uppercase mt-1.5 block">Trigger Event</span>
+                                </div>
+                              </div>
+
+                              <div className="text-[8px] bg-[#111827] border border-slate-800 p-2 text-slate-400 text-center font-mono">
+                                Vector State: <span className="text-amber-400 font-bold">[{syncState.vectorClock.ClientA}, {syncState.vectorClock.ClientB}, {syncState.vectorClock.Server}]</span>
+                              </div>
+                            </div>
+                          )}
+
+                          {/* 9. Local P2P Coupling Link View */}
+                          {syncState.activeTab === 'p2p' && (
+                            <div className="space-y-3">
+                              <div className="flex items-center justify-between border-b border-slate-800 pb-1.5">
+                                <span className="text-[10px] font-bold text-amber-400 uppercase">P2P Cross-Tab Coupled Pipe</span>
+                                <span className="text-[8px] bg-slate-800 px-1 py-0.5 text-slate-400 rounded">Local Sync Pipe</span>
+                              </div>
+                              <p className="text-[9px] text-slate-400 leading-relaxed font-sans">
+                                Replicate document data directly between open browser sessions using zero-cloud BroadcastChannel socket loops.
+                              </p>
+
+                              <div className="flex items-center justify-between border border-slate-800 bg-slate-900/40 p-2.5">
+                                <div className="space-y-0.5">
+                                  <span className="text-[7px] text-slate-500 font-bold uppercase block font-sans">WebRTC Connection</span>
+                                  <span className="text-xs font-black text-emerald-400 uppercase">{syncState.p2pStatus}</span>
+                                </div>
+                                <div className="space-y-0.5 text-right">
+                                  <span className="text-[7px] text-slate-500 font-bold uppercase block font-sans">Throughput Speed</span>
+                                  <span className="text-xs font-black text-slate-200">{syncState.p2pThroughput} KB/sec</span>
+                                </div>
+                              </div>
+
+                              <div className="flex gap-2">
+                                <button
+                                  onClick={() => {
+                                    updateState('p2pStatus', 'Handshaking');
+                                    updateState('p2pThroughput', 0);
+                                    triggerLocalLog('P2P_HANDSHAKE', 'Restarting WebRTC localized tab discovery...', 'PENDING');
+                                    setTimeout(() => {
+                                      const updated = {
+                                        ...syncState,
+                                        p2pStatus: 'Coupled',
+                                        p2pThroughput: Number((10 + Math.random() * 25).toFixed(1))
+                                      };
+                                      updateCanvasElement(el.id, { properties: JSON.stringify({ ...propertiesObj, syncSim: updated }) });
+                                      triggerLocalLog('P2P_ACTIVE', 'Tab coupled successfully. Active cross-buffer stream active.', 'OK');
+                                    }, 800);
+                                  }}
+                                  className="px-2 py-1 bg-slate-800 hover:bg-slate-700 border border-slate-700 text-slate-200 text-[9px] font-black uppercase cursor-pointer"
+                                >
+                                  Restart Local Discovery
+                                </button>
+                              </div>
+                            </div>
+                          )}
+
+                          {/* 10. Merkle Tree State Healer View */}
+                          {syncState.activeTab === 'merkle' && (
+                            <div className="space-y-3">
+                              <div className="flex items-center justify-between border-b border-slate-800 pb-1.5">
+                                <span className="text-[10px] font-bold text-amber-400 uppercase">Merkle Tree Ledger Verification & Deep Healing</span>
+                                <span className="text-[8px] bg-slate-800 px-1 py-0.5 text-slate-400 rounded">Hash Alignment</span>
+                              </div>
+                              <p className="text-[9px] text-slate-400 leading-relaxed font-sans">
+                                Detect and repair silent bit-rot. When any block hash fails verification, only repair the specific branch path mapping to save payload traffic.
+                              </p>
+
+                              {/* Simple Hierarchical Merkle Tree Diagram */}
+                              <div className="bg-black/40 border border-slate-800 p-3 flex flex-col items-center space-y-2 text-[7px] font-mono select-none">
+                                {/* Root */}
+                                {(() => {
+                                  const root = syncState.merkleNodes.find((n: any) => n.id === 'root');
+                                  const b1 = syncState.merkleNodes.find((n: any) => n.id === 'branch-1');
+                                  const b2 = syncState.merkleNodes.find((n: any) => n.id === 'branch-2');
+                                  const l11 = syncState.merkleNodes.find((n: any) => n.id === 'leaf-1-1');
+                                  const l12 = syncState.merkleNodes.find((n: any) => n.id === 'leaf-1-2');
+                                  const l21 = syncState.merkleNodes.find((n: any) => n.id === 'leaf-2-1');
+                                  const l22 = syncState.merkleNodes.find((n: any) => n.id === 'leaf-2-2');
+                                  
+                                  return (
+                                    <>
+                                      <div className={`px-2 py-0.5 border font-extrabold ${root.status === 'corrupt' ? 'border-rose-500 bg-rose-950/40 text-rose-400' : 'border-emerald-500 bg-emerald-950/40 text-emerald-400'}`}>
+                                        ROOT: {root.hash}
+                                      </div>
+                                      
+                                      <div className="flex justify-between w-full max-w-sm px-12">
+                                        <div className={`px-1 py-0.5 border ${b1.status === 'corrupt' ? 'border-rose-500 bg-rose-950/40 text-rose-400' : 'border-slate-800 bg-slate-900/60 text-slate-400'}`}>
+                                          L1: {b1.hash}
+                                        </div>
+                                        <div className={`px-1 py-0.5 border ${b2.status === 'corrupt' ? 'border-rose-500 bg-rose-950/40 text-rose-400' : 'border-slate-800 bg-slate-900/60 text-slate-400'}`}>
+                                          R1: {b2.hash}
+                                        </div>
+                                      </div>
+
+                                      <div className="flex justify-between w-full text-[6px] gap-1">
+                                        <div 
+                                          onClick={() => corruptLeaf('leaf-1-1')}
+                                          className={`cursor-pointer px-1 py-0.5 border rounded-sm hover:border-slate-400 ${l11.status === 'corrupt' ? 'border-rose-500 bg-rose-950/40 text-rose-400' : 'border-slate-800 bg-slate-900/20 text-slate-500'}`}
+                                          title="Click to Corrupt Leaf Node State"
+                                        >
+                                          L1.1: {l11.hash} [CORRUPT]
+                                        </div>
+                                        <div 
+                                          onClick={() => corruptLeaf('leaf-1-2')}
+                                          className={`cursor-pointer px-1 py-0.5 border rounded-sm hover:border-slate-400 ${l12.status === 'corrupt' ? 'border-rose-500 bg-rose-950/40 text-rose-400' : 'border-slate-800 bg-slate-900/20 text-slate-500'}`}
+                                          title="Click to Corrupt Leaf Node State"
+                                        >
+                                          L1.2: {l12.hash} [CORRUPT]
+                                        </div>
+                                        <div 
+                                          onClick={() => corruptLeaf('leaf-2-1')}
+                                          className={`cursor-pointer px-1 py-0.5 border rounded-sm hover:border-slate-400 ${l21.status === 'corrupt' ? 'border-rose-500 bg-rose-950/40 text-rose-400' : 'border-slate-800 bg-slate-900/20 text-slate-500'}`}
+                                          title="Click to Corrupt Leaf Node State"
+                                        >
+                                          R1.1: {l21.hash} [CORRUPT]
+                                        </div>
+                                        <div 
+                                          onClick={() => corruptLeaf('leaf-2-2')}
+                                          className={`cursor-pointer px-1 py-0.5 border rounded-sm hover:border-slate-400 ${l22.status === 'corrupt' ? 'border-rose-500 bg-rose-950/40 text-rose-400' : 'border-slate-800 bg-slate-900/20 text-slate-500'}`}
+                                          title="Click to Corrupt Leaf Node State"
+                                        >
+                                          R1.2: {l22.hash} [CORRUPT]
+                                        </div>
+                                      </div>
+                                    </>
+                                  );
+                                })()}
+                              </div>
+
+                              <div className="flex gap-2">
+                                <button
+                                  onClick={healMerkleTree}
+                                  className="px-2 py-1 bg-emerald-500 text-[#0A0F1D] text-[9px] font-black uppercase cursor-pointer"
+                                >
+                                  Run State Verification & Healing Protocol
+                                </button>
+                              </div>
+                            </div>
+                          )}
+
+                          {/* Footer Action items inside current sandbox */}
+                          <div className="border-t border-slate-900 pt-2.5 mt-3 flex items-center justify-between text-[7px] text-slate-500 font-bold uppercase font-mono">
+                            <span>FEATURE MODULE: ACTIVE</span>
+                            <span>COMPILER: VERIFIED</span>
                           </div>
-                        ))}
-                      </div>
+                        </div>
 
-                      <div className="flex flex-wrap gap-2 font-sans">
-                        <button
-                          onClick={() => {
-                            const time = new Date().toTimeString().split(' ')[0];
-                            const nLog = { time, op: 'OFFLINE_QUEUE_COMMIT', payload: 'Mutated element list while tunnel isolated', status: 'PENDING' };
-                            const updatedLogs = [...syncState.logs, nLog];
-                            const updated = { ...syncState, clientRevision: syncState.clientRevision + 1, logs: updatedLogs };
-                            updateCanvasElement(el.id, { properties: JSON.stringify({ ...propertiesObj, syncSim: updated }) });
-                          }}
-                          className="px-2 py-1 text-[9px] font-bold uppercase border border-slate-700 bg-slate-800 hover:bg-slate-700 cursor-pointer text-[#E5E7EB]"
-                        >
-                          Simulate Local Edit
-                        </button>
-                        <button
-                          onClick={() => {
-                            const time = new Date().toTimeString().split(' ')[0];
-                            const nLog = { time, op: 'RESOLVE_CONFLICTS', payload: `Successfully resolved conflicts using ${syncState.strategy} engine`, status: 'OK' };
-                            const updatedLogs = [...syncState.logs, nLog];
-                            const updated = { ...syncState, clientRevision: syncState.cloudRevision, logs: updatedLogs };
-                            updateCanvasElement(el.id, { properties: JSON.stringify({ ...propertiesObj, syncSim: updated }) });
-                          }}
-                          className="px-2 py-1 text-[9px] font-bold uppercase border-2 border-amber-400 bg-amber-400/20 text-amber-300 hover:bg-amber-400/30 cursor-pointer"
-                        >
-                          Sync & Resolve Conflicts
-                        </button>
+                        {/* Real-time Event Logger Terminal (Right 1 column) */}
+                        <div className="border-2 border-slate-800 bg-slate-950 text-slate-200 p-3 flex flex-col justify-between font-mono text-[9px]">
+                          <div>
+                            <span className="text-[8px] font-black text-slate-500 uppercase block mb-1.5 font-sans">
+                              Active Buffer Terminal Stream:
+                            </span>
+                            <div className="space-y-1.5 max-h-48 overflow-y-auto pr-1">
+                              {syncState.logs.map((log: any, lIdx: number) => (
+                                <div key={lIdx} className="text-[7.5px] border-b border-slate-900 pb-1 leading-tight flex flex-col">
+                                  <div className="flex items-center justify-between text-[6.5px] text-slate-500 font-bold">
+                                    <span>TIMESTAMP: {log.time}</span>
+                                    <span className={`px-1 rounded-sm ${
+                                      log.status === 'OK' ? 'text-emerald-400 bg-emerald-950/60 border border-emerald-900' :
+                                      log.status === 'WARNING' ? 'text-amber-400 bg-amber-950/60 border border-amber-900' :
+                                      log.status === 'CONFLICT' ? 'text-rose-400 bg-rose-950/60 border border-rose-900' :
+                                      'text-blue-400 bg-blue-950/60 border border-blue-900'
+                                    }`}>{log.status}</span>
+                                  </div>
+                                  <div className="mt-0.5 text-slate-300">
+                                    <span className="text-amber-400 font-black uppercase mr-1">[{log.op}]</span>
+                                    {log.payload}
+                                  </div>
+                                </div>
+                              ))}
+                            </div>
+                          </div>
+
+                          <div className="border-t border-slate-900 pt-2 flex items-center justify-between text-[7px] text-slate-500 font-bold font-sans mt-2">
+                            <span>SHIELD PROTECTION: GATED</span>
+                            <span>LOGS: VERIFIED</span>
+                          </div>
+                        </div>
+
                       </div>
                     </div>
                   );
