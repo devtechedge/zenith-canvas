@@ -18,7 +18,10 @@ import {
   Type as TextIcon, 
   Check, 
   ChevronRight,
-  Calculator
+  Calculator,
+  ArrowUpDown,
+  ArrowUp,
+  ArrowDown
 } from 'lucide-react';
 
 interface DataGridProps {
@@ -40,6 +43,22 @@ export default function DataGrid({ tableId }: DataGridProps) {
   // 2. Filter states
   const [filters, setFilters] = useState<FilterRule[]>([]);
   const [logicalOperator, setLogicalOperator] = useState<'AND' | 'OR'>('AND');
+
+  // Sorting and Aggregations states
+  const [sortConfig, setSortConfig] = useState<{ columnId: string; direction: 'asc' | 'desc' } | null>(null);
+  const [columnAggregations, setColumnAggregations] = useState<Record<string, 'sum' | 'avg' | 'min' | 'max' | 'count' | 'none'>>({});
+
+  const handleSortToggle = (colId: string) => {
+    setSortConfig(current => {
+      if (current?.columnId === colId) {
+        if (current.direction === 'asc') {
+          return { columnId: colId, direction: 'desc' };
+        }
+        return null; // Toggle off
+      }
+      return { columnId: colId, direction: 'asc' };
+    });
+  };
 
   // Parse schema columns
   const columns = useMemo(() => {
@@ -113,6 +132,38 @@ export default function DataGrid({ tableId }: DataGridProps) {
     });
   }, [rows, filters, logicalOperator]);
 
+  // Client-side sort pipeline on filtered rows
+  const sortedAndFilteredRows = useMemo(() => {
+    const result = [...filteredRows];
+    if (sortConfig) {
+      const { columnId, direction } = sortConfig;
+      const column = columns.find(c => c.id === columnId);
+      result.sort((a, b) => {
+        let valA: any = '';
+        let valB: any = '';
+        try {
+          valA = JSON.parse(a.cells)[columnId] ?? '';
+          valB = JSON.parse(b.cells)[columnId] ?? '';
+        } catch {}
+
+        if (column?.type === 'Number') {
+          const numA = Number(valA);
+          const numB = Number(valB);
+          if (!isNaN(numA) && !isNaN(numB)) {
+            return direction === 'asc' ? numA - numB : numB - numA;
+          }
+        }
+
+        const strA = String(valA).toLowerCase();
+        const strB = String(valB).toLowerCase();
+        if (strA < strB) return direction === 'asc' ? -1 : 1;
+        if (strA > strB) return direction === 'asc' ? 1 : -1;
+        return 0;
+      });
+    }
+    return result;
+  }, [filteredRows, sortConfig, columns]);
+
   // 4. Columns mutations
   const handleAddColumn = async () => {
     if (!collectionTable) return;
@@ -170,28 +221,53 @@ export default function DataGrid({ tableId }: DataGridProps) {
 
   // 6. Aggregations Calculations in Footer
   const aggregations = useMemo(() => {
-    const agg: Record<string, { sum: number; avg: number; count: number }> = {};
+    const agg: Record<string, { value: string | number; type: string }> = {};
     columns.forEach(col => {
-      let sum = 0;
-      let count = 0;
-      filteredRows.forEach(row => {
+      const activeType = columnAggregations[col.id] || (col.type === 'Number' ? 'sum' : 'count');
+      
+      if (activeType === 'none') {
+        agg[col.id] = { value: '-', type: 'none' };
+        return;
+      }
+
+      const values = filteredRows.map(row => {
         try {
           const cells = JSON.parse(row.cells);
-          const val = cells[col.id];
-          if (col.type === 'Number' && !isNaN(Number(val))) {
-            sum += Number(val);
-            count++;
-          }
-        } catch {}
-      });
-      agg[col.id] = {
-        sum,
-        avg: count > 0 ? Math.round((sum / count) * 100) / 100 : 0,
-        count: filteredRows.length,
-      };
+          return cells[col.id];
+        } catch {
+          return undefined;
+        }
+      }).filter(v => v !== undefined && v !== null && v !== '');
+
+      if (activeType === 'count') {
+        agg[col.id] = { value: `${values.length} rows`, type: 'count' };
+        return;
+      }
+
+      const numValues = values.map(v => Number(v)).filter(n => !isNaN(n));
+
+      if (numValues.length === 0) {
+        agg[col.id] = { value: 0, type: activeType };
+        return;
+      }
+
+      if (activeType === 'sum') {
+        const sum = numValues.reduce((s, v) => s + v, 0);
+        agg[col.id] = { value: sum, type: 'sum' };
+      } else if (activeType === 'avg') {
+        const sum = numValues.reduce((s, v) => s + v, 0);
+        const avg = Math.round((sum / numValues.length) * 100) / 100;
+        agg[col.id] = { value: avg, type: 'avg' };
+      } else if (activeType === 'min') {
+        const min = Math.min(...numValues);
+        agg[col.id] = { value: min, type: 'min' };
+      } else if (activeType === 'max') {
+        const max = Math.max(...numValues);
+        agg[col.id] = { value: max, type: 'max' };
+      }
     });
     return agg;
-  }, [filteredRows, columns]);
+  }, [filteredRows, columns, columnAggregations]);
 
   // HTML5 Drag and Drop for Kanban board lane transition
   const handleKanbanDragStart = (e: React.DragEvent, rowId: string) => {
@@ -285,21 +361,35 @@ export default function DataGrid({ tableId }: DataGridProps) {
             {/* Headers */}
             <thead className="bg-[#F4F7F6] border-b-2 border-[#1A1A1A] text-xs font-bold font-mono">
               <tr>
-                {columns.map(col => (
-                  <th key={col.id} className="p-2 border-r-2 border-[#1A1A1A] relative group/header min-w-[150px]">
-                    <div className="flex items-center justify-between">
-                      <div className="flex items-center space-x-1">
-                        {col.type === 'Number' && <Hash className="w-3 h-3 text-gray-500" />}
-                        {col.type === 'Date' && <Calendar className="w-3 h-3 text-gray-500" />}
-                        {col.type === 'Text' && <TextIcon className="w-3 h-3 text-gray-500" />}
-                        {col.type === 'Select' && <Check className="w-3 h-3 text-gray-500" />}
-                        <input
-                          type="text"
-                          value={col.name}
-                          onChange={(e) => handleUpdateColumnName(col.id, e.target.value)}
-                          className="bg-transparent border-none outline-none font-bold text-[#1A1A1A] focus:bg-white px-1 rounded max-w-[100px]"
-                        />
-                      </div>
+                {columns.map(col => {
+                  const isSorted = sortConfig?.columnId === col.id;
+                  return (
+                    <th key={col.id} className="p-2 border-r-2 border-[#1A1A1A] relative group/header min-w-[150px]">
+                      <div className="flex items-center justify-between">
+                        <div className="flex items-center space-x-1">
+                          <button 
+                            type="button"
+                            onClick={() => handleSortToggle(col.id)}
+                            className={`p-0.5 rounded border border-transparent hover:border-gray-300 hover:bg-white text-gray-400 hover:text-[#1A1A1A] transition-all flex items-center justify-center mr-1 ${isSorted ? 'text-[#FFB703]' : ''}`}
+                            title="Toggle column sort"
+                          >
+                            {isSorted ? (
+                              sortConfig?.direction === 'asc' ? <ArrowUp className="w-3.5 h-3.5" /> : <ArrowDown className="w-3.5 h-3.5" />
+                            ) : (
+                              <ArrowUpDown className="w-3.5 h-3.5" />
+                            )}
+                          </button>
+                          {col.type === 'Number' && <Hash className="w-3 h-3 text-gray-500" />}
+                          {col.type === 'Date' && <Calendar className="w-3 h-3 text-gray-500" />}
+                          {col.type === 'Text' && <TextIcon className="w-3 h-3 text-gray-500" />}
+                          {col.type === 'Select' && <Check className="w-3 h-3 text-gray-500" />}
+                          <input
+                            type="text"
+                            value={col.name}
+                            onChange={(e) => handleUpdateColumnName(col.id, e.target.value)}
+                            className="bg-transparent border-none outline-none font-bold text-[#1A1A1A] focus:bg-white px-1 rounded max-w-[100px]"
+                          />
+                        </div>
 
                       {/* Header utilities (Type transformer & deleter) */}
                       <div className="flex items-center space-x-0.5 opacity-0 group-hover/header:opacity-100 transition-opacity">
@@ -323,7 +413,7 @@ export default function DataGrid({ tableId }: DataGridProps) {
                       </div>
                     </div>
                   </th>
-                ))}
+                );})}
                 {/* Column addition trigger */}
                 <th className="p-2 w-12 text-center">
                   <button
@@ -339,14 +429,14 @@ export default function DataGrid({ tableId }: DataGridProps) {
 
             {/* Rows */}
             <tbody className="divide-y-2 divide-[#1A1A1A] text-xs">
-              {filteredRows.length === 0 ? (
+              {sortedAndFilteredRows.length === 0 ? (
                 <tr>
                   <td colSpan={columns.length + 1} className="p-8 text-center text-gray-400 font-medium">
                     No matching grid rows found. Add a record to start.
                   </td>
                 </tr>
               ) : (
-                filteredRows.map(row => {
+                sortedAndFilteredRows.map(row => {
                   let cellData: Record<string, any> = {};
                   try {
                     cellData = JSON.parse(row.cells);
@@ -402,22 +492,42 @@ export default function DataGrid({ tableId }: DataGridProps) {
             {filteredRows.length > 0 && (
               <tfoot className="bg-[#F4F7F6] border-t-4 border-[#1A1A1A] font-mono text-[10px]">
                 <tr className="divide-x-2 divide-[#1A1A1A]">
-                  {columns.map(col => (
-                    <td key={col.id} className="p-2 text-gray-500 font-bold space-y-1">
-                      <div className="flex items-center space-x-1 text-gray-400">
-                        <Calculator className="w-3 h-3" />
-                        <span>METRIC SUMMARY</span>
-                      </div>
-                      {col.type === 'Number' ? (
-                        <div className="space-y-0.5">
-                          <div>Sum: <span className="text-[#1A1A1A] font-extrabold">{aggregations[col.id]?.sum}</span></div>
-                          <div>Avg: <span className="text-[#1A1A1A] font-extrabold">{aggregations[col.id]?.avg}</span></div>
+                  {columns.map(col => {
+                    const currentType = columnAggregations[col.id] || (col.type === 'Number' ? 'sum' : 'count');
+                    const aggData = aggregations[col.id] || { value: '-', type: 'none' };
+                    return (
+                      <td key={col.id} className="p-2 text-gray-500 font-bold space-y-2 bg-[#FAFBFA]">
+                        <div className="flex items-center justify-between border-b border-gray-200 pb-1">
+                          <div className="flex items-center space-x-1 text-gray-400">
+                            <Calculator className="w-3 h-3" />
+                            <span>AGGREGATION</span>
+                          </div>
+                          <select
+                            value={currentType}
+                            onChange={(e) => setColumnAggregations(prev => ({ ...prev, [col.id]: e.target.value as any }))}
+                            className="bg-white border border-gray-300 rounded text-[9px] p-0.5 outline-none font-bold text-gray-700 cursor-pointer hover:bg-slate-50"
+                          >
+                            <option value="none">None</option>
+                            <option value="count">Count</option>
+                            {col.type === 'Number' && (
+                              <>
+                                <option value="sum">Sum</option>
+                                <option value="avg">Avg</option>
+                                <option value="min">Min</option>
+                                <option value="max">Max</option>
+                              </>
+                            )}
+                          </select>
                         </div>
-                      ) : (
-                        <div>Count: <span className="text-[#1A1A1A] font-extrabold">{aggregations[col.id]?.count} rows</span></div>
-                      )}
-                    </td>
-                  ))}
+                        <div className="text-xs text-[#1A1A1A] font-black tracking-tight">
+                          <span className="uppercase text-[9px] text-emerald-800 font-extrabold mr-1 bg-emerald-100 px-1 py-0.5 rounded">
+                            {aggData.type}:
+                          </span>
+                          <span>{aggData.value}</span>
+                        </div>
+                      </td>
+                    );
+                  })}
                   <td className="p-2 bg-gray-100" />
                 </tr>
               </tfoot>

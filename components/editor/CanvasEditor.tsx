@@ -58,17 +58,113 @@ const playTypewriterSound = (isSpace: boolean) => {
   }
 };
 
+const generateTableId = () => {
+  return `table-${Math.random().toString(36).substring(2, 11)}`;
+};
+
 interface CanvasEditorProps {
   canvasId: string;
+  isLocked?: boolean;
 }
 
-export default function CanvasEditor({ canvasId }: CanvasEditorProps) {
+export default function CanvasEditor({ canvasId, isLocked = false }: CanvasEditorProps) {
   const { 
     createCanvasElement, 
     updateCanvasElement, 
     deleteCanvasElement,
     createCollectionTable
   } = useCanvasSync();
+
+  const [focusedId, setFocusedId] = useState<string | null>(null);
+
+  const renderDynamicContent = (text: string) => {
+    if (!text || text.trim() === '') return <span className="text-gray-300 italic font-normal">Empty block</span>;
+
+    const regex = /({{[a-zA-Z0-9_]+}}|\b(?:IMPORTANT|TODO|FIXME|NOTE|DONE):)/g;
+    const tokens = text.split(regex);
+
+    return (
+      <span className="inline-wrap">
+        {tokens.map((token, i) => {
+          if (token === '{{today}}') {
+            return (
+              <span key={i} className="inline-flex items-center mx-1 px-2 py-0.5 rounded-full text-[10px] font-bold bg-emerald-100 text-emerald-800 border border-emerald-300 font-mono select-none">
+                📅 {new Date().toISOString().split('T')[0]}
+              </span>
+            );
+          }
+          if (token === '{{total_blocks}}') {
+            return (
+              <span key={i} className="inline-flex items-center mx-1 px-2 py-0.5 rounded-full text-[10px] font-bold bg-sky-100 text-sky-800 border border-sky-300 font-mono select-none">
+                🔢 {elements.length} blocks
+              </span>
+            );
+          }
+          if (token === '{{completed_tasks}}') {
+            const count = elements.filter(el => {
+              if (el.type !== 'todo') return false;
+              try {
+                return JSON.parse(el.properties).checked === true;
+              } catch {
+                return false;
+              }
+            }).length;
+            return (
+              <span key={i} className="inline-flex items-center mx-1 px-2 py-0.5 rounded-full text-[10px] font-bold bg-indigo-100 text-indigo-800 border border-indigo-300 font-mono select-none">
+                ✅ {count} completed
+              </span>
+            );
+          }
+          if (token === '{{sandbox_count}}') {
+            const count = elements.filter(el => el.type === 'code_sandbox').length;
+            return (
+              <span key={i} className="inline-flex items-center mx-1 px-2 py-0.5 rounded-full text-[10px] font-bold bg-purple-100 text-purple-800 border border-purple-300 font-mono select-none">
+                💻 {count} sandboxes
+              </span>
+            );
+          }
+          
+          if (token === 'IMPORTANT:') {
+            return (
+              <span key={i} className="inline-flex items-center mr-1.5 px-1.5 py-0.5 rounded bg-rose-500 text-white font-black text-[9px] tracking-wider uppercase border border-rose-600 shadow-sm font-mono select-none">
+                🔴 IMPORTANT
+              </span>
+            );
+          }
+          if (token === 'TODO:') {
+            return (
+              <span key={i} className="inline-flex items-center mr-1.5 px-1.5 py-0.5 rounded bg-amber-400 text-[#1A1A1A] font-black text-[9px] tracking-wider uppercase border border-amber-500 shadow-sm font-mono select-none">
+                🟡 TODO
+              </span>
+            );
+          }
+          if (token === 'FIXME:') {
+            return (
+              <span key={i} className="inline-flex items-center mr-1.5 px-1.5 py-0.5 rounded bg-orange-500 text-white font-black text-[9px] tracking-wider uppercase border border-orange-600 shadow-sm font-mono select-none">
+                🟠 FIXME
+              </span>
+            );
+          }
+          if (token === 'NOTE:') {
+            return (
+              <span key={i} className="inline-flex items-center mr-1.5 px-1.5 py-0.5 rounded bg-blue-500 text-white font-black text-[9px] tracking-wider uppercase border border-blue-600 shadow-sm font-mono select-none">
+                🔵 NOTE
+              </span>
+            );
+          }
+          if (token === 'DONE:') {
+            return (
+              <span key={i} className="inline-flex items-center mr-1.5 px-1.5 py-0.5 rounded bg-emerald-500 text-white font-black text-[9px] tracking-wider uppercase border border-emerald-600 shadow-sm font-mono select-none">
+                🟢 DONE
+              </span>
+            );
+          }
+
+          return token;
+        })}
+      </span>
+    );
+  };
 
   // Load and sort elements of the current canvas
   const elements = useLiveQuery(async () => {
@@ -165,7 +261,7 @@ export default function CanvasEditor({ canvasId }: CanvasEditorProps) {
 
     if (commandId === 'collection_ref') {
       // Setup table reference properties
-      const tableId = `table-${Math.random().toString(36).substring(2, 11)}`;
+      const tableId = generateTableId();
       await updateCanvasElement(elementId, {
         type: 'collection_ref',
         content: 'Data-Grid Table',
@@ -351,47 +447,81 @@ export default function CanvasEditor({ canvasId }: CanvasEditorProps) {
               onAddBelow={() => handleInsertBelow(el.sortOrder)}
               onMoveUp={idx > 0 ? () => handleMoveUp(idx) : undefined}
               onMoveDown={idx < elements.length - 1 ? () => handleMoveDown(idx) : undefined}
+              isLocked={isLocked}
             >
               {/* HEADING 1 ELEMENT */}
               {el.type === 'heading_1' && (
-                <textarea
-                  id={`textarea-${el.id}`}
-                  value={el.content}
-                  placeholder="Heading 1 (Use '/' for insert commands...)"
-                  onChange={(e) => updateCanvasElement(el.id, { content: e.target.value })}
-                  onKeyDown={(e) => handleElementKeyDown(e, el)}
-                  onSelect={(e) => handleSelection(e, el)}
-                  rows={1}
-                  className="w-full bg-transparent resize-none border-none outline-none font-black text-3xl sm:text-4xl text-[#1A1A1A] tracking-tight placeholder-gray-300 font-sans leading-tight py-1"
-                />
+                focusedId === el.id && !isLocked ? (
+                  <textarea
+                    id={`textarea-${el.id}`}
+                    value={el.content}
+                    autoFocus
+                    placeholder="Heading 1 (Use '/' for insert commands...)"
+                    onChange={(e) => updateCanvasElement(el.id, { content: e.target.value })}
+                    onKeyDown={(e) => handleElementKeyDown(e, el)}
+                    onSelect={(e) => handleSelection(e, el)}
+                    onBlur={() => setFocusedId(null)}
+                    rows={1}
+                    className="w-full bg-transparent resize-none border-none outline-none font-black text-3xl sm:text-4xl text-[#1A1A1A] tracking-tight placeholder-gray-300 font-sans leading-tight py-1"
+                  />
+                ) : (
+                  <div
+                    onClick={() => !isLocked && setFocusedId(el.id)}
+                    className="w-full font-black text-3xl sm:text-4xl text-[#1A1A1A] tracking-tight leading-tight py-1 cursor-text min-h-[40px]"
+                  >
+                    {renderDynamicContent(el.content)}
+                  </div>
+                )
               )}
 
               {/* HEADING 2 ELEMENT */}
               {el.type === 'heading_2' && (
-                <textarea
-                  id={`textarea-${el.id}`}
-                  value={el.content}
-                  placeholder="Heading 2 (Use '/' for commands)"
-                  onChange={(e) => updateCanvasElement(el.id, { content: e.target.value })}
-                  onKeyDown={(e) => handleElementKeyDown(e, el)}
-                  onSelect={(e) => handleSelection(e, el)}
-                  rows={1}
-                  className="w-full bg-transparent resize-none border-none outline-none font-extrabold text-xl sm:text-2xl text-[#1A1A1A] tracking-tight placeholder-gray-300 font-sans leading-tight py-1"
-                />
+                focusedId === el.id && !isLocked ? (
+                  <textarea
+                    id={`textarea-${el.id}`}
+                    value={el.content}
+                    autoFocus
+                    placeholder="Heading 2 (Use '/' for commands)"
+                    onChange={(e) => updateCanvasElement(el.id, { content: e.target.value })}
+                    onKeyDown={(e) => handleElementKeyDown(e, el)}
+                    onSelect={(e) => handleSelection(e, el)}
+                    onBlur={() => setFocusedId(null)}
+                    rows={1}
+                    className="w-full bg-transparent resize-none border-none outline-none font-extrabold text-xl sm:text-2xl text-[#1A1A1A] tracking-tight placeholder-gray-300 font-sans leading-tight py-1"
+                  />
+                ) : (
+                  <div
+                    onClick={() => !isLocked && setFocusedId(el.id)}
+                    className="w-full font-extrabold text-xl sm:text-2xl text-[#1A1A1A] tracking-tight leading-tight py-1 cursor-text min-h-[32px]"
+                  >
+                    {renderDynamicContent(el.content)}
+                  </div>
+                )
               )}
 
               {/* PARAGRAPH TEXT ELEMENT */}
               {el.type === 'text' && (
-                <textarea
-                  id={`textarea-${el.id}`}
-                  value={el.content}
-                  placeholder="Start writing plain text, or type '/' for interactive data grids & checklists..."
-                  onChange={(e) => updateCanvasElement(el.id, { content: e.target.value })}
-                  onKeyDown={(e) => handleElementKeyDown(e, el)}
-                  onSelect={(e) => handleSelection(e, el)}
-                  rows={1}
-                  className="w-full bg-transparent resize-none border-none outline-none font-medium text-sm text-[#1A1A1A] placeholder-gray-300 font-sans leading-relaxed py-1 focus:bg-white/40 rounded px-1 transition-colors"
-                />
+                focusedId === el.id && !isLocked ? (
+                  <textarea
+                    id={`textarea-${el.id}`}
+                    value={el.content}
+                    autoFocus
+                    placeholder="Start writing plain text, or type '/' for interactive data grids & checklists..."
+                    onChange={(e) => updateCanvasElement(el.id, { content: e.target.value })}
+                    onKeyDown={(e) => handleElementKeyDown(e, el)}
+                    onSelect={(e) => handleSelection(e, el)}
+                    onBlur={() => setFocusedId(null)}
+                    rows={1}
+                    className="w-full bg-transparent resize-none border-none outline-none font-medium text-sm text-[#1A1A1A] placeholder-gray-300 font-sans leading-relaxed py-1 focus:bg-white/40 rounded px-1 transition-colors"
+                  />
+                ) : (
+                  <div
+                    onClick={() => !isLocked && setFocusedId(el.id)}
+                    className="w-full font-medium text-sm text-[#1A1A1A] leading-relaxed py-1 cursor-text focus:bg-white/10 rounded px-1 min-h-[24px]"
+                  >
+                    {renderDynamicContent(el.content)}
+                  </div>
+                )
               )}
 
               {/* CHECKLIST TODO ELEMENT */}
@@ -400,22 +530,36 @@ export default function CanvasEditor({ canvasId }: CanvasEditorProps) {
                   <input
                     type="checkbox"
                     checked={!!propertiesObj.checked}
+                    disabled={isLocked}
                     onChange={(e) => updateCanvasElement(el.id, { 
                       properties: JSON.stringify({ ...propertiesObj, checked: e.target.checked }) 
                     })}
                     className="w-4 h-4 rounded-none border-2 border-[#1A1A1A] text-[#2D6A4F] focus:ring-0 focus:ring-offset-0 cursor-pointer mt-1"
                   />
-                  <textarea
-                    id={`textarea-${el.id}`}
-                    value={el.content}
-                    placeholder="Checklist task (Press '/' for block insert...)"
-                    onChange={(e) => updateCanvasElement(el.id, { content: e.target.value })}
-                    onKeyDown={(e) => handleElementKeyDown(e, el)}
-                    rows={1}
-                    className={`w-full bg-transparent resize-none border-none outline-none font-bold text-sm text-[#1A1A1A] placeholder-gray-300 font-sans leading-relaxed ${
-                      propertiesObj.checked ? 'line-through text-gray-400 font-medium' : ''
-                    }`}
-                  />
+                  {focusedId === el.id && !isLocked ? (
+                    <textarea
+                      id={`textarea-${el.id}`}
+                      value={el.content}
+                      autoFocus
+                      placeholder="Checklist task (Press '/' for block insert...)"
+                      onChange={(e) => updateCanvasElement(el.id, { content: e.target.value })}
+                      onKeyDown={(e) => handleElementKeyDown(e, el)}
+                      onBlur={() => setFocusedId(null)}
+                      rows={1}
+                      className={`w-full bg-transparent resize-none border-none outline-none font-bold text-sm text-[#1A1A1A] placeholder-gray-300 font-sans leading-relaxed ${
+                        propertiesObj.checked ? 'line-through text-gray-400 font-medium' : ''
+                      }`}
+                    />
+                  ) : (
+                    <div
+                      onClick={() => !isLocked && setFocusedId(el.id)}
+                      className={`w-full font-bold text-sm text-[#1A1A1A] leading-relaxed cursor-text min-h-[24px] ${
+                        propertiesObj.checked ? 'line-through text-gray-400 font-medium' : ''
+                      }`}
+                    >
+                      {renderDynamicContent(el.content)}
+                    </div>
+                  )}
                 </div>
               )}
 
@@ -439,11 +583,12 @@ export default function CanvasEditor({ canvasId }: CanvasEditorProps) {
                     <textarea
                       id={`textarea-${el.id}`}
                       value={el.content}
+                      disabled={isLocked}
                       placeholder="Callout info block text..."
                       onChange={(e) => updateCanvasElement(el.id, { content: e.target.value })}
                       onKeyDown={(e) => handleElementKeyDown(e, el)}
                       rows={2}
-                      className="w-full bg-transparent resize-none border-none outline-none font-bold text-xs text-[#1A1A1A] placeholder-gray-300 font-sans leading-relaxed"
+                      className="w-full bg-transparent resize-none border-none outline-none font-bold text-xs text-[#1A1A1A] placeholder-gray-300 font-sans leading-relaxed disabled:cursor-not-allowed"
                     />
                     {/* Mood selection list */}
                     <div className="flex flex-wrap items-center gap-1 mt-2 pt-1.5 border-t border-dashed border-[#1A1A1A]/10 text-[9px] font-mono font-bold text-gray-400">
@@ -456,10 +601,11 @@ export default function CanvasEditor({ canvasId }: CanvasEditorProps) {
                       ].map(m => (
                         <button
                           key={m.id}
+                          disabled={isLocked}
                           onClick={() => updateCanvasElement(el.id, {
                             properties: JSON.stringify({ ...propertiesObj, mood: m.id })
                           })}
-                          className={`px-1.5 py-0.5 border border-[#1A1A1A] rounded-none bg-white hover:bg-slate-50 transition-all text-[#1A1A1A] ${
+                          className={`px-1.5 py-0.5 border border-[#1A1A1A] rounded-none bg-white hover:bg-slate-50 disabled:hover:bg-white disabled:cursor-not-allowed transition-all text-[#1A1A1A] ${
                             (propertiesObj.mood || 'info') === m.id ? 'bg-[#FFB703] border-2 border-black font-extrabold' : ''
                           }`}
                         >

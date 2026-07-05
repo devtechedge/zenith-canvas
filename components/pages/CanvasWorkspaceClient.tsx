@@ -7,6 +7,7 @@ import { useCanvasSync } from '@/lib/hooks/useCanvasSync';
 import Sidebar from '@/components/layout/Sidebar';
 import CommandPalette from '@/components/layout/CommandPalette';
 import CanvasEditor from '@/components/editor/CanvasEditor';
+import AcousticWaveOverlay from '@/components/editor/AcousticWaveOverlay';
 import { 
   ChevronLeft, 
   Trash2, 
@@ -19,7 +20,9 @@ import {
   Check,
   Download,
   Share2,
-  Menu
+  Menu,
+  Lock,
+  Unlock
 } from 'lucide-react';
 import Link from 'next/link';
 import { useParams, useRouter } from 'next/navigation';
@@ -61,6 +64,16 @@ export default function CanvasWorkspaceClient() {
   });
   const [isFocusMode, setIsFocusMode] = useState<boolean>(false);
   const [isMobileSidebarOpen, setIsMobileSidebarOpen] = useState(false);
+  const [isLocked, setIsLocked] = useState<boolean>(() => {
+    if (typeof window === 'undefined') return false;
+    return localStorage.getItem(`zenith-canvas-locked-${canvasId}`) === 'true';
+  });
+
+  const toggleLock = () => {
+    const nextLocked = !isLocked;
+    setIsLocked(nextLocked);
+    localStorage.setItem(`zenith-canvas-locked-${canvasId}`, String(nextLocked));
+  };
 
   // 1. Fetch current canvas details
   const canvas = useLiveQuery(() => db.canvases.get(canvasId), [canvasId]);
@@ -119,6 +132,62 @@ export default function CanvasWorkspaceClient() {
       await updateCanvasCover(canvasId, coverUrl || null);
       setShowCoverInput(false);
     }
+  };
+
+  const generateProceduralCover = async (type: 'neo_grid' | 'bauhaus' | 'warning_stripes' | 'cosmic_pulse') => {
+    let svgString = '';
+    if (type === 'neo_grid') {
+      svgString = `<svg xmlns="http://www.w3.org/2000/svg" width="800" height="300" viewBox="0 0 800 300">
+        <rect width="800" height="300" fill="#0B0C10" />
+        <defs>
+          <linearGradient id="gridGrad" x1="0%" y1="0%" x2="100%" y2="100%">
+            <stop offset="0%" stop-color="#4E0E2E" />
+            <stop offset="100%" stop-color="#0A192F" />
+          </linearGradient>
+          <pattern id="grid" width="30" height="30" patternUnits="userSpaceOnUse">
+            <path d="M 30 0 L 0 0 0 30" fill="none" stroke="#66FCF1" stroke-width="0.5" stroke-opacity="0.3"/>
+          </pattern>
+        </defs>
+        <rect width="800" height="300" fill="url(#gridGrad)" />
+        <rect width="800" height="300" fill="url(#grid)" />
+        <line x1="100" y1="50" x2="700" y2="250" stroke="#FF007F" stroke-width="2" stroke-opacity="0.8" />
+        <circle cx="400" cy="150" r="60" fill="none" stroke="#66FCF1" stroke-width="3" stroke-opacity="0.7" />
+      </svg>`;
+    } else if (type === 'bauhaus') {
+      svgString = `<svg xmlns="http://www.w3.org/2000/svg" width="800" height="300" viewBox="0 0 800 300">
+        <rect width="800" height="300" fill="#F4F1EA" />
+        <circle cx="200" cy="150" r="100" fill="#E63946" opacity="0.8" />
+        <rect x="350" y="50" width="150" height="200" fill="#457B9D" opacity="0.8" />
+        <polygon points="550,250 650,50 750,250" fill="#E9C46A" opacity="0.9" />
+        <line x1="0" y1="150" x2="800" y2="150" stroke="#1A1A1A" stroke-width="4" />
+        <line x1="400" y1="0" x2="400" y2="300" stroke="#1A1A1A" stroke-width="2" stroke-dasharray="10,5" />
+      </svg>`;
+    } else if (type === 'warning_stripes') {
+      svgString = `<svg xmlns="http://www.w3.org/2000/svg" width="800" height="300" viewBox="0 0 800 300">
+        <rect width="800" height="300" fill="#FFB703" />
+        <defs>
+          <pattern id="stripes" width="40" height="40" patternTransform="rotate(45 0 0)" patternUnits="userSpaceOnUse">
+            <line x1="0" y1="0" x2="0" y2="40" stroke="#1A1A1A" stroke-width="20" />
+          </pattern>
+        </defs>
+        <rect width="800" height="300" fill="url(#stripes)" />
+        <rect x="150" y="100" width="500" height="100" fill="#1A1A1A" stroke="#FFB703" stroke-width="4" />
+        <text x="400" y="160" fill="#FFB703" font-family="monospace" font-size="28" font-weight="900" text-anchor="middle">WARNING: ZENITH SYSTEM ACTIVE</text>
+      </svg>`;
+    } else if (type === 'cosmic_pulse') {
+      svgString = `<svg xmlns="http://www.w3.org/2000/svg" width="800" height="300" viewBox="0 0 800 300">
+        <rect width="800" height="300" fill="#1D1A39" />
+        <circle cx="400" cy="150" r="120" fill="none" stroke="#812F33" stroke-width="12" opacity="0.4" />
+        <circle cx="400" cy="150" r="90" fill="none" stroke="#F15C5C" stroke-width="8" opacity="0.6" />
+        <circle cx="400" cy="150" r="60" fill="none" stroke="#FFB067" stroke-width="4" opacity="0.8" />
+        <circle cx="400" cy="150" r="30" fill="#FFB067" />
+        <path d="M 100 150 Q 250 50, 400 150 T 700 150" fill="none" stroke="#FFFFFF" stroke-width="2" stroke-opacity="0.5" />
+      </svg>`;
+    }
+    
+    const base64Svg = `data:image/svg+xml;base64,${btoa(unescape(encodeURIComponent(svgString)))}`;
+    await updateCanvasCover(canvasId, base64Svg);
+    setCoverUrl(base64Svg);
   };
 
   const handleDeleteCurrent = async () => {
@@ -534,6 +603,20 @@ export default function CanvasWorkspaceClient() {
               <span className="hidden sm:inline">Export Portable</span>
             </button>
  
+            {/* Document Lock/Unlock Toggle */}
+            <button
+              onClick={toggleLock}
+              className={`p-1.5 border-2 border-[#1A1A1A] rounded-none text-xs font-bold flex items-center space-x-1 cursor-pointer transition-colors ${
+                isLocked 
+                  ? 'bg-red-500 text-white hover:bg-red-600' 
+                  : 'bg-white hover:bg-gray-50 text-gray-700'
+              }`}
+              title={isLocked ? "Unlock document to edit" : "Lock document to prevent edits"}
+            >
+              {isLocked ? <Lock className="w-3.5 h-3.5" /> : <Unlock className="w-3.5 h-3.5" />}
+              <span className="hidden sm:inline">{isLocked ? 'Locked' : 'Lock'}</span>
+            </button>
+
             {/* Document actions */}
             <button
               onClick={() => setShowCoverInput(!showCoverInput)}
@@ -557,6 +640,7 @@ export default function CanvasWorkspaceClient() {
  
         {/* Cover image area */}
         <div className="flex-1 overflow-y-auto relative">
+          {isFocusMode && <AcousticWaveOverlay />}
           
           {/* Dynamic Cover Banner */}
           {canvas.coverImage && (
@@ -588,8 +672,8 @@ export default function CanvasWorkspaceClient() {
  
           {/* Cover Input Field */}
           {showCoverInput && (
-            <div className="max-w-4xl mx-auto px-6 mt-4">
-              <div className="bg-white border-2 border-[#1A1A1A] neo-shadow-sm p-3 rounded-none flex items-center space-x-2">
+            <div className="max-w-4xl mx-auto px-6 mt-4 space-y-3 bg-white border-2 border-[#1A1A1A] neo-shadow-sm p-4 rounded-none">
+              <div className="flex items-center space-x-2">
                 <LinkIcon className="w-4 h-4 text-gray-400 flex-shrink-0" />
                 <input
                   type="text"
@@ -600,14 +684,63 @@ export default function CanvasWorkspaceClient() {
                 />
                 <button
                   onClick={handleSaveCover}
-                  className="px-3 py-1 bg-[#2D6A4F] text-white border-2 border-[#1A1A1A] text-xs font-bold uppercase rounded-none"
+                  className="px-3 py-1 bg-[#2D6A4F] text-white border-2 border-[#1A1A1A] text-xs font-bold uppercase rounded-none cursor-pointer"
                 >
                   Save
                 </button>
               </div>
+              <div className="border-t border-gray-100 pt-3">
+                <div className="text-[10px] font-bold font-mono text-gray-400 mb-2 uppercase tracking-wide">
+                  ⚡ 2026 BRUTALIST VECTOR GENERATORS
+                </div>
+                <div className="grid grid-cols-2 sm:grid-cols-4 gap-2">
+                  <button
+                    onClick={() => generateProceduralCover('neo_grid')}
+                    className="p-1.5 border-2 border-[#1A1A1A] bg-[#0B0C10] text-[#66FCF1] hover:text-white text-[10px] font-black font-mono uppercase cursor-pointer text-center hover:scale-[1.02] transition-transform"
+                  >
+                    Neo Retro Grid
+                  </button>
+                  <button
+                    onClick={() => generateProceduralCover('bauhaus')}
+                    className="p-1.5 border-2 border-[#1A1A1A] bg-[#F4F1EA] text-[#E63946] hover:text-[#1A1A1A] text-[10px] font-black font-mono uppercase cursor-pointer text-center hover:scale-[1.02] transition-transform"
+                  >
+                    Bauhaus Spheres
+                  </button>
+                  <button
+                    onClick={() => generateProceduralCover('warning_stripes')}
+                    className="p-1.5 border-2 border-[#1A1A1A] bg-[#FFB703] text-[#1A1A1A] hover:bg-amber-400 text-[10px] font-black font-mono uppercase cursor-pointer text-center hover:scale-[1.02] transition-transform"
+                  >
+                    Danger Stripes
+                  </button>
+                  <button
+                    onClick={() => generateProceduralCover('cosmic_pulse')}
+                    className="p-1.5 border-2 border-[#1A1A1A] bg-[#1D1A39] text-[#FFB067] hover:text-white text-[10px] font-black font-mono uppercase cursor-pointer text-center hover:scale-[1.02] transition-transform"
+                  >
+                    Cosmic Pulse
+                  </button>
+                </div>
+              </div>
             </div>
           )}
  
+          {/* Locked Notice Banner */}
+          {isLocked && (
+            <div className="max-w-4xl mx-auto px-6 mt-6">
+              <div className="bg-red-50 border-2 border-red-500 p-3.5 text-xs font-mono font-extrabold text-red-700 flex items-center justify-between shadow-sm">
+                <div className="flex items-center space-x-2">
+                  <Lock className="w-4 h-4 text-red-500 animate-pulse" />
+                  <span>VIEW-ONLY LEDGER MODE: THIS ZENITH CANVAS NODE IS SECURELY LOCKED.</span>
+                </div>
+                <button
+                  onClick={toggleLock}
+                  className="bg-red-500 text-white px-2 py-1 border border-red-700 hover:bg-red-600 transition-colors uppercase text-[10px] cursor-pointer"
+                >
+                  Unlock
+                </button>
+              </div>
+            </div>
+          )}
+
           {/* Canvas Title, Icon Header Block */}
           <div className="max-w-4xl mx-auto px-6 pt-8 space-y-4">
             
@@ -640,14 +773,15 @@ export default function CanvasWorkspaceClient() {
             <input
               type="text"
               value={canvas.title}
+              disabled={isLocked}
               placeholder="Untitled Document"
               onChange={(e) => handleTitleChange(e.target.value)}
-              className="w-full bg-transparent border-none outline-none text-4xl sm:text-5xl font-black text-[#1A1A1A] tracking-tight placeholder-gray-300 font-sans"
+              className="w-full bg-transparent border-none outline-none text-4xl sm:text-5xl font-black text-[#1A1A1A] tracking-tight placeholder-gray-300 font-sans disabled:cursor-not-allowed"
             />
           </div>
  
           {/* Poly-morphic block list Canvas Editor */}
-          <CanvasEditor canvasId={canvasId} />
+          <CanvasEditor canvasId={canvasId} isLocked={isLocked} />
  
           {/* Bi-directional Backlinks Section */}
           {backlinks.length > 0 && (
