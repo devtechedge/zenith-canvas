@@ -16,11 +16,21 @@ import {
   Quote,
   Link,
   ChevronDown,
-  Volume2
+  Volume2,
+  LayoutGrid,
+  GitFork,
+  Activity,
+  Layers,
+  FileJson,
+  GitCommit,
+  Cpu,
+  FileText,
+  Share2,
+  Search
 } from 'lucide-react';
 
 export interface CommandItem {
-  id: 'heading_1' | 'heading_2' | 'text' | 'todo' | 'callout' | 'code_sandbox' | 'collection_ref' | 'toggle_list' | 'quote' | 'page_link' | 'acoustic_wave';
+  id: 'heading_1' | 'heading_2' | 'text' | 'todo' | 'callout' | 'code_sandbox' | 'collection_ref' | 'toggle_list' | 'quote' | 'page_link' | 'acoustic_wave' | 'matrix_view' | 'node_router' | 'spectrogram' | 'layout_sandbox' | 'ast_parser' | 'cycle_timeline' | 'telemetry_deck' | 'markdown_ast' | 'relation_graph' | 'search_matrix';
   title: string;
   description: string;
   icon: React.ComponentType<any>;
@@ -92,6 +102,66 @@ const COMMANDS: CommandItem[] = [
     title: 'Relational Data-Grid',
     description: 'Spreadsheet, Kanban, or Gallery collection',
     icon: Grid,
+  },
+  {
+    id: 'matrix_view',
+    title: 'AST Matrix Mapper',
+    description: 'Coordinate key-value-value property matrix block',
+    icon: LayoutGrid,
+  },
+  {
+    id: 'node_router',
+    title: 'Cluster Node Router',
+    description: 'Dynamic canvas transition & routing diagram',
+    icon: GitFork,
+  },
+  {
+    id: 'spectrogram',
+    title: 'Acoustic Spectrogram',
+    description: 'Real-time HTML5 audio waveform visualization',
+    icon: Activity,
+  },
+  {
+    id: 'layout_sandbox',
+    title: 'Nesting Grid Sandbox',
+    description: 'Draggable pane sandbox, alternative to toggles',
+    icon: Layers,
+  },
+  {
+    id: 'ast_parser',
+    title: 'JSON AST Parser',
+    description: 'Interactive structural schema parser & validator',
+    icon: FileJson,
+  },
+  {
+    id: 'cycle_timeline',
+    title: 'Chronos Timeline',
+    description: 'Task cycle timeline with dependencies',
+    icon: GitCommit,
+  },
+  {
+    id: 'telemetry_deck',
+    title: 'Diagnostic Telemetry',
+    description: 'Dexie DB stats, system performance terminal',
+    icon: Cpu,
+  },
+  {
+    id: 'markdown_ast',
+    title: 'Markdown AST Parser',
+    description: 'Dual compiler with interactive node-tree viewer',
+    icon: FileText,
+  },
+  {
+    id: 'relation_graph',
+    title: 'Layer Connectivity Graph',
+    description: 'Warp navigation map of related canvas layers',
+    icon: Share2,
+  },
+  {
+    id: 'search_matrix',
+    title: 'Semantic Tag Weight Matrix',
+    description: 'Weighted tag matrix and high-speed search index',
+    icon: Search,
   }
 ];
 

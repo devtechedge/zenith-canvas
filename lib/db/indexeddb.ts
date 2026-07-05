@@ -23,7 +23,7 @@ export interface Canvas {
 export interface CanvasElement {
   id: string;
   canvasId: string;
-  type: 'heading_1' | 'heading_2' | 'text' | 'todo' | 'callout' | 'code_sandbox' | 'collection_ref' | 'toggle_list' | 'quote' | 'page_link' | 'acoustic_wave';
+  type: 'heading_1' | 'heading_2' | 'text' | 'todo' | 'callout' | 'code_sandbox' | 'collection_ref' | 'toggle_list' | 'quote' | 'page_link' | 'acoustic_wave' | 'matrix_view' | 'node_router' | 'spectrogram' | 'layout_sandbox' | 'ast_parser' | 'cycle_timeline' | 'telemetry_deck' | 'markdown_ast' | 'relation_graph' | 'search_matrix';
   content: string;
   properties: string; // JSON string: { checked?: boolean, language?: string, tableId?: string, open?: boolean, body?: string, mood?: string, targetCanvasId?: string }
   sortOrder: number;
