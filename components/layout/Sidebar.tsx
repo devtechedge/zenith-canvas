@@ -23,6 +23,7 @@ import {
 import { motion, AnimatePresence } from 'motion/react';
 import Link from 'next/link';
 import { useParams } from 'next/navigation';
+import ConfirmDialog from '@/components/ui/ConfirmDialog';
 
 interface SidebarProps {
   onOpenCommandPalette: () => void;
@@ -32,6 +33,7 @@ export default function Sidebar({ onOpenCommandPalette }: SidebarProps) {
   const params = useParams();
   const currentCanvasId = params?.canvasId as string;
   const { syncStatus, isOnline, createNewCanvas, deleteCanvasAndChildren } = useCanvasSync();
+  const [deleteCandidateId, setDeleteCandidateId] = useState<string | null>(null);
 
   // Load all non-archived canvases
   const canvases = useLiveQuery(() => 
@@ -64,11 +66,16 @@ export default function Sidebar({ onOpenCommandPalette }: SidebarProps) {
   const handleDeleteCanvas = async (id: string, e: React.MouseEvent) => {
     e.preventDefault();
     e.stopPropagation();
-    if (confirm('Are you sure you want to delete this canvas and all its sub-canvases?')) {
-      await deleteCanvasAndChildren(id);
-      if (currentCanvasId === id) {
+    setDeleteCandidateId(id);
+  };
+
+  const handleConfirmDelete = async () => {
+    if (deleteCandidateId) {
+      await deleteCanvasAndChildren(deleteCandidateId);
+      if (currentCanvasId === deleteCandidateId) {
         window.location.href = '/';
       }
+      setDeleteCandidateId(null);
     }
   };
 
@@ -280,6 +287,14 @@ export default function Sidebar({ onOpenCommandPalette }: SidebarProps) {
           </div>
         </Link>
       </div>
+
+      <ConfirmDialog
+        isOpen={deleteCandidateId !== null}
+        onClose={() => setDeleteCandidateId(null)}
+        onConfirm={handleConfirmDelete}
+        title="Delete Canvas"
+        message="Are you sure you want to delete this canvas and all its nested sub-canvases? This action is irreversible."
+      />
     </aside>
   );
 }
