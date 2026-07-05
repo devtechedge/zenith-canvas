@@ -23,7 +23,7 @@ export interface Canvas {
 export interface CanvasElement {
   id: string;
   canvasId: string;
-  type: 'heading_1' | 'heading_2' | 'text' | 'todo' | 'callout' | 'code_sandbox' | 'collection_ref' | 'toggle_list' | 'quote' | 'page_link' | 'acoustic_wave' | 'matrix_view' | 'node_router' | 'spectrogram' | 'layout_sandbox' | 'ast_parser' | 'cycle_timeline' | 'telemetry_deck' | 'markdown_ast' | 'relation_graph' | 'search_matrix';
+  type: 'heading_1' | 'heading_2' | 'text' | 'todo' | 'callout' | 'code_sandbox' | 'collection_ref' | 'toggle_list' | 'quote' | 'page_link' | 'acoustic_wave' | 'matrix_view' | 'node_router' | 'spectrogram' | 'layout_sandbox' | 'ast_parser' | 'cycle_timeline' | 'telemetry_deck' | 'markdown_ast' | 'relation_graph' | 'search_matrix' | 'formula_grid' | 'vector_diagram' | 'sql_schema_visualizer' | 'conflict_sync_simulator' | 'audio_sampler' | 'ast_query_builder' | 'theme_engine_sandbox' | 'revision_ledger' | 'bento_composer' | 'ai_grounding_workspace';
   content: string;
   properties: string; // JSON string: { checked?: boolean, language?: string, tableId?: string, open?: boolean, body?: string, mood?: string, targetCanvasId?: string }
   sortOrder: number;

@@ -32,7 +32,16 @@ import {
   Wrench,
   Workflow,
   RefreshCw,
-  Plus
+  Plus,
+  Calculator,
+  Paintbrush,
+  GitCompare,
+  Disc,
+  Filter,
+  Palette,
+  History,
+  Layout,
+  Brain
 } from 'lucide-react';
 
 const playTypewriterSound = (isSpace: boolean) => {
@@ -1867,6 +1876,1015 @@ export default function CanvasEditor({ canvasId, isLocked = false }: CanvasEdito
                             </div>
                           </div>
                         )}
+                      </div>
+                    </div>
+                  );
+                })()
+              )}
+
+              {/* FORMULA SPREADSHEET SANDBOX */}
+              {el.type === 'formula_grid' && (
+                (() => {
+                  const gridState = propertiesObj.grid || {
+                    cells: {
+                      'A1': '10', 'A2': '20', 'A3': '=SUM(A1:A2)',
+                      'B1': '15', 'B2': '30', 'B3': '=B1+B2',
+                      'C1': '5',  'C2': '=A1*C1', 'C3': '=SUM(A3:B3)'
+                    }
+                  };
+                  const cells = gridState.cells;
+
+                  const evalFormula = (cellVal: string, allCells: any, visited = new Set<string>()): string => {
+                    if (!cellVal) return '';
+                    if (!cellVal.startsWith('=')) return cellVal;
+                    try {
+                      const expr = cellVal.substring(1).toUpperCase();
+                      let parsedExpr = expr;
+
+                      if (parsedExpr.startsWith('SUM(')) {
+                        const match = parsedExpr.match(/SUM\(([A-C][1-3]):([A-C][1-3])\)/);
+                        if (match) {
+                          const start = match[1];
+                          const end = match[2];
+                          let sum = 0;
+                          const colStart = start.charCodeAt(0);
+                          const colEnd = end.charCodeAt(0);
+                          const rowStart = parseInt(start[1]);
+                          const rowEnd = parseInt(end[1]);
+                          for (let col = colStart; col <= colEnd; col++) {
+                            for (let row = rowStart; row <= rowEnd; row++) {
+                              const cellKey = String.fromCharCode(col) + row;
+                              if (visited.has(cellKey)) return '#CYCLE!';
+                              visited.add(cellKey);
+                              const evald = parseFloat(evalFormula(allCells[cellKey] || '', allCells, visited)) || 0;
+                              visited.delete(cellKey);
+                              sum += evald;
+                            }
+                          }
+                          return String(sum);
+                        }
+                      }
+
+                      const cellRegex = /[A-C][1-3]/g;
+                      parsedExpr = parsedExpr.replace(cellRegex, (match) => {
+                        if (visited.has(match)) return '0';
+                        visited.add(match);
+                        const val = evalFormula(allCells[match] || '', allCells, visited);
+                        visited.delete(match);
+                        return String(parseFloat(val) || 0);
+                      });
+
+                      const sanitized = parsedExpr.replace(/[^0-9+\-*/().\s]/g, '');
+                      const result = new Function(`return (${sanitized})`)();
+                      return String(result !== undefined ? result : '#ERR');
+                    } catch {
+                      return '#ERR';
+                    }
+                  };
+
+                  return (
+                    <div className="border-2 border-[#1A1A1A] p-4 bg-white rounded-none neo-shadow-sm my-2 w-full">
+                      <div className="flex items-center justify-between border-b border-gray-100 pb-2 mb-3">
+                        <div className="flex items-center space-x-2">
+                          <Calculator className="w-4 h-4 text-emerald-600" />
+                          <span className="text-[11px] font-mono font-bold uppercase tracking-wider text-gray-500 font-sans">
+                            Formula Spreadsheet Sandbox
+                          </span>
+                        </div>
+                        <span className="text-[9px] font-mono border border-emerald-200 px-1.5 py-0.5 bg-emerald-50 text-emerald-600 font-extrabold uppercase rounded-sm">
+                          Grid AST Compiler
+                        </span>
+                      </div>
+
+                      <div className="overflow-x-auto border-2 border-[#1A1A1A] mb-3">
+                        <table className="w-full text-xs font-mono">
+                          <thead>
+                            <tr className="bg-slate-50 border-b-2 border-black">
+                              <th className="p-2 border-r border-[#1A1A1A] bg-slate-100 w-12 text-center">Cell</th>
+                              {['A', 'B', 'C'].map(col => (
+                                <th key={col} className="p-2 border-r border-[#1A1A1A] font-black uppercase text-center">{col}</th>
+                              ))}
+                            </tr>
+                          </thead>
+                          <tbody>
+                            {[1, 2, 3].map(row => (
+                              <tr key={row} className="border-b border-black last:border-b-0">
+                                <td className="p-2 border-r border-[#1A1A1A] font-black bg-slate-50 text-center w-12">{row}</td>
+                                {['A', 'B', 'C'].map(col => {
+                                  const cellKey = `${col}${row}`;
+                                  const formula = cells[cellKey] || '';
+                                  const evaluated = evalFormula(formula, cells);
+                                  return (
+                                    <td key={col} className="p-1 border-r border-[#1A1A1A] last:border-r-0 relative">
+                                      <div className="flex flex-col">
+                                        <input
+                                          type="text"
+                                          value={formula}
+                                          onChange={(e) => {
+                                            const nextCells = { ...cells, [cellKey]: e.target.value };
+                                            const updated = { ...gridState, cells: nextCells };
+                                            updateCanvasElement(el.id, { properties: JSON.stringify({ ...propertiesObj, grid: updated }) });
+                                          }}
+                                          className="w-full bg-transparent p-1 outline-none text-xs font-bold text-gray-800"
+                                          placeholder="-"
+                                        />
+                                        {formula.startsWith('=') && (
+                                          <span className="text-[9px] font-mono font-semibold text-emerald-600 px-1 bg-emerald-50 rounded-sm self-start mt-0.5 pointer-events-none">
+                                            {evaluated}
+                                          </span>
+                                        )}
+                                      </div>
+                                    </td>
+                                  );
+                                })}
+                              </tr>
+                            ))}
+                          </tbody>
+                        </table>
+                      </div>
+                      <div className="text-[9px] text-gray-400 font-mono leading-tight">
+                        SUPPORTED: Math expressions e.g. <code className="bg-slate-100 px-1 py-0.5 text-slate-800 border border-black/5 font-black">=A1+B2</code> or ranges <code className="bg-slate-100 px-1 py-0.5 text-slate-800 border border-black/5 font-black">=SUM(A1:C2)</code>.
+                      </div>
+                    </div>
+                  );
+                })()
+              )}
+
+              {/* SVG FLOW SKETCHPAD */}
+              {el.type === 'vector_diagram' && (
+                (() => {
+                  const state = propertiesObj.vector || {
+                    shapes: [
+                      { id: 'sh1', type: 'rect', x: 20, y: 20, w: 80, h: 40, color: '#3A86C8', label: 'CLIENT' },
+                      { id: 'sh2', type: 'rect', x: 180, y: 20, w: 80, h: 40, color: '#2EC4B6', label: 'SERVER' },
+                      { id: 'sh3', type: 'line', x: 100, y: 40, w: 180, h: 40, color: '#FFB703', label: 'HTTP API' }
+                    ],
+                    selectedId: ''
+                  };
+                  const shapes = state.shapes;
+                  const selectedId = state.selectedId;
+                  const selectedShape = shapes.find((s: any) => s.id === selectedId);
+
+                  return (
+                    <div className="border-2 border-[#1A1A1A] p-4 bg-white rounded-none neo-shadow-sm my-2 w-full">
+                      <div className="flex items-center justify-between border-b border-gray-100 pb-2 mb-3">
+                        <div className="flex items-center space-x-2">
+                          <Paintbrush className="w-4 h-4 text-purple-600" />
+                          <span className="text-[11px] font-mono font-bold uppercase tracking-wider text-gray-500 font-sans">
+                            SVG Vector Flow Diagram Board
+                          </span>
+                        </div>
+                        <span className="text-[9px] font-mono border border-purple-200 px-1.5 py-0.5 bg-purple-50 text-purple-600 font-extrabold uppercase rounded-sm">
+                          Interactive Vector DB
+                        </span>
+                      </div>
+
+                      <div className="grid grid-cols-1 sm:grid-cols-3 gap-4">
+                        <div className="sm:col-span-2">
+                          <div className="border-2 border-black bg-slate-50 relative overflow-hidden" style={{ height: '200px' }}>
+                            <svg className="w-full h-full" style={{ backgroundImage: 'radial-gradient(#CBD5E1 1px, transparent 1px)', backgroundSize: '12px 12px' }}>
+                              {shapes.map((s: any) => {
+                                const isSel = s.id === selectedId;
+                                return (
+                                  <g 
+                                    key={s.id} 
+                                    onClick={(e) => {
+                                      e.stopPropagation();
+                                      const updated = { ...state, selectedId: s.id };
+                                      updateCanvasElement(el.id, { properties: JSON.stringify({ ...propertiesObj, vector: updated }) });
+                                    }}
+                                    className="cursor-pointer"
+                                  >
+                                    {s.type === 'rect' && (
+                                      <rect 
+                                        x={s.x} y={s.y} width={s.w} height={s.h} 
+                                        fill={s.color} stroke="#1A1A1A" strokeWidth={isSel ? 3 : 2} 
+                                      />
+                                    )}
+                                    {s.type === 'circle' && (
+                                      <circle 
+                                        cx={s.x + s.w/2} cy={s.y + s.h/2} r={s.w/2} 
+                                        fill={s.color} stroke="#1A1A1A" strokeWidth={isSel ? 3 : 2} 
+                                      />
+                                    )}
+                                    {s.type === 'line' && (
+                                      <line 
+                                        x1={s.x} y1={s.y} x2={s.w} y2={s.h} 
+                                        stroke={s.color} strokeWidth={isSel ? 4 : 3} 
+                                        markerEnd="url(#arrow)"
+                                      />
+                                    )}
+                                    <text 
+                                      x={s.type === 'line' ? (s.x + s.w)/2 : s.x + s.w/2} 
+                                      y={s.type === 'line' ? (s.y + s.h)/2 - 5 : s.y + s.h/2 + 4} 
+                                      textAnchor="middle" 
+                                      className="font-mono text-[9px] font-black fill-[#1A1A1A] select-none"
+                                    >
+                                      {s.label}
+                                    </text>
+                                  </g>
+                                );
+                              })}
+                              <defs>
+                                <marker id="arrow" viewBox="0 0 10 10" refX="6" refY="5" markerWidth="6" markerHeight="6" orient="auto-start-reverse">
+                                  <path d="M 0 0 L 10 5 L 0 10 z" fill="#1A1A1A" />
+                                </marker>
+                              </defs>
+                            </svg>
+                          </div>
+                        </div>
+
+                        <div className="flex flex-col justify-between border-2 border-black p-3 bg-slate-50 font-mono text-xs">
+                          <div className="space-y-2">
+                            <span className="text-[9px] font-black text-gray-400 block uppercase">Shape Tools:</span>
+                            <div className="grid grid-cols-2 gap-1.5 text-[9px]">
+                              <button
+                                onClick={() => {
+                                  const nShape = { id: `sh${Date.now()}`, type: 'rect', x: 50, y: 50, w: 70, h: 35, color: '#CAF0F8', label: 'NODE' };
+                                  const updated = { ...state, shapes: [...shapes, nShape], selectedId: nShape.id };
+                                  updateCanvasElement(el.id, { properties: JSON.stringify({ ...propertiesObj, vector: updated }) });
+                                }}
+                                className="p-1 border border-black bg-white font-bold hover:bg-slate-100 uppercase cursor-pointer"
+                              >
+                                + Box
+                              </button>
+                              <button
+                                onClick={() => {
+                                  const nShape = { id: `sh${Date.now()}`, type: 'circle', x: 60, y: 60, w: 40, h: 40, color: '#FFCCD5', label: 'BUBBLE' };
+                                  const updated = { ...state, shapes: [...shapes, nShape], selectedId: nShape.id };
+                                  updateCanvasElement(el.id, { properties: JSON.stringify({ ...propertiesObj, vector: updated }) });
+                                }}
+                                className="p-1 border border-black bg-white font-bold hover:bg-slate-100 uppercase cursor-pointer"
+                              >
+                                + Circle
+                              </button>
+                              <button
+                                onClick={() => {
+                                  const nShape = { id: `sh${Date.now()}`, type: 'line', x: 20, y: 120, w: 150, h: 120, color: '#A70000', label: 'LINK' };
+                                  const updated = { ...state, shapes: [...shapes, nShape], selectedId: nShape.id };
+                                  updateCanvasElement(el.id, { properties: JSON.stringify({ ...propertiesObj, vector: updated }) });
+                                }}
+                                className="p-1 border border-black bg-white font-bold hover:bg-slate-100 uppercase col-span-2 cursor-pointer"
+                              >
+                                + Connector Vector Arrow
+                              </button>
+                            </div>
+
+                            {selectedShape && (
+                              <div className="border-t border-dashed border-black/15 pt-2.5 space-y-1.5 text-[9px]">
+                                <span className="font-bold text-gray-500 uppercase">Selected: {selectedShape.id}</span>
+                                <div className="flex items-center justify-between">
+                                  <span>Text:</span>
+                                  <input 
+                                    type="text" 
+                                    value={selectedShape.label} 
+                                    onChange={(e) => {
+                                      const updatedShapes = shapes.map((s: any) => s.id === selectedId ? { ...s, label: e.target.value } : s);
+                                      updateCanvasElement(el.id, { properties: JSON.stringify({ ...propertiesObj, vector: { ...state, shapes: updatedShapes } }) });
+                                    }}
+                                    className="border border-black p-0.5 bg-white text-[9px] w-24"
+                                  />
+                                </div>
+                                <div className="flex items-center justify-between">
+                                  <span>Coord X:</span>
+                                  <input 
+                                    type="range" min="0" max="250" step="5"
+                                    value={selectedShape.x} 
+                                    onChange={(e) => {
+                                      const updatedShapes = shapes.map((s: any) => s.id === selectedId ? { ...s, x: parseInt(e.target.value) } : s);
+                                      updateCanvasElement(el.id, { properties: JSON.stringify({ ...propertiesObj, vector: { ...state, shapes: updatedShapes } }) });
+                                    }}
+                                    className="w-20 cursor-pointer accent-purple-600"
+                                  />
+                                </div>
+                                <div className="flex items-center justify-between">
+                                  <span>Coord Y:</span>
+                                  <input 
+                                    type="range" min="0" max="150" step="5"
+                                    value={selectedShape.y} 
+                                    onChange={(e) => {
+                                      const updatedShapes = shapes.map((s: any) => s.id === selectedId ? { ...s, y: parseInt(e.target.value) } : s);
+                                      updateCanvasElement(el.id, { properties: JSON.stringify({ ...propertiesObj, vector: { ...state, shapes: updatedShapes } }) });
+                                    }}
+                                    className="w-20 cursor-pointer accent-purple-600"
+                                  />
+                                </div>
+                                <button
+                                  onClick={() => {
+                                    const updatedShapes = shapes.filter((s: any) => s.id !== selectedId);
+                                    updateCanvasElement(el.id, { properties: JSON.stringify({ ...propertiesObj, vector: { ...state, shapes: updatedShapes, selectedId: '' } }) });
+                                  }}
+                                  className="w-full py-1 border border-rose-500 bg-rose-50 text-rose-600 font-extrabold uppercase cursor-pointer"
+                                >
+                                  Remove Shape
+                                </button>
+                              </div>
+                            )}
+                          </div>
+                          {!selectedId && (
+                            <span className="text-[8px] text-gray-400 italic block mt-4">Select shape elements on diagram to tweak offsets.</span>
+                          )}
+                        </div>
+                      </div>
+                    </div>
+                  );
+                })()
+              )}
+
+              {/* RELATIONAL SQL SCHEMA VISUALIZER */}
+              {el.type === 'sql_schema_visualizer' && (
+                (() => {
+                  const schema = propertiesObj.sqlSchema || {
+                    tables: [
+                      { id: 'tb1', name: 'accounts', columns: ['id (UUID)', 'email (TEXT)', 'created_at (TIMESTAMP)'] },
+                      { id: 'tb2', name: 'canvases', columns: ['id (UUID)', 'account_id (UUID)', 'title (TEXT)'] }
+                    ],
+                    relations: [
+                      { from: 'tb2.account_id', to: 'tb1.id' }
+                    ]
+                  };
+
+                  const ddlQuery = (() => {
+                    let ddl = '';
+                    schema.tables.forEach((t: any) => {
+                      ddl += `CREATE TABLE ${t.name} (\n`;
+                      const colLines = t.columns.map((c: string) => `  ${c.replace(/ *\([^)]*\) */g, ' ').trim()} ${c.includes('UUID') ? 'UUID PRIMARY KEY' : c.includes('TIMESTAMP') ? 'TIMESTAMP DEFAULT NOW()' : 'VARCHAR(255)'}`);
+                      ddl += colLines.join(',\n') + '\n);\n\n';
+                    });
+                    schema.relations.forEach((r: any) => {
+                      const [fromT, fromC] = r.from.split('.');
+                      const [toT, toC] = r.to.split('.');
+                      const fromTableName = schema.tables.find((t: any) => t.id === fromT)?.name || 'tbl';
+                      const toTableName = schema.tables.find((t: any) => t.id === toT)?.name || 'tbl';
+                      ddl += `ALTER TABLE ${fromTableName}\nADD CONSTRAINT fk_${fromTableName}_${fromC}\nFOREIGN KEY (${fromC}) REFERENCES ${toTableName}(${toC});\n\n`;
+                    });
+                    return ddl;
+                  })();
+
+                  return (
+                    <div className="border-2 border-[#1A1A1A] p-4 bg-white rounded-none neo-shadow-sm my-2 w-full">
+                      <div className="flex items-center justify-between border-b border-gray-100 pb-2 mb-3">
+                        <div className="flex items-center space-x-2">
+                          <Database className="w-4 h-4 text-blue-600" />
+                          <span className="text-[11px] font-mono font-bold uppercase tracking-wider text-gray-500 font-sans">
+                            Relational SQL Schema Visualizer
+                          </span>
+                        </div>
+                        <span className="text-[9px] font-mono border border-blue-200 px-1.5 py-0.5 bg-blue-50 text-blue-600 font-extrabold uppercase rounded-sm">
+                          DDL Engine
+                        </span>
+                      </div>
+
+                      <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+                        <div className="space-y-3">
+                          <span className="text-[9px] font-mono font-black text-gray-400 block uppercase mb-1">Entity Relations Diagram:</span>
+                          <div className="space-y-2 max-h-48 overflow-y-auto font-mono">
+                            {schema.tables.map((t: any) => (
+                              <div key={t.id} className="border-2 border-black bg-slate-50 p-2.5 relative">
+                                <div className="flex items-center justify-between border-b border-black/10 pb-1 mb-1">
+                                  <input 
+                                    type="text" value={t.name}
+                                    onChange={(e) => {
+                                      const nextTables = schema.tables.map((tbl: any) => tbl.id === t.id ? { ...tbl, name: e.target.value } : tbl);
+                                      updateCanvasElement(el.id, { properties: JSON.stringify({ ...propertiesObj, sqlSchema: { ...schema, tables: nextTables } }) });
+                                    }}
+                                    className="font-black text-xs uppercase bg-transparent outline-none border-b border-dashed border-black/10 focus:border-black text-[10px] py-0.5"
+                                  />
+                                  <button
+                                    onClick={() => {
+                                      const nextTables = schema.tables.filter((tbl: any) => tbl.id !== t.id);
+                                      const nextRels = schema.relations.filter((r: any) => !r.from.startsWith(t.id) && !r.to.startsWith(t.id));
+                                      updateCanvasElement(el.id, { properties: JSON.stringify({ ...propertiesObj, sqlSchema: { tables: nextTables, relations: nextRels } }) });
+                                    }}
+                                    className="text-[9px] font-black text-rose-600 hover:underline uppercase cursor-pointer"
+                                  >
+                                    Drop
+                                  </button>
+                                </div>
+                                <div className="space-y-1">
+                                  {t.columns.map((col: string, cIdx: number) => (
+                                    <div key={cIdx} className="text-[10px] font-mono text-gray-700 flex justify-between">
+                                      <span>🔑 {col}</span>
+                                      {schema.relations.some((r: any) => r.from === `${t.id}.${col.split(' ')[0]}`) && (
+                                        <span className="text-blue-600 font-extrabold uppercase text-[8px] tracking-tight bg-blue-50 border border-blue-200 px-1 rounded">FK LINK</span>
+                                      )}
+                                    </div>
+                                  ))}
+                                </div>
+                                <button
+                                  onClick={() => {
+                                    const colName = prompt("Enter Column name (e.g. workspace_id (UUID)):") || '';
+                                    if (colName) {
+                                      const nextTables = schema.tables.map((tbl: any) => tbl.id === t.id ? { ...tbl, columns: [...tbl.columns, colName] } : tbl);
+                                      updateCanvasElement(el.id, { properties: JSON.stringify({ ...propertiesObj, sqlSchema: { ...schema, tables: nextTables } }) });
+                                    }
+                                  }}
+                                  className="w-full text-center border border-dashed border-slate-400 mt-2 text-[9px] font-black text-slate-500 hover:bg-slate-100 py-0.5 uppercase cursor-pointer font-sans"
+                                >
+                                  + New Attribute
+                                </button>
+                              </div>
+                            ))}
+                            <button
+                              onClick={() => {
+                                const tblName = prompt("Enter Entity Table Name:") || '';
+                                if (tblName) {
+                                  const nTable = { id: `tb${Date.now()}`, name: tblName.toLowerCase(), columns: ['id (UUID)'] };
+                                  const nextTables = [...schema.tables, nTable];
+                                  updateCanvasElement(el.id, { properties: JSON.stringify({ ...propertiesObj, sqlSchema: { ...schema, tables: nextTables } }) });
+                                }
+                              }}
+                              className="w-full py-1.5 border-2 border-black bg-[#FFB703] text-black text-[10px] font-black uppercase text-center cursor-pointer hover:bg-amber-400 font-sans"
+                            >
+                              + CREATE NEW SCHEMATIC TABLE
+                            </button>
+                          </div>
+                        </div>
+
+                        <div className="flex flex-col justify-between border-2 border-black bg-slate-900 text-cyan-400 p-3 font-mono text-xs">
+                          <div>
+                            <span className="text-[9px] font-bold text-slate-500 uppercase block mb-1">Generated SQL Ledger:</span>
+                            <pre className="text-[9px] text-[#A5D6A7] overflow-x-auto select-all leading-tight max-h-36">
+                              {ddlQuery}
+                            </pre>
+                          </div>
+                          <div className="border-t border-slate-800 pt-2 flex items-center justify-between text-[8px] text-slate-500 font-black">
+                            <span>SQL STATE: VALID COMPILABLE</span>
+                            <span>ENGINE: POSTGRESQL_16</span>
+                          </div>
+                        </div>
+                      </div>
+                    </div>
+                  );
+                })()
+              )}
+
+              {/* CONFLICT SYNC & MERGE TERMINAL */}
+              {el.type === 'conflict_sync_simulator' && (
+                (() => {
+                  const syncState = propertiesObj.syncSim || {
+                    clientRevision: 14,
+                    cloudRevision: 18,
+                    strategy: 'Last-Write-Wins',
+                    logs: [
+                      { time: '13:04:12', op: 'MUTATION_COMMIT', payload: 'Added todo element el-101', status: 'OK' },
+                      { time: '13:04:15', op: 'NETWORK_DISCONNECT', payload: 'Client went offline due to network tunnel closure', status: 'WARNING' },
+                      { time: '13:04:18', op: 'LOCAL_MUTATION', payload: 'Client edited code sandbox content locally', status: 'PENDING' },
+                      { time: '13:04:19', op: 'REMOTE_MUTATION', payload: 'Remote editor updated code sandbox online', status: 'CONFLICT' }
+                    ]
+                  };
+
+                  return (
+                    <div className="border-2 border-[#1A1A1A] p-4 bg-[#111827] text-[#E5E7EB] rounded-none neo-shadow-sm my-2 w-full font-mono">
+                      <div className="flex items-center justify-between border-b border-slate-800 pb-2 mb-3">
+                        <div className="flex items-center space-x-2 font-sans">
+                          <GitCompare className="w-4 h-4 text-amber-400" />
+                          <span className="text-[11px] font-black uppercase tracking-wider text-amber-400">
+                            Offline Delta-Sync & Conflict Merger
+                          </span>
+                        </div>
+                        <span className="text-[9px] border border-amber-500/30 px-1.5 py-0.5 bg-amber-950 text-amber-400 font-extrabold uppercase rounded-sm font-sans">
+                          Sync Simulator
+                        </span>
+                      </div>
+
+                      <div className="grid grid-cols-1 sm:grid-cols-3 gap-3 mb-3">
+                        <div className="border border-slate-800 bg-slate-900/50 p-2.5">
+                          <span className="text-[8px] text-slate-500 font-bold block uppercase font-sans">Client Ledger Rev</span>
+                          <span className="text-xl font-black text-[#60A5FA]">v{syncState.clientRevision}</span>
+                        </div>
+                        <div className="border border-slate-800 bg-slate-900/50 p-2.5">
+                          <span className="text-[8px] text-slate-500 font-bold block uppercase font-sans">Cloud Sync Rev</span>
+                          <span className="text-xl font-black text-[#34D399]">v{syncState.cloudRevision}</span>
+                        </div>
+                        <div className="border border-slate-800 bg-slate-900/50 p-2.5 flex flex-col justify-between">
+                          <span className="text-[8px] text-slate-500 font-bold block uppercase font-sans">Strategy</span>
+                          <select
+                            value={syncState.strategy}
+                            onChange={(e) => {
+                              const updated = { ...syncState, strategy: e.target.value };
+                              updateCanvasElement(el.id, { properties: JSON.stringify({ ...propertiesObj, syncSim: updated }) });
+                            }}
+                            className="bg-slate-800 border border-slate-700 text-amber-400 text-[10px] font-black py-0.5 outline-none rounded cursor-pointer text-xs"
+                          >
+                            <option value="Last-Write-Wins">Last-Write-Wins (LWW)</option>
+                            <option value="MVCC-Merge">Multi-Version Merger</option>
+                            <option value="Client-Override">Client Authority Only</option>
+                          </select>
+                        </div>
+                      </div>
+
+                      <div className="border border-slate-800 bg-black/60 p-2.5 text-[9px] space-y-1 h-32 overflow-y-auto mb-3">
+                        <span className="font-bold text-slate-500 uppercase block border-b border-slate-800 pb-1 mb-1.5 font-sans">Simulation Log Stream:</span>
+                        {syncState.logs.map((log: any, lIdx: number) => (
+                          <div key={lIdx} className="flex justify-between items-center text-[8px] py-0.5 border-b border-slate-900 last:border-0">
+                            <span>
+                              <span className="text-slate-500 mr-1.5">[{log.time}]</span>
+                              <span className={`font-black uppercase mr-1.5 ${
+                                log.status === 'OK' ? 'text-emerald-400' :
+                                log.status === 'WARNING' ? 'text-amber-400' :
+                                log.status === 'CONFLICT' ? 'text-rose-400' : 'text-blue-400'
+                              }`}>{log.op}:</span>
+                              <span className="text-slate-300 font-mono font-medium">{log.payload}</span>
+                            </span>
+                            <span className="text-slate-600 bg-slate-950 px-1 border border-slate-800/40 font-sans text-[7px]">{log.status}</span>
+                          </div>
+                        ))}
+                      </div>
+
+                      <div className="flex flex-wrap gap-2 font-sans">
+                        <button
+                          onClick={() => {
+                            const time = new Date().toTimeString().split(' ')[0];
+                            const nLog = { time, op: 'OFFLINE_QUEUE_COMMIT', payload: 'Mutated element list while tunnel isolated', status: 'PENDING' };
+                            const updatedLogs = [...syncState.logs, nLog];
+                            const updated = { ...syncState, clientRevision: syncState.clientRevision + 1, logs: updatedLogs };
+                            updateCanvasElement(el.id, { properties: JSON.stringify({ ...propertiesObj, syncSim: updated }) });
+                          }}
+                          className="px-2 py-1 text-[9px] font-bold uppercase border border-slate-700 bg-slate-800 hover:bg-slate-700 cursor-pointer text-[#E5E7EB]"
+                        >
+                          Simulate Local Edit
+                        </button>
+                        <button
+                          onClick={() => {
+                            const time = new Date().toTimeString().split(' ')[0];
+                            const nLog = { time, op: 'RESOLVE_CONFLICTS', payload: `Successfully resolved conflicts using ${syncState.strategy} engine`, status: 'OK' };
+                            const updatedLogs = [...syncState.logs, nLog];
+                            const updated = { ...syncState, clientRevision: syncState.cloudRevision, logs: updatedLogs };
+                            updateCanvasElement(el.id, { properties: JSON.stringify({ ...propertiesObj, syncSim: updated }) });
+                          }}
+                          className="px-2 py-1 text-[9px] font-bold uppercase border-2 border-amber-400 bg-amber-400/20 text-amber-300 hover:bg-amber-400/30 cursor-pointer"
+                        >
+                          Sync & Resolve Conflicts
+                        </button>
+                      </div>
+                    </div>
+                  );
+                })()
+              )}
+
+              {/* AUDIO WAVEFORM SLICER */}
+              {el.type === 'audio_sampler' && (
+                (() => {
+                  const samplerState = propertiesObj.sampler || {
+                    slices: [
+                      { id: 'sl1', name: 'Low Synth Kick', freq: 100, length: 0.2 },
+                      { id: 'sl2', name: 'Mid Sine Beep', freq: 440, length: 0.15 },
+                      { id: 'sl3', name: 'High Harmony Ring', freq: 880, length: 0.3 }
+                    ]
+                  };
+
+                  return (
+                    <div className="border-2 border-[#1A1A1A] p-4 bg-white rounded-none neo-shadow-sm my-2 w-full">
+                      <div className="flex items-center justify-between border-b border-gray-100 pb-2 mb-3">
+                        <div className="flex items-center space-x-2">
+                          <Disc className="w-4 h-4 text-rose-600" />
+                          <span className="text-[11px] font-mono font-bold uppercase tracking-wider text-gray-500 font-sans">
+                            Audio Waveform Slicer & Synthesizer
+                          </span>
+                        </div>
+                        <span className="text-[9px] font-mono border border-rose-200 px-1.5 py-0.5 bg-rose-50 text-rose-600 font-extrabold uppercase rounded-sm">
+                          HTML5 Audio Node
+                        </span>
+                      </div>
+
+                      <div className="grid grid-cols-1 sm:grid-cols-3 gap-4">
+                        <div className="sm:col-span-2 space-y-2">
+                          <span className="text-[9px] font-mono font-black text-gray-400 block uppercase">Sound wave slice mapping:</span>
+                          <div className="border-2 border-black bg-rose-950/10 p-3 h-20 flex items-center justify-around relative overflow-hidden rounded-none">
+                            <svg className="absolute inset-0 w-full h-full stroke-rose-300 fill-none opacity-40" viewBox="0 0 300 80">
+                              <path d="M0,40 Q15,10 30,40 T60,40 T90,40 T120,40 T150,40 T180,40 T210,40 T240,40 T270,40 T300,40" strokeWidth="2" />
+                            </svg>
+                            {samplerState.slices.map((slice: any) => (
+                              <button
+                                key={slice.id}
+                                onClick={() => {
+                                  if (typeof window === 'undefined') return;
+                                  try {
+                                    const AudioContextClass = window.AudioContext || (window as any).webkitAudioContext;
+                                    if (!AudioContextClass) return;
+                                    const ctx = new AudioContextClass();
+                                    const osc = ctx.createOscillator();
+                                    const gain = ctx.createGain();
+                                    osc.connect(gain);
+                                    gain.connect(ctx.destination);
+                                    
+                                    osc.frequency.setValueAtTime(slice.freq, ctx.currentTime);
+                                    gain.gain.setValueAtTime(0.15, ctx.currentTime);
+                                    gain.gain.exponentialRampToValueAtTime(0.01, ctx.currentTime + slice.length);
+                                    
+                                    osc.start();
+                                    osc.stop(ctx.currentTime + slice.length);
+                                  } catch {}
+                                }}
+                                className="z-10 px-2.5 py-1.5 border border-black bg-rose-500 text-white font-mono text-[9px] font-black uppercase tracking-tight neo-shadow-sm hover:translate-y-[1px] hover:shadow-none cursor-pointer text-center"
+                              >
+                                {slice.name} <br/> ({slice.freq}Hz)
+                              </button>
+                            ))}
+                          </div>
+                        </div>
+
+                        <div className="border-2 border-black p-3 bg-slate-50 font-mono text-xs flex flex-col justify-between">
+                          <div className="space-y-1.5 text-[9px]">
+                            <span className="font-black text-slate-500 uppercase">Interactive Config:</span>
+                            {samplerState.slices.map((slice: any) => (
+                              <div key={slice.id} className="flex justify-between items-center text-[8px]">
+                                <span className="font-bold text-gray-600">{slice.name}</span>
+                                <input
+                                  type="range" min="100" max="1200" step="50"
+                                  value={slice.freq}
+                                  onChange={(e) => {
+                                    const updatedSlices = samplerState.slices.map((sl: any) => sl.id === slice.id ? { ...sl, freq: parseInt(e.target.value) } : sl);
+                                    updateCanvasElement(el.id, { properties: JSON.stringify({ ...propertiesObj, sampler: { slices: updatedSlices } }) });
+                                  }}
+                                  className="w-16 accent-rose-500 cursor-pointer"
+                                />
+                              </div>
+                            ))}
+                          </div>
+                        </div>
+                      </div>
+                    </div>
+                  );
+                })()
+              )}
+
+              {/* DISTRIBUTED AST QUERY BUILDER */}
+              {el.type === 'ast_query_builder' && (
+                (() => {
+                  const state = propertiesObj.queryBuilder || {
+                    filters: [
+                      { field: 'type', op: '==', value: 'todo' }
+                    ]
+                  };
+                  const filters = state.filters;
+
+                  const results = elements.filter(item => {
+                    return filters.every((f: any) => {
+                      if (f.field === 'type') {
+                        return f.op === '==' ? item.type === f.value : item.type !== f.value;
+                      }
+                      if (f.field === 'content') {
+                        return item.content.toLowerCase().includes(f.value.toLowerCase());
+                      }
+                      return true;
+                    });
+                  });
+
+                  return (
+                    <div className="border-2 border-[#1A1A1A] p-4 bg-white rounded-none neo-shadow-sm my-2 w-full">
+                      <div className="flex items-center justify-between border-b border-gray-100 pb-2 mb-3">
+                        <div className="flex items-center space-x-2">
+                          <Filter className="w-4 h-4 text-sky-600" />
+                          <span className="text-[11px] font-mono font-bold uppercase tracking-wider text-gray-500 font-sans">
+                            Distributed AST Query Builder & Selector
+                          </span>
+                        </div>
+                        <span className="text-[9px] font-mono border border-sky-200 px-1.5 py-0.5 bg-sky-50 text-sky-600 font-extrabold uppercase rounded-sm">
+                          Query Compiler
+                        </span>
+                      </div>
+
+                      <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+                        <div className="space-y-3">
+                          <span className="text-[9px] font-mono font-black text-gray-400 block uppercase font-sans">Filter Schema Clauses:</span>
+                          <div className="space-y-2">
+                            {filters.map((f: any, fIdx: number) => (
+                              <div key={fIdx} className="flex gap-1.5 items-center text-[10px] font-mono font-bold bg-slate-50 p-1.5 border border-black/10">
+                                <select
+                                  value={f.field}
+                                  onChange={(e) => {
+                                    const nextFilters = filters.map((item: any, idx: number) => idx === fIdx ? { ...item, field: e.target.value } : item);
+                                    updateCanvasElement(el.id, { properties: JSON.stringify({ ...propertiesObj, queryBuilder: { filters: nextFilters } }) });
+                                  }}
+                                  className="border border-black bg-white p-0.5 text-[10px]"
+                                >
+                                  <option value="type">Block Type</option>
+                                  <option value="content">Text Content</option>
+                                </select>
+                                <span className="text-gray-400">is</span>
+                                <input 
+                                  type="text" value={f.value}
+                                  onChange={(e) => {
+                                    const nextFilters = filters.map((item: any, idx: number) => idx === fIdx ? { ...item, value: e.target.value } : item);
+                                    updateCanvasElement(el.id, { properties: JSON.stringify({ ...propertiesObj, queryBuilder: { filters: nextFilters } }) });
+                                  }}
+                                  className="border border-black bg-white p-0.5 text-[10px] flex-1"
+                                />
+                                <button
+                                  onClick={() => {
+                                    const nextFilters = filters.filter((_: any, idx: number) => idx !== fIdx);
+                                    updateCanvasElement(el.id, { properties: JSON.stringify({ ...propertiesObj, queryBuilder: { filters: nextFilters } }) });
+                                  }}
+                                  className="text-rose-600 font-black px-1.5 cursor-pointer"
+                                >
+                                  ×
+                                </button>
+                              </div>
+                            ))}
+                            <button
+                              onClick={() => {
+                                const nextFilters = [...filters, { field: 'content', op: '==', value: 'sprint' }];
+                                updateCanvasElement(el.id, { properties: JSON.stringify({ ...propertiesObj, queryBuilder: { filters: nextFilters } }) });
+                              }}
+                              className="px-2 py-1 text-[9px] font-black uppercase border border-dashed border-sky-500 text-sky-600 hover:bg-sky-50 cursor-pointer font-sans"
+                            >
+                              + Add query constraint
+                            </button>
+                          </div>
+                        </div>
+
+                        <div className="border-2 border-black bg-slate-50 p-3 h-44 overflow-y-auto">
+                          <span className="text-[9px] font-black text-gray-400 block uppercase mb-2 font-sans">Query AST matches ({results.length}):</span>
+                          <div className="space-y-1 text-[9px] font-mono">
+                            {results.map((item, idx) => (
+                              <div key={idx} className="p-1 bg-white border border-black/15 flex justify-between items-center">
+                                <span className="font-extrabold text-slate-800">[{item.type}]</span>
+                                <span className="text-slate-500 truncate max-w-[120px]">{item.content}</span>
+                              </div>
+                            ))}
+                          </div>
+                        </div>
+                      </div>
+                    </div>
+                  );
+                })()
+              )}
+
+              {/* AESTHETIC THEME CUSTOMIZER */}
+              {el.type === 'theme_engine_sandbox' && (
+                (() => {
+                  const theme = propertiesObj.theme || {
+                    accentColor: '#FFB703',
+                    borderWeight: 'border-2',
+                    shadowSize: 'neo-shadow-sm',
+                    rounding: 'rounded-none'
+                  };
+
+                  return (
+                    <div className="border-2 border-[#1A1A1A] p-4 bg-white rounded-none neo-shadow-sm my-2 w-full">
+                      <div className="flex items-center justify-between border-b border-gray-100 pb-2 mb-3">
+                        <div className="flex items-center space-x-2">
+                          <Palette className="w-4 h-4 text-amber-500" />
+                          <span className="text-[11px] font-mono font-bold uppercase tracking-wider text-gray-500 font-sans">
+                            Aesthetic UI Theme Designer Sandbox
+                          </span>
+                        </div>
+                        <span className="text-[9px] font-mono border border-amber-200 px-1.5 py-0.5 bg-amber-50 text-amber-600 font-extrabold uppercase rounded-sm">
+                          Theme Sandbox
+                        </span>
+                      </div>
+
+                      <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+                        <div className="space-y-3">
+                          <span className="text-[9px] font-mono font-black text-gray-400 block uppercase font-sans">Visual settings layout:</span>
+                          <div className="space-y-2 text-[10px] font-mono font-bold">
+                            <div className="flex items-center justify-between">
+                              <span>Brand Accent:</span>
+                              <div className="flex gap-1.5">
+                                {['#FFB703', '#4F46E5', '#F43F5E', '#10B981', '#1A1A1A'].map(color => (
+                                  <button
+                                    key={color}
+                                    onClick={() => {
+                                      const updated = { ...theme, accentColor: color };
+                                      updateCanvasElement(el.id, { properties: JSON.stringify({ ...propertiesObj, theme: updated }) });
+                                    }}
+                                    className="w-4 h-4 rounded-full border border-black cursor-pointer"
+                                    style={{ backgroundColor: color }}
+                                  />
+                                ))}
+                              </div>
+                            </div>
+                            <div className="flex items-center justify-between">
+                              <span>Brutalist Shadows:</span>
+                              <select
+                                value={theme.shadowSize}
+                                onChange={(e) => {
+                                  const updated = { ...theme, shadowSize: e.target.value };
+                                  updateCanvasElement(el.id, { properties: JSON.stringify({ ...propertiesObj, theme: updated }) });
+                                }}
+                                className="border border-black bg-white text-[9px] p-0.5 cursor-pointer text-xs"
+                              >
+                                <option value="none">No Shadow</option>
+                                <option value="neo-shadow-sm">Small Offsets</option>
+                                <option value="neo-shadow">Solid Heavy</option>
+                              </select>
+                            </div>
+                          </div>
+                        </div>
+
+                        <div className="border-2 border-black bg-slate-50 p-3 flex flex-col justify-between">
+                          <div className="space-y-1">
+                            <span className="text-[9px] font-black text-gray-400 block uppercase mb-1 font-sans">Live preview block:</span>
+                            <div 
+                              className={`p-3 bg-white border-2 border-black transition-all ${theme.shadowSize}`}
+                              style={{ borderLeftColor: theme.accentColor, borderLeftWidth: '6px' }}
+                            >
+                              <h4 className="font-sans font-bold text-xs text-slate-800">Preview Heading</h4>
+                              <p className="text-[10px] font-mono text-gray-500 mt-1">Brutalist block aesthetics loaded.</p>
+                            </div>
+                          </div>
+                          <span className="text-[8px] text-slate-400 font-mono text-right mt-2">Pairings: Space Grotesk / JetBrains</span>
+                        </div>
+                      </div>
+                    </div>
+                  );
+                })()
+              )}
+
+              {/* GIT-LIKE REVISION LEDGER */}
+              {el.type === 'revision_ledger' && (
+                (() => {
+                  const ledger = propertiesObj.ledger || {
+                    revisions: [
+                      { hash: 'a12bc8f', time: '13:10', msg: 'Init product release canvas', author: 'techedge' },
+                      { hash: 'b98dcf1', time: '13:15', msg: 'Seeded core database table references', author: 'techedge' }
+                    ]
+                  };
+
+                  return (
+                    <div className="border-2 border-[#1A1A1A] p-4 bg-white rounded-none neo-shadow-sm my-2 w-full">
+                      <div className="flex items-center justify-between border-b border-gray-100 pb-2 mb-3">
+                        <div className="flex items-center space-x-2">
+                          <History className="w-4 h-4 text-purple-600" />
+                          <span className="text-[11px] font-mono font-bold uppercase tracking-wider text-gray-500 font-sans">
+                            Git-Like Local Revision Ledger
+                          </span>
+                        </div>
+                        <span className="text-[9px] font-mono border border-purple-200 px-1.5 py-0.5 bg-purple-50 text-purple-600 font-extrabold uppercase rounded-sm">
+                          Revision Control
+                        </span>
+                      </div>
+
+                      <div className="space-y-3">
+                        <span className="text-[9px] font-mono font-black text-gray-400 block uppercase font-sans">Workspace Version timeline:</span>
+                        <div className="space-y-1.5 font-mono text-[9px] max-h-36 overflow-y-auto">
+                          {ledger.revisions.map((rev: any) => (
+                            <div key={rev.hash} className="border border-black bg-slate-50 p-2 flex items-center justify-between">
+                              <div className="flex items-center space-x-2">
+                                <span className="bg-indigo-100 text-indigo-700 px-1 py-0.5 rounded border border-indigo-200 text-[8px] font-extrabold uppercase font-mono">{rev.hash}</span>
+                                <span className="font-bold text-slate-800">&quot;{rev.msg}&quot;</span>
+                              </div>
+                              <div className="text-[8px] text-gray-400 flex items-center gap-1">
+                                <span>by @{rev.author}</span>
+                                <span>• {rev.time}</span>
+                              </div>
+                            </div>
+                          ))}
+                        </div>
+
+                        <div className="flex gap-2">
+                          <button
+                            onClick={() => {
+                              const msg = prompt("Enter version commit message:") || '';
+                              if (msg) {
+                                const hash = Math.random().toString(16).substring(2, 9);
+                                const time = new Date().toTimeString().split(' ')[0].substring(0, 5);
+                                const nRev = { hash, time, msg, author: 'techedge' };
+                                const updated = { ...ledger, revisions: [...ledger.revisions, nRev] };
+                                updateCanvasElement(el.id, { properties: JSON.stringify({ ...propertiesObj, ledger: updated }) });
+                              }
+                            }}
+                            className="px-2 py-1 border-2 border-black bg-[#FFB703] text-[10px] font-black uppercase hover:bg-amber-400 cursor-pointer font-sans"
+                          >
+                            + COMMIT NEW LOCAL REVISION SNAPSHOT
+                          </button>
+                        </div>
+                      </div>
+                    </div>
+                  );
+                })()
+              )}
+
+              {/* BENTO GRID DASHBOARD ARRANGER */}
+              {el.type === 'bento_composer' && (
+                (() => {
+                  const bento = propertiesObj.bento || {
+                    widgets: [
+                      { id: 'w1', title: 'METRIC_MONITOR', xSpan: 'sm:col-span-8', color: 'bg-[#E0F2FE]' },
+                      { id: 'w2', title: 'SYSTEM_STATUS', xSpan: 'sm:col-span-4', color: 'bg-[#DCFCE7]' },
+                      { id: 'w3', title: 'AST_CLOCK', xSpan: 'sm:col-span-4', color: 'bg-[#FEE2E2]' },
+                      { id: 'w4', title: 'SYNC_RESOURCES', xSpan: 'sm:col-span-8', color: 'bg-[#FEF9C3]' }
+                    ]
+                  };
+                  const widgets = bento.widgets;
+
+                  return (
+                    <div className="border-2 border-[#1A1A1A] p-4 bg-white rounded-none neo-shadow-sm my-2 w-full">
+                      <div className="flex items-center justify-between border-b border-gray-100 pb-2 mb-3">
+                        <div className="flex items-center space-x-2">
+                          <Layout className="w-4 h-4 text-emerald-600" />
+                          <span className="text-[11px] font-mono font-bold uppercase tracking-wider text-gray-500 font-sans">
+                            Bento Grid Responsive layout Composer
+                          </span>
+                        </div>
+                        <span className="text-[9px] font-mono border border-emerald-200 px-1.5 py-0.5 bg-emerald-50 text-emerald-600 font-extrabold uppercase rounded-sm font-sans">
+                          Layout Matrix
+                        </span>
+                      </div>
+
+                      <div className="space-y-3">
+                        <div className="grid grid-cols-1 sm:grid-cols-12 gap-2">
+                          {widgets.map((widget: any) => (
+                            <div key={widget.id} className={`${widget.xSpan} ${widget.color} border-2 border-black p-3 flex flex-col justify-between min-h-[60px]`}>
+                              <div className="flex items-center justify-between border-b border-black/10 pb-1">
+                                <span className="font-mono text-[9px] font-black text-slate-700">{widget.title}</span>
+                                <div className="flex gap-1 text-[8px] font-bold">
+                                  <button
+                                    onClick={() => {
+                                      const nextSpan = widget.xSpan === 'sm:col-span-4' ? 'sm:col-span-8' : 'sm:col-span-4';
+                                      const nextWidgets = widgets.map((w: any) => w.id === widget.id ? { ...w, xSpan: nextSpan } : w);
+                                      updateCanvasElement(el.id, { properties: JSON.stringify({ ...propertiesObj, bento: { widgets: nextWidgets } }) });
+                                    }}
+                                    className="px-1 border border-black bg-white cursor-pointer"
+                                  >
+                                    Resize
+                                  </button>
+                                </div>
+                              </div>
+                              <span className="text-[8px] font-mono text-slate-500 mt-2 block">WIDTH: {widget.xSpan === 'sm:col-span-4' ? '33%' : '66%'}</span>
+                            </div>
+                          ))}
+                        </div>
+                      </div>
+                    </div>
+                  );
+                })()
+              )}
+
+              {/* CONTEXTUAL AI PROMPT GROUNDING */}
+              {el.type === 'ai_grounding_workspace' && (
+                (() => {
+                  const state = propertiesObj.promptGrounding || {
+                    selectedBlockIds: []
+                  };
+                  const selectedIds = state.selectedBlockIds;
+
+                  const selectedBlocks = elements.filter(item => selectedIds.includes(item.id));
+                  const compilePrompt = () => {
+                    let prompt = `You are a helpful AI coding assistant grounded with Zenith Canvas workspace data:\n\n`;
+                    selectedBlocks.forEach(b => {
+                      prompt += `[BLOCK TYPE: ${b.type.toUpperCase()}]\n${b.content}\n\n`;
+                    });
+                    prompt += `Query: Summarize or compile the above elements.`;
+                    return prompt;
+                  };
+
+                  const totalGroundedTokens = selectedBlocks.reduce((acc, curr) => acc + curr.content.split(' ').length, 0) * 1.3;
+
+                  return (
+                    <div className="border-2 border-[#1A1A1A] p-4 bg-[#FAF5FF] rounded-none neo-shadow-sm my-2 w-full font-sans">
+                      <div className="flex items-center justify-between border-b border-purple-100 pb-2 mb-3">
+                        <div className="flex items-center space-x-2">
+                          <Brain className="w-4 h-4 text-purple-600" />
+                          <span className="text-[11px] font-mono font-bold uppercase tracking-wider text-gray-500">
+                            Contextual AI Prompt Grounding & Token Math
+                          </span>
+                        </div>
+                        <span className="text-[9px] font-mono border border-purple-200 px-1.5 py-0.5 bg-purple-50 text-purple-600 font-extrabold uppercase rounded-sm">
+                          Grounding Sandbox
+                        </span>
+                      </div>
+
+                      <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+                        <div className="space-y-3">
+                          <span className="text-[9px] font-mono font-black text-gray-400 block uppercase">Select Block Context elements:</span>
+                          <div className="space-y-1.5 max-h-36 overflow-y-auto">
+                            {elements.filter(b => b.id !== el.id).map(b => {
+                              const isChecked = selectedIds.includes(b.id);
+                              return (
+                                <label key={b.id} className="flex items-center space-x-2 p-1.5 bg-white border border-black/10 text-[9px] font-mono cursor-pointer hover:bg-slate-50">
+                                  <input 
+                                    type="checkbox" checked={isChecked}
+                                    onChange={(e) => {
+                                      const nextIds = e.target.checked 
+                                        ? [...selectedIds, b.id] 
+                                        : selectedIds.filter((id: string) => id !== b.id);
+                                      updateCanvasElement(el.id, { properties: JSON.stringify({ ...propertiesObj, promptGrounding: { selectedBlockIds: nextIds } }) });
+                                    }}
+                                    className="accent-purple-600 cursor-pointer"
+                                  />
+                                  <span className="font-black text-purple-700">[{b.type.toUpperCase()}]</span>
+                                  <span className="truncate text-slate-600 max-w-[120px]">{b.content || 'Empty block'}</span>
+                                </label>
+                              );
+                            })}
+                          </div>
+                        </div>
+
+                        <div className="border-2 border-black bg-slate-900 text-purple-300 p-3 font-mono text-[9px] flex flex-col justify-between">
+                          <div>
+                            <span className="text-[8px] font-bold text-slate-500 uppercase block mb-1">Grounded Context Prompt:</span>
+                            <div className="h-28 overflow-y-auto font-mono text-slate-200 border border-slate-800 p-1 bg-black/40">
+                              {compilePrompt()}
+                            </div>
+                          </div>
+                          <div className="border-t border-slate-800 pt-2 flex items-center justify-between text-[8px] text-slate-500 font-black mt-2">
+                            <span>TOKEN MATH: ~{Math.round(totalGroundedTokens)} TOKENS</span>
+                            <span>MODEL: GEMINI-3.5-FLASH</span>
+                          </div>
+                        </div>
                       </div>
                     </div>
                   );

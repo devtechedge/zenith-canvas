@@ -26,11 +26,21 @@ import {
   Cpu,
   FileText,
   Share2,
-  Search
+  Search,
+  Calculator,
+  Paintbrush,
+  Database,
+  GitCompare,
+  Disc,
+  Filter,
+  Palette,
+  History,
+  Layout,
+  Brain
 } from 'lucide-react';
 
 export interface CommandItem {
-  id: 'heading_1' | 'heading_2' | 'text' | 'todo' | 'callout' | 'code_sandbox' | 'collection_ref' | 'toggle_list' | 'quote' | 'page_link' | 'acoustic_wave' | 'matrix_view' | 'node_router' | 'spectrogram' | 'layout_sandbox' | 'ast_parser' | 'cycle_timeline' | 'telemetry_deck' | 'markdown_ast' | 'relation_graph' | 'search_matrix';
+  id: 'heading_1' | 'heading_2' | 'text' | 'todo' | 'callout' | 'code_sandbox' | 'collection_ref' | 'toggle_list' | 'quote' | 'page_link' | 'acoustic_wave' | 'matrix_view' | 'node_router' | 'spectrogram' | 'layout_sandbox' | 'ast_parser' | 'cycle_timeline' | 'telemetry_deck' | 'markdown_ast' | 'relation_graph' | 'search_matrix' | 'formula_grid' | 'vector_diagram' | 'sql_schema_visualizer' | 'conflict_sync_simulator' | 'audio_sampler' | 'ast_query_builder' | 'theme_engine_sandbox' | 'revision_ledger' | 'bento_composer' | 'ai_grounding_workspace';
   title: string;
   description: string;
   icon: React.ComponentType<any>;
@@ -162,6 +172,66 @@ const COMMANDS: CommandItem[] = [
     title: 'Semantic Tag Weight Matrix',
     description: 'Weighted tag matrix and high-speed search index',
     icon: Search,
+  },
+  {
+    id: 'formula_grid',
+    title: 'Formula Spreadsheet Sandbox',
+    description: 'Tabular grid with cell reactive formula parser',
+    icon: Calculator,
+  },
+  {
+    id: 'vector_diagram',
+    title: 'SVG Flow Sketchpad',
+    description: 'Vector draw board with coordinates layout storage',
+    icon: Paintbrush,
+  },
+  {
+    id: 'sql_schema_visualizer',
+    title: 'Relational SQL Schema Visualizer',
+    description: 'Interactive table link engine with SQL DDL generation',
+    icon: Database,
+  },
+  {
+    id: 'conflict_sync_simulator',
+    title: 'Conflict Sync & Merge Terminal',
+    description: 'Offline state conflict resolution simulation ledger',
+    icon: GitCompare,
+  },
+  {
+    id: 'audio_sampler',
+    title: 'Audio Waveform Slicer',
+    description: 'Sound bit recorder with slice markers visual controls',
+    icon: Disc,
+  },
+  {
+    id: 'ast_query_builder',
+    title: 'Distributed AST Query Builder',
+    description: 'Interactive block query filters compiler',
+    icon: Filter,
+  },
+  {
+    id: 'theme_engine_sandbox',
+    title: 'Aesthetic Theme Customizer',
+    description: 'Live layout padding & brutalist shadow design tool',
+    icon: Palette,
+  },
+  {
+    id: 'revision_ledger',
+    title: 'Git-Like Revision Ledger',
+    description: 'Local time-travel history diffs commit ledger',
+    icon: History,
+  },
+  {
+    id: 'bento_composer',
+    title: 'Bento Grid Dashboard Arranger',
+    description: 'Draggable responsive grid dimensions composer',
+    icon: Layout,
+  },
+  {
+    id: 'ai_grounding_workspace',
+    title: 'Contextual AI Prompt Grounding',
+    description: 'Gemini system prompt engineer with canvas nodes token math',
+    icon: Brain,
   }
 ];
 
