@@ -36,11 +36,21 @@ import {
   Palette,
   History,
   Layout,
-  Brain
+  Brain,
+  Network,
+  Clock,
+  ArrowUpRight,
+  Globe,
+  Binary,
+  Trello,
+  Waves,
+  Shuffle,
+  GitPullRequest,
+  Workflow
 } from 'lucide-react';
 
 export interface CommandItem {
-  id: 'heading_1' | 'heading_2' | 'text' | 'todo' | 'callout' | 'code_sandbox' | 'collection_ref' | 'toggle_list' | 'quote' | 'page_link' | 'acoustic_wave' | 'matrix_view' | 'node_router' | 'spectrogram' | 'layout_sandbox' | 'ast_parser' | 'cycle_timeline' | 'telemetry_deck' | 'markdown_ast' | 'relation_graph' | 'search_matrix' | 'formula_grid' | 'vector_diagram' | 'sql_schema_visualizer' | 'conflict_sync_simulator' | 'audio_sampler' | 'ast_query_builder' | 'theme_engine_sandbox' | 'revision_ledger' | 'bento_composer' | 'ai_grounding_workspace';
+  id: 'heading_1' | 'heading_2' | 'text' | 'todo' | 'callout' | 'code_sandbox' | 'collection_ref' | 'toggle_list' | 'quote' | 'page_link' | 'acoustic_wave' | 'matrix_view' | 'node_router' | 'spectrogram' | 'layout_sandbox' | 'ast_parser' | 'cycle_timeline' | 'telemetry_deck' | 'markdown_ast' | 'relation_graph' | 'search_matrix' | 'formula_grid' | 'vector_diagram' | 'sql_schema_visualizer' | 'conflict_sync_simulator' | 'audio_sampler' | 'ast_query_builder' | 'theme_engine_sandbox' | 'revision_ledger' | 'bento_composer' | 'ai_grounding_workspace' | 'uml_studio' | 'cron_scheduler' | 'db_migrator' | 'api_request_builder' | 'regex_tester' | 'kanban_orchestrator' | 'math_mesh' | 'format_converter' | 'ast_diff_viewer' | 'state_machine_designer';
   title: string;
   description: string;
   icon: React.ComponentType<any>;
@@ -232,6 +242,66 @@ const COMMANDS: CommandItem[] = [
     title: 'Contextual AI Prompt Grounding',
     description: 'Gemini system prompt engineer with canvas nodes token math',
     icon: Brain,
+  },
+  {
+    id: 'uml_studio',
+    title: 'UML Class Diagram Studio',
+    description: 'Design software object models with real-time class code builders',
+    icon: Network,
+  },
+  {
+    id: 'cron_scheduler',
+    title: 'Cron Job Scheduler Configurator',
+    description: 'Visual cron generator with timeline forecast & logs terminal',
+    icon: Clock,
+  },
+  {
+    id: 'db_migrator',
+    title: 'Migration CLI Simulator',
+    description: 'Plan & track table schema migrations with dynamic rollback',
+    icon: ArrowUpRight,
+  },
+  {
+    id: 'api_request_builder',
+    title: 'API Request & Payload Builder',
+    description: 'Design requests, header lists, and simulate mock HTTP responses',
+    icon: Globe,
+  },
+  {
+    id: 'regex_tester',
+    title: 'RegEx Visual Tester & Debugger',
+    description: 'Verify patterns, test capture groups, and audit string matching',
+    icon: Binary,
+  },
+  {
+    id: 'kanban_orchestrator',
+    title: 'Kanban Sprint Lane Orchestrator',
+    description: 'Interactive board mapping workflows with metrics indicators',
+    icon: Trello,
+  },
+  {
+    id: 'math_mesh',
+    title: 'Bilinear Chart & Math Mesh',
+    description: 'Interactive mathematical wave mesh coordinate visualizer',
+    icon: Waves,
+  },
+  {
+    id: 'format_converter',
+    title: 'JSON/YAML/CSV Format Converter',
+    description: 'Convert data formats in real-time with compliance parser',
+    icon: Shuffle,
+  },
+  {
+    id: 'ast_diff_viewer',
+    title: 'AST Source Code Diff Visualizer',
+    description: 'Dual-panel change compiler highlighting modified structural nodes',
+    icon: GitPullRequest,
+  },
+  {
+    id: 'state_machine_designer',
+    title: 'State Machine & DFA Designer',
+    description: 'Design states & trigger transitions inside an interactive live visualizer',
+    icon: Workflow,
   }
 ];
 
