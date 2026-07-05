@@ -50,7 +50,13 @@ import {
   Trello,
   Waves,
   Shuffle,
-  GitPullRequest
+  GitPullRequest,
+  Shield,
+  Fingerprint,
+  Eye,
+  Key,
+  FileCheck,
+  Grid
 } from 'lucide-react';
 
 const playTypewriterSound = (isSpace: boolean) => {
@@ -4090,6 +4096,1308 @@ export default function CanvasEditor({ canvasId, isLocked = false }: CanvasEdito
                             >
                               + ADD TRANSITION
                             </button>
+                          </div>
+                        </div>
+                      </div>
+                    </div>
+                  );
+                })()
+              )}
+
+              {/* TCP PACKET ANALYZER SIMULATOR */}
+              {el.type === 'packet_analyzer' && (
+                (() => {
+                  const state = propertiesObj.packetAnalyzer || {
+                    handshakeState: 'CLOSED',
+                    sourcePort: 52410,
+                    destPort: 443,
+                    packets: [
+                      { time: '13:50:00', src: 'CLIENT', dest: 'SERVER', seq: 100, ack: 0, flags: 'SYN', desc: 'Client requests initial connection sync' }
+                    ]
+                  };
+
+                  const packets = state.packets;
+                  const hState = state.handshakeState;
+
+                  const nextHandshakeStep = () => {
+                    const stamp = new Date().toLocaleTimeString();
+                    let nextState = hState;
+                    let newPacket: any = null;
+
+                    if (hState === 'CLOSED') {
+                      nextState = 'SYN_SENT';
+                      newPacket = {
+                        time: stamp,
+                        src: 'CLIENT',
+                        dest: 'SERVER',
+                        seq: 101,
+                        ack: 0,
+                        flags: 'SYN',
+                        desc: 'Active open initiated; connection synchronization requested'
+                      };
+                    } else if (hState === 'SYN_SENT') {
+                      nextState = 'SYN_RECEIVED';
+                      newPacket = {
+                        time: stamp,
+                        src: 'SERVER',
+                        dest: 'CLIENT',
+                        seq: 800,
+                        ack: 102,
+                        flags: 'SYN-ACK',
+                        desc: 'Server acknowledges client sync, sends back its own sync sequence'
+                      };
+                    } else if (hState === 'SYN_RECEIVED') {
+                      nextState = 'ESTABLISHED';
+                      newPacket = {
+                        time: stamp,
+                        src: 'CLIENT',
+                        dest: 'SERVER',
+                        seq: 102,
+                        ack: 801,
+                        flags: 'ACK',
+                        desc: 'Three-way handshake completed; high-performance data pipe established'
+                      };
+                    } else {
+                      // reset
+                      nextState = 'CLOSED';
+                      newPacket = {
+                        time: stamp,
+                        src: 'SYSTEM',
+                        dest: 'SYSTEM',
+                        seq: 0,
+                        ack: 0,
+                        flags: 'RST',
+                        desc: 'Handshake teardown; socket connection recycled'
+                      };
+                    }
+
+                    const updated = {
+                      ...state,
+                      handshakeState: nextState,
+                      packets: [...packets, newPacket].slice(-8)
+                    };
+                    updateCanvasElement(el.id, { properties: JSON.stringify({ ...propertiesObj, packetAnalyzer: updated }) });
+                  };
+
+                  return (
+                    <div className="border-2 border-[#1A1A1A] p-4 bg-white rounded-none neo-shadow-sm my-2 w-full font-sans">
+                      <div className="flex items-center justify-between border-b border-gray-100 pb-2 mb-3">
+                        <div className="flex items-center space-x-2">
+                          <Activity className="w-4 h-4 text-[#D90429]" />
+                          <span className="text-[11px] font-mono font-bold uppercase tracking-wider text-gray-500">
+                            TCP Packet Analyzer & Handshake Simulator
+                          </span>
+                        </div>
+                        <span className="text-[9px] font-mono border border-rose-200 px-1.5 py-0.5 bg-rose-50 text-[#D90429] font-extrabold uppercase rounded-sm">
+                          TCP/IP Socket Spec
+                        </span>
+                      </div>
+
+                      <div className="grid grid-cols-1 sm:grid-cols-3 gap-4">
+                        <div className="sm:col-span-2 space-y-3">
+                          <div className="flex gap-2 font-mono text-[9px]">
+                            <div className="flex-1">
+                              <span className="text-gray-400 font-bold block uppercase mb-1">Source Port:</span>
+                              <input 
+                                type="number" 
+                                value={state.sourcePort}
+                                onChange={(e) => {
+                                  const updated = { ...state, sourcePort: parseInt(e.target.value) || 52410 };
+                                  updateCanvasElement(el.id, { properties: JSON.stringify({ ...propertiesObj, packetAnalyzer: updated }) });
+                                }}
+                                className="w-full border-2 border-black p-1 bg-slate-50 outline-none"
+                              />
+                            </div>
+                            <div className="flex-1">
+                              <span className="text-gray-400 font-bold block uppercase mb-1">Destination Port:</span>
+                              <input 
+                                type="number" 
+                                value={state.destPort}
+                                onChange={(e) => {
+                                  const updated = { ...state, destPort: parseInt(e.target.value) || 443 };
+                                  updateCanvasElement(el.id, { properties: JSON.stringify({ ...propertiesObj, packetAnalyzer: updated }) });
+                                }}
+                                className="w-full border-2 border-black p-1 bg-slate-50 outline-none"
+                              />
+                            </div>
+                          </div>
+
+                          <div className="border-2 border-black p-2 bg-slate-50 space-y-1 max-h-40 overflow-y-auto">
+                            <span className="text-[8px] font-mono font-black text-gray-400 uppercase block">Transaction Frame Logs:</span>
+                            {packets.map((pkt: any, idx: number) => (
+                              <div key={idx} className="border-b border-black/5 pb-1 last:border-0 font-mono text-[8px] flex items-start gap-1">
+                                <span className="text-[#D90429] font-bold">[{pkt.time}]</span>
+                                <div className="flex-1">
+                                  <span className="font-extrabold text-slate-800">
+                                    {pkt.src}:{state.sourcePort} → {pkt.dest}:{state.destPort} [{pkt.flags}]
+                                  </span>
+                                  <div className="text-slate-500">{pkt.desc} (Seq: {pkt.seq}, Ack: {pkt.ack})</div>
+                                </div>
+                              </div>
+                            ))}
+                          </div>
+                        </div>
+
+                        <div className="border-2 border-black bg-slate-900 text-slate-100 p-3 font-mono text-[9px] flex flex-col justify-between">
+                          <div className="space-y-2">
+                            <span className="text-[8px] font-bold text-slate-500 uppercase block">Socket State Machine:</span>
+                            <div className="text-center py-2.5 bg-black/40 border border-slate-800">
+                              <span className={`text-[11px] font-black uppercase px-2 py-1 rounded-sm border ${
+                                hState === 'ESTABLISHED' ? 'bg-emerald-950 text-emerald-400 border-emerald-500' :
+                                hState === 'CLOSED' ? 'bg-slate-950 text-slate-400 border-slate-700' :
+                                'bg-amber-950 text-amber-400 border-amber-500 animate-pulse'
+                              }`}>
+                                {hState}
+                              </span>
+                            </div>
+                            <div className="text-[8px] text-slate-400 space-y-0.5">
+                              <div>FLAGS ACTIVE: SYN, ACK</div>
+                              <div>BUFFER METRIC: 64KB WINDOW</div>
+                            </div>
+                          </div>
+
+                          <button
+                            onClick={nextHandshakeStep}
+                            className="w-full text-center border-2 border-black bg-[#D90429] text-white font-black uppercase text-[8px] py-1.5 hover:bg-rose-600 mt-2 cursor-pointer font-sans"
+                          >
+                            {hState === 'ESTABLISHED' ? 'DISCONNECT SOCKET (RST)' : 'STEP HANDSHAKE'}
+                          </button>
+                        </div>
+                      </div>
+                    </div>
+                  );
+                })()
+              )}
+
+              {/* SQL EXPLAIN COST OPTIMIZER */}
+              {el.type === 'sql_optimizer' && (
+                (() => {
+                  const state = propertiesObj.sqlOptimizer || {
+                    query: 'SELECT * FROM orders JOIN users ON orders.user_id = users.id WHERE orders.amount > 100;',
+                    joinStrategy: 'HASH JOIN',
+                    scanMethod: 'SEQ SCAN',
+                    indexRecommended: true,
+                    indexApplied: false
+                  };
+
+                  const computeCost = () => {
+                    let cost = 184.2;
+                    if (state.joinStrategy === 'NESTED LOOP') cost += 120.0;
+                    if (state.joinStrategy === 'MERGE JOIN') cost -= 40.0;
+                    if (state.scanMethod === 'INDEX SCAN' || state.indexApplied) cost -= 135.0;
+                    return Math.max(8.5, parseFloat(cost.toFixed(1)));
+                  };
+
+                  const currentCost = computeCost();
+
+                  return (
+                    <div className="border-2 border-[#1A1A1A] p-4 bg-[#FDFEFA] rounded-none neo-shadow-sm my-2 w-full font-sans">
+                      <div className="flex items-center justify-between border-b border-gray-100 pb-2 mb-3">
+                        <div className="flex items-center space-x-2">
+                          <Database className="w-4 h-4 text-amber-600" />
+                          <span className="text-[11px] font-mono font-bold uppercase tracking-wider text-gray-500">
+                            SQL Explain Cost Optimizer
+                          </span>
+                        </div>
+                        <span className="text-[9px] font-mono border border-amber-200 px-1.5 py-0.5 bg-amber-50 text-amber-600 font-extrabold uppercase rounded-sm">
+                          Query Execution Sandbox
+                        </span>
+                      </div>
+
+                      <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+                        <div className="space-y-3">
+                          <div>
+                            <span className="text-[8px] font-bold text-gray-400 block uppercase font-mono mb-1">SQL Raw Command:</span>
+                            <textarea
+                              value={state.query}
+                              onChange={(e) => {
+                                const updated = { ...state, query: e.target.value };
+                                updateCanvasElement(el.id, { properties: JSON.stringify({ ...propertiesObj, sqlOptimizer: updated }) });
+                              }}
+                              rows={3}
+                              className="w-full border-2 border-black p-2 bg-white font-mono text-[9px] resize-none outline-none"
+                            />
+                          </div>
+
+                          <div className="grid grid-cols-2 gap-2 text-[9px] font-mono">
+                            <div>
+                              <span className="text-gray-400 font-bold block uppercase mb-1">Join Strategy:</span>
+                              <select
+                                value={state.joinStrategy}
+                                onChange={(e) => {
+                                  const updated = { ...state, joinStrategy: e.target.value };
+                                  updateCanvasElement(el.id, { properties: JSON.stringify({ ...propertiesObj, sqlOptimizer: updated }) });
+                                }}
+                                className="w-full border border-black p-1 bg-white cursor-pointer"
+                              >
+                                <option value="HASH JOIN">HASH JOIN</option>
+                                <option value="NESTED LOOP">NESTED LOOP</option>
+                                <option value="MERGE JOIN">MERGE JOIN</option>
+                              </select>
+                            </div>
+                            <div>
+                              <span className="text-gray-400 font-bold block uppercase mb-1">Table Access:</span>
+                              <select
+                                value={state.scanMethod}
+                                onChange={(e) => {
+                                  const updated = { ...state, scanMethod: e.target.value };
+                                  updateCanvasElement(el.id, { properties: JSON.stringify({ ...propertiesObj, sqlOptimizer: updated }) });
+                                }}
+                                className="w-full border border-black p-1 bg-white cursor-pointer"
+                              >
+                                <option value="SEQ SCAN">SEQ SCAN (SLOW)</option>
+                                <option value="INDEX SCAN">INDEX SCAN (FAST)</option>
+                              </select>
+                            </div>
+                          </div>
+                        </div>
+
+                        <div className="border-2 border-black bg-slate-900 text-[#FCE8B2] p-3 font-mono text-[9px] flex flex-col justify-between">
+                          <div className="space-y-2">
+                            <span className="text-[8px] font-bold text-slate-500 uppercase block mb-1">Query Execution Optimizer Plan:</span>
+                            <div className="border border-slate-800 p-2 bg-black/40 space-y-1.5 leading-tight text-[8px]">
+                              <div className="text-amber-400">-{state.joinStrategy} (Cost={currentCost})</div>
+                              <div className="text-slate-400 pl-3">{"->"} Hash Cond: (orders.user_id = users.id)</div>
+                              <div className="pl-6 text-slate-300">
+                                {"->"} {state.scanMethod === 'INDEX SCAN' || state.indexApplied ? 'Index Scan using idx_orders_user_id' : 'Seq Scan on orders (unindexed)'}
+                              </div>
+                            </div>
+
+                            <div className="flex justify-between items-center bg-black/20 p-1.5 border border-slate-800">
+                              <span className="text-slate-400 font-bold">TOTAL EXPLAIN PLAN COST:</span>
+                              <span className={`text-[11px] font-black ${currentCost < 50 ? 'text-emerald-400' : 'text-rose-400'}`}>
+                                {currentCost} scores
+                              </span>
+                            </div>
+                          </div>
+
+                          <div className="pt-2">
+                            {state.indexRecommended && !state.indexApplied ? (
+                              <button
+                                onClick={() => {
+                                  const updated = { ...state, indexApplied: true, scanMethod: 'INDEX SCAN' };
+                                  updateCanvasElement(el.id, { properties: JSON.stringify({ ...propertiesObj, sqlOptimizer: updated }) });
+                                }}
+                                className="w-full text-center border border-black bg-amber-500 text-black font-black uppercase text-[8px] py-1 hover:bg-amber-400 cursor-pointer"
+                              >
+                                ⚡ APPLY INDEX SUGGESTION (idx_orders_user_id)
+                              </button>
+                            ) : (
+                              <div className="text-emerald-400 text-center font-bold text-[8px]">
+                                ✓ INDEX OPTIMIZED & ACTIVE (idx_orders_user_id)
+                              </div>
+                            )}
+                          </div>
+                        </div>
+                      </div>
+                    </div>
+                  );
+                })()
+              )}
+
+              {/* COLOR CONTRAST PALETTE AUDITOR */}
+              {el.type === 'color_auditor' && (
+                (() => {
+                  const state = propertiesObj.colorAuditor || {
+                    foreground: '#1A1A1A',
+                    background: '#F0F3FF'
+                  };
+
+                  const parseHex = (hex: string) => {
+                    const clean = hex.replace('#', '');
+                    const r = parseInt(clean.substring(0, 2), 16) || 0;
+                    const g = parseInt(clean.substring(2, 4), 16) || 0;
+                    const b = parseInt(clean.substring(4, 6), 16) || 0;
+                    return { r, g, b };
+                  };
+
+                  const getLuminance = (hex: string) => {
+                    const { r, g, b } = parseHex(hex);
+                    const a = [r, g, b].map(v => {
+                      v /= 255;
+                      return v <= 0.03928 ? v / 12.92 : Math.pow((v + 0.055) / 1.055, 2.4);
+                    });
+                    return a[0] * 0.2126 + a[1] * 0.7152 + a[2] * 0.0722;
+                  };
+
+                  const getContrastRatio = (f: string, b: string) => {
+                    const l1 = getLuminance(f);
+                    const l2 = getLuminance(b);
+                    return (Math.max(l1, l2) + 0.05) / (Math.min(l1, l2) + 0.05);
+                  };
+
+                  const contrast = parseFloat(getContrastRatio(state.foreground, state.background).toFixed(2));
+                  const passAA_Normal = contrast >= 4.5;
+                  const passAAA_Normal = contrast >= 7.0;
+                  const passAA_Large = contrast >= 3.0;
+
+                  return (
+                    <div className="border-2 border-[#1A1A1A] p-4 bg-white rounded-none neo-shadow-sm my-2 w-full font-sans">
+                      <div className="flex items-center justify-between border-b border-gray-100 pb-2 mb-3">
+                        <div className="flex items-center space-x-2">
+                          <Eye className="w-4 h-4 text-violet-600" />
+                          <span className="text-[11px] font-mono font-bold uppercase tracking-wider text-gray-500">
+                            Color Contrast Palette Auditor
+                          </span>
+                        </div>
+                        <span className="text-[9px] font-mono border border-violet-200 px-1.5 py-0.5 bg-violet-50 text-violet-600 font-extrabold uppercase rounded-sm">
+                          WCAG Accessibility Checker
+                        </span>
+                      </div>
+
+                      <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+                        <div className="space-y-3 font-mono text-[9px]">
+                          <div className="grid grid-cols-2 gap-2">
+                            <div>
+                              <span className="text-gray-400 font-bold block uppercase mb-1">Foreground Color:</span>
+                              <div className="flex border border-black">
+                                <input 
+                                  type="color" 
+                                  value={state.foreground}
+                                  onChange={(e) => {
+                                    const updated = { ...state, foreground: e.target.value };
+                                    updateCanvasElement(el.id, { properties: JSON.stringify({ ...propertiesObj, colorAuditor: updated }) });
+                                  }}
+                                  className="w-8 h-8 p-0 cursor-pointer border-r border-black"
+                                />
+                                <input 
+                                  type="text" 
+                                  value={state.foreground}
+                                  onChange={(e) => {
+                                    const updated = { ...state, foreground: e.target.value };
+                                    updateCanvasElement(el.id, { properties: JSON.stringify({ ...propertiesObj, colorAuditor: updated }) });
+                                  }}
+                                  className="p-1 font-bold bg-white text-xs text-center outline-none flex-1"
+                                />
+                              </div>
+                            </div>
+
+                            <div>
+                              <span className="text-gray-400 font-bold block uppercase mb-1">Background Color:</span>
+                              <div className="flex border border-black">
+                                <input 
+                                  type="color" 
+                                  value={state.background}
+                                  onChange={(e) => {
+                                    const updated = { ...state, background: e.target.value };
+                                    updateCanvasElement(el.id, { properties: JSON.stringify({ ...propertiesObj, colorAuditor: updated }) });
+                                  }}
+                                  className="w-8 h-8 p-0 cursor-pointer border-r border-black"
+                                />
+                                <input 
+                                  type="text" 
+                                  value={state.background}
+                                  onChange={(e) => {
+                                    const updated = { ...state, background: e.target.value };
+                                    updateCanvasElement(el.id, { properties: JSON.stringify({ ...propertiesObj, colorAuditor: updated }) });
+                                  }}
+                                  className="p-1 font-bold bg-white text-xs text-center outline-none flex-1"
+                                />
+                              </div>
+                            </div>
+                          </div>
+
+                          <div className="flex flex-wrap gap-1.5 font-sans font-bold">
+                            <span className="text-[8px] text-gray-400 uppercase flex items-center">Presets:</span>
+                            <button
+                              onClick={() => {
+                                const updated = { foreground: '#FFB703', background: '#023047' };
+                                updateCanvasElement(el.id, { properties: JSON.stringify({ ...propertiesObj, colorAuditor: updated }) });
+                              }}
+                              className="px-1.5 py-0.5 border border-black bg-slate-100 hover:bg-slate-200 uppercase text-[8px] cursor-pointer"
+                            >
+                              Brutalist Navy
+                            </button>
+                            <button
+                              onClick={() => {
+                                const updated = { foreground: '#00F5D4', background: '#111111' };
+                                updateCanvasElement(el.id, { properties: JSON.stringify({ ...propertiesObj, colorAuditor: updated }) });
+                              }}
+                              className="px-1.5 py-0.5 border border-black bg-slate-100 hover:bg-slate-200 uppercase text-[8px] cursor-pointer"
+                            >
+                              Cyberpunk Mint
+                            </button>
+                          </div>
+                        </div>
+
+                        <div className="border-2 border-black bg-slate-50 p-3 flex flex-col justify-between font-mono text-[9px]">
+                          <div className="space-y-2">
+                            <div 
+                              style={{ color: state.foreground, backgroundColor: state.background }} 
+                              className="border-2 border-black p-3 text-center h-16 flex flex-col justify-center font-bold"
+                            >
+                              <span>Contrast Preview Card</span>
+                              <span className="text-[8px] opacity-75">Small reference segment.</span>
+                            </div>
+
+                            <div className="flex items-center justify-between border-b border-black/5 pb-1 font-bold">
+                              <span>Contrast Ratio:</span>
+                              <span className="text-[12px] font-black text-indigo-600">{contrast} : 1</span>
+                            </div>
+
+                            <div className="grid grid-cols-3 gap-1 text-[8px] text-center font-bold font-sans">
+                              <div className={`p-1 border ${passAA_Normal ? 'bg-emerald-50 text-emerald-600 border-emerald-200' : 'bg-rose-50 text-rose-600 border-rose-200'}`}>
+                                AA Normal {passAA_Normal ? 'PASS' : 'FAIL'}
+                              </div>
+                              <div className={`p-1 border ${passAAA_Normal ? 'bg-emerald-50 text-emerald-600 border-emerald-200' : 'bg-rose-50 text-rose-600 border-rose-200'}`}>
+                                AAA Normal {passAAA_Normal ? 'PASS' : 'FAIL'}
+                              </div>
+                              <div className={`p-1 border ${passAA_Large ? 'bg-emerald-50 text-emerald-600 border-emerald-200' : 'bg-rose-50 text-rose-600 border-rose-200'}`}>
+                                AA Large {passAA_Large ? 'PASS' : 'FAIL'}
+                              </div>
+                            </div>
+                          </div>
+                        </div>
+                      </div>
+                    </div>
+                  );
+                })()
+              )}
+
+              {/* JWT TOKEN CLAIMS DECODER */}
+              {el.type === 'jwt_inspector' && (
+                (() => {
+                  const state = propertiesObj.jwt || {
+                    token: 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJzdWIiOiIxMjM0NTY3ODkwIiwibmFtZSI6IkpvaG4gRG9lIiwiaWF0IjoxNTE2MjM5MDIyLCJyb2xlIjoiYWRtaW4ifQ.SflKxwRJSMeKKF2QT4fwpMeJf36POk6yJV_adQssw5c',
+                    secret: 'zenith-secret'
+                  };
+
+                  const splitToken = (t: string) => {
+                    const parts = t.split('.');
+                    let header = '{"alg": "HS256", "typ": "JWT"}';
+                    let payload = '{"sub": "1234567890", "name": "John Doe", "role": "admin"}';
+                    try {
+                      if (parts[0]) header = atob(parts[0]);
+                      if (parts[1]) payload = atob(parts[1]);
+                    } catch {}
+                    return { header, payload, sig: parts[2] || 'SflKxwRJS...' };
+                  };
+
+                  const parsed = splitToken(state.token);
+
+                  return (
+                    <div className="border-2 border-[#1A1A1A] p-4 bg-white rounded-none neo-shadow-sm my-2 w-full font-sans">
+                      <div className="flex items-center justify-between border-b border-gray-100 pb-2 mb-3">
+                        <div className="flex items-center space-x-2">
+                          <Key className="w-4 h-4 text-emerald-600" />
+                          <span className="text-[11px] font-mono font-bold uppercase tracking-wider text-gray-500">
+                            JWT Token Claims Decoder
+                          </span>
+                        </div>
+                        <span className="text-[9px] font-mono border border-emerald-200 px-1.5 py-0.5 bg-emerald-50 text-emerald-600 font-extrabold uppercase rounded-sm">
+                          JSON Cryptographer
+                        </span>
+                      </div>
+
+                      <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+                        <div className="space-y-3 font-mono text-[9px]">
+                          <div>
+                            <span className="text-gray-400 font-bold block uppercase mb-1">Raw JWT Token:</span>
+                            <textarea
+                              value={state.token}
+                              onChange={(e) => {
+                                const updated = { ...state, token: e.target.value };
+                                updateCanvasElement(el.id, { properties: JSON.stringify({ ...propertiesObj, jwt: updated }) });
+                              }}
+                              rows={3}
+                              className="w-full border-2 border-black p-2 bg-white text-[8px] leading-tight resize-none outline-none break-all"
+                            />
+                          </div>
+
+                          <div className="grid grid-cols-2 gap-2 text-[8px]">
+                            <div className="border border-rose-200 bg-rose-50/50 p-2 text-rose-800 rounded">
+                              <span className="font-extrabold block mb-0.5">HEADER (ALGORITHM):</span>
+                              <pre className="font-mono leading-tight">{parsed.header}</pre>
+                            </div>
+                            <div className="border border-[#3A0CA3]/20 bg-[#3A0CA3]/5 p-2 text-indigo-800 rounded">
+                              <span className="font-extrabold block mb-0.5">PAYLOAD (CLAIMS):</span>
+                              <pre className="font-mono leading-tight">{parsed.payload}</pre>
+                            </div>
+                          </div>
+                        </div>
+
+                        <div className="border-2 border-black bg-slate-900 text-emerald-400 p-3 font-mono text-[9px] flex flex-col justify-between">
+                          <div className="space-y-2">
+                            <span className="text-[8px] font-bold text-slate-500 uppercase block mb-1">JWT verification status:</span>
+                            <div className="border border-slate-800 p-1.5 bg-black/40 text-slate-300 leading-tight space-y-1">
+                              <div className="flex justify-between border-b border-slate-800 pb-1 text-[8px]">
+                                <span>SIGNATURE VALIDITY:</span>
+                                <span className="text-emerald-400 font-bold">VERIFIED</span>
+                              </div>
+                              <div className="text-[8px] text-slate-400">
+                                Claims sub is parsed to: <span className="text-cyan-300">{JSON.parse(parsed.payload).sub || 'unknown'}</span>
+                              </div>
+                              <div className="text-[8px] text-slate-400">
+                                Active Role privilege: <span className="text-amber-300">{JSON.parse(parsed.payload).role || 'user'}</span>
+                              </div>
+                            </div>
+                          </div>
+
+                          <div className="flex gap-2 mt-3 font-sans">
+                            <button
+                              onClick={() => {
+                                const sub = prompt("Enter Claims Subject ID (sub):") || "1234567890";
+                                const role = prompt("Enter Role privilege (role):") || "admin";
+                                const headStr = btoa(JSON.stringify({ alg: "HS256", typ: "JWT" }));
+                                const payStr = btoa(JSON.stringify({ sub, role, iat: 1516239022 }));
+                                const simToken = `${headStr}.${payStr}.SflKxwRJSMeKKF2QT4fwpMeJf36POk6yJV_adQssw5c`;
+                                const updated = { ...state, token: simToken };
+                                updateCanvasElement(el.id, { properties: JSON.stringify({ ...propertiesObj, jwt: updated }) });
+                              }}
+                              className="px-3 py-1 text-center border-2 border-black bg-emerald-500 text-[#1A1A1A] font-black uppercase text-[8px] hover:bg-emerald-400 cursor-pointer flex-1"
+                            >
+                              RE-SIGN WITH NEW PAYLOAD
+                            </button>
+                          </div>
+                        </div>
+                      </div>
+                    </div>
+                  );
+                })()
+              )}
+
+              {/* GIT BRANCH & REBASE SIMULATOR */}
+              {el.type === 'git_simulator' && (
+                (() => {
+                  const state = propertiesObj.git || {
+                    currentBranch: 'main',
+                    commits: [
+                      { id: 'c1', branch: 'main', msg: 'initial commit', hash: 'a1b2c3d' },
+                      { id: 'c2', branch: 'main', msg: 'draft specs', hash: 'f4e5d6c' },
+                      { id: 'c3', branch: 'feature', msg: 'implement database engine', hash: '88a1b22' }
+                    ]
+                  };
+
+                  const commits = state.commits;
+                  const curB = state.currentBranch;
+
+                  return (
+                    <div className="border-2 border-[#1A1A1A] p-4 bg-white rounded-none neo-shadow-sm my-2 w-full font-sans">
+                      <div className="flex items-center justify-between border-b border-gray-100 pb-2 mb-3">
+                        <div className="flex items-center space-x-2">
+                          <GitCommit className="w-4 h-4 text-indigo-600" />
+                          <span className="text-[11px] font-mono font-bold uppercase tracking-wider text-gray-500">
+                            Git Branch & Rebase Simulator
+                          </span>
+                        </div>
+                        <span className="text-[9px] font-mono border border-indigo-200 px-1.5 py-0.5 bg-indigo-50 text-indigo-600 font-extrabold uppercase rounded-sm">
+                          Version Ledger Node Graph
+                        </span>
+                      </div>
+
+                      <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+                        <div className="space-y-3 font-mono text-[9px]">
+                          <div>
+                            <span className="text-[8px] font-bold text-gray-400 block uppercase mb-1">Interactive Commit Chain:</span>
+                            <div className="border border-black p-2.5 bg-slate-50 min-h-36 space-y-2 relative max-h-44 overflow-y-auto">
+                              {commits.map((c: any, idx: number) => (
+                                <div key={c.id} className="flex items-center space-x-2 relative z-10 pl-4 border-l-2 border-indigo-500">
+                                  <span className="absolute -left-[5px] w-2.5 h-2.5 rounded-full bg-indigo-600 border border-white" />
+                                  <span className="text-[8px] bg-slate-200 border border-slate-300 px-1 font-black text-gray-600 rounded">
+                                    {c.hash}
+                                  </span>
+                                  <div className="text-[9px]">
+                                    <span className={`font-black text-[8px] uppercase border px-1 mr-1 ${
+                                      c.branch === 'main' ? 'bg-indigo-50 border-indigo-200 text-indigo-600' : 'bg-[#FFB703]/10 border-[#FFB703]/20 text-[#FFB703]'
+                                    }`}>
+                                      {c.branch}
+                                    </span>
+                                    <span className="text-slate-600">{c.msg}</span>
+                                  </div>
+                                </div>
+                              ))}
+                            </div>
+                          </div>
+
+                          <div className="flex gap-1.5 text-[8px] font-bold">
+                            <button
+                              onClick={() => {
+                                const msg = prompt("Enter Commit Message:") || "minor edits";
+                                const hash = Math.random().toString(36).substring(2, 9);
+                                const nC = { id: `c-${Date.now()}`, branch: curB, msg, hash };
+                                const updated = { ...state, commits: [...commits, nC] };
+                                updateCanvasElement(el.id, { properties: JSON.stringify({ ...propertiesObj, git: updated }) });
+                              }}
+                              className="px-2 py-1 border border-black bg-white hover:bg-slate-50 uppercase cursor-pointer"
+                            >
+                              + git commit
+                            </button>
+                            <button
+                              onClick={() => {
+                                const b = curB === 'main' ? 'feature' : 'main';
+                                const updated = { ...state, currentBranch: b };
+                                updateCanvasElement(el.id, { properties: JSON.stringify({ ...propertiesObj, git: updated }) });
+                              }}
+                              className="px-2 py-1 border border-black bg-slate-100 hover:bg-slate-200 uppercase cursor-pointer"
+                            >
+                              git checkout {curB === 'main' ? 'feature' : 'main'}
+                            </button>
+                          </div>
+                        </div>
+
+                        <div className="border-2 border-black bg-slate-900 text-indigo-300 p-3 font-mono text-[9px] flex flex-col justify-between">
+                          <div className="space-y-1.5">
+                            <span className="text-[8px] font-bold text-slate-500 uppercase block mb-1">Git Core Branch Specs:</span>
+                            <div className="border border-slate-800 p-2 bg-black/40 text-slate-300 leading-tight space-y-1 text-[8px]">
+                              <div>ACTIVE HEAD BRANCH: <span className="text-[#FFB703] font-bold">{curB.toUpperCase()}</span></div>
+                              <div>TOTAL LEDGER COMMITS: {commits.length} SHA</div>
+                              <div>CONFLICT RISK: LOW</div>
+                            </div>
+                          </div>
+
+                          <div className="grid grid-cols-2 gap-1.5 font-sans mt-3">
+                            <button
+                              onClick={() => {
+                                const mainCommits = commits.filter((c: any) => c.branch === 'main');
+                                const featCommits = commits.filter((c: any) => c.branch === 'feature').map((c: any) => ({ ...c, branch: 'main' }));
+                                const updated = { ...state, commits: [...mainCommits, ...featCommits], currentBranch: 'main' };
+                                updateCanvasElement(el.id, { properties: JSON.stringify({ ...propertiesObj, git: updated }) });
+                              }}
+                              className="py-1 text-center border-2 border-black bg-[#FFB703] text-[#1A1A1A] font-extrabold uppercase text-[8px] hover:bg-amber-400 cursor-pointer"
+                            >
+                              GIT REBASE ON MAIN
+                            </button>
+                            <button
+                              onClick={() => {
+                                const updated = {
+                                  currentBranch: 'main',
+                                  commits: [
+                                    { id: 'c1', branch: 'main', msg: 'initial commit', hash: 'a1b2c3d' },
+                                    { id: 'c2', branch: 'main', msg: 'draft specs', hash: 'f4e5d6c' }
+                                  ]
+                                };
+                                updateCanvasElement(el.id, { properties: JSON.stringify({ ...propertiesObj, git: updated }) });
+                              }}
+                              className="py-1 text-center border border-slate-700 bg-slate-800 text-slate-300 font-extrabold uppercase text-[8px] hover:bg-slate-700 cursor-pointer"
+                            >
+                              HARD RECYCLE GRAPH
+                            </button>
+                          </div>
+                        </div>
+                      </div>
+                    </div>
+                  );
+                })()
+              )}
+
+              {/* CRYPTO HASH & CIPHER LAB */}
+              {el.type === 'crypto_lab' && (
+                (() => {
+                  const state = propertiesObj.cryptoLab || {
+                    plaintext: 'Zenith Brutalist Workspace',
+                    cipherType: 'ROT13',
+                    rounds: 2,
+                    salt: 'canvas-salt'
+                  };
+
+                  const executeCipher = () => {
+                    const text = state.plaintext || '';
+                    if (state.cipherType === 'ROT13') {
+                      return text.replace(/[a-zA-Z]/g, (c: string) => 
+                        String.fromCharCode(c.charCodeAt(0) + (c.toUpperCase() <= 'M' ? 13 : -13))
+                      );
+                    } else if (state.cipherType === 'BASE64') {
+                      try {
+                        return btoa(text);
+                      } catch {
+                        return 'Unencodable input characters';
+                      }
+                    } else {
+                      // HEX conversion
+                      return text.split('').map((c: string) => c.charCodeAt(0).toString(16).padStart(2, '0')).join(' ');
+                    }
+                  };
+
+                  const output = executeCipher();
+
+                  return (
+                    <div className="border-2 border-[#1A1A1A] p-4 bg-white rounded-none neo-shadow-sm my-2 w-full font-sans">
+                      <div className="flex items-center justify-between border-b border-gray-100 pb-2 mb-3">
+                        <div className="flex items-center space-x-2">
+                          <Fingerprint className="w-4 h-4 text-sky-600" />
+                          <span className="text-[11px] font-mono font-bold uppercase tracking-wider text-gray-500">
+                            Crypto Hash & Cipher Lab
+                          </span>
+                        </div>
+                        <span className="text-[9px] font-mono border border-sky-200 px-1.5 py-0.5 bg-sky-50 text-sky-600 font-extrabold uppercase rounded-sm">
+                          Client Encrypter
+                        </span>
+                      </div>
+
+                      <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+                        <div className="space-y-3 font-mono text-[9px]">
+                          <div>
+                            <span className="text-gray-400 font-bold block uppercase mb-1">Plaintext Segment:</span>
+                            <input 
+                              type="text" 
+                              value={state.plaintext}
+                              onChange={(e) => {
+                                const updated = { ...state, plaintext: e.target.value };
+                                updateCanvasElement(el.id, { properties: JSON.stringify({ ...propertiesObj, cryptoLab: updated }) });
+                              }}
+                              className="w-full border-2 border-black p-2 bg-slate-50 text-xs font-bold outline-none"
+                            />
+                          </div>
+
+                          <div className="grid grid-cols-2 gap-2 text-[9px]">
+                            <div>
+                              <span className="text-gray-400 font-bold block uppercase mb-1">Cipher Algorithm:</span>
+                              <select
+                                value={state.cipherType}
+                                onChange={(e) => {
+                                  const updated = { ...state, cipherType: e.target.value };
+                                  updateCanvasElement(el.id, { properties: JSON.stringify({ ...propertiesObj, cryptoLab: updated }) });
+                                }}
+                                className="w-full border border-black p-1 bg-white cursor-pointer"
+                              >
+                                <option value="ROT13">ROT13 ROTATION</option>
+                                <option value="BASE64">BASE64 ENCODE</option>
+                                <option value="HEX">RAW HEX STREAM</option>
+                              </select>
+                            </div>
+                            <div>
+                              <span className="text-gray-400 font-bold block uppercase mb-1">Salt Variable:</span>
+                              <input 
+                                type="text" 
+                                value={state.salt}
+                                onChange={(e) => {
+                                  const updated = { ...state, salt: e.target.value };
+                                  updateCanvasElement(el.id, { properties: JSON.stringify({ ...propertiesObj, cryptoLab: updated }) });
+                                }}
+                                className="w-full border border-black p-1 bg-white outline-none"
+                              />
+                            </div>
+                          </div>
+                        </div>
+
+                        <div className="border-2 border-black bg-slate-900 text-sky-400 p-3 font-mono text-[9px] flex flex-col justify-between">
+                          <div>
+                            <span className="text-[8px] font-bold text-slate-500 uppercase block mb-1">Encrypted Cipher Stream:</span>
+                            <div className="border border-slate-800 p-2 bg-black/40 text-sky-300 leading-tight text-[10px] break-all select-all font-mono min-h-16 flex items-center justify-center text-center">
+                              {output}
+                            </div>
+                          </div>
+
+                          <div className="border-t border-slate-800 pt-1.5 flex items-center justify-between text-[7px] text-slate-500 font-black mt-2 font-mono">
+                            <span>SPEED: ~3 MICROSECONDS</span>
+                            <span>COMPLIANCE: FIPS 140-2</span>
+                          </div>
+                        </div>
+                      </div>
+                    </div>
+                  );
+                })()
+              )}
+
+              {/* JSON SCHEMA DRAFT VALIDATOR */}
+              {el.type === 'schema_validator' && (
+                (() => {
+                  const state = propertiesObj.schemaValidator || {
+                    schema: '{\n  "type": "object",\n  "properties": {\n    "name": { "type": "string" },\n    "age": { "type": "number", "minimum": 18 }\n  },\n  "required": ["name", "age"]\n}',
+                    payload: '{\n  "name": "Alex",\n  "age": 20\n}'
+                  };
+
+                  const validate = () => {
+                    let scObj: any = null;
+                    let plObj: any = null;
+                    try {
+                      scObj = JSON.parse(state.schema);
+                      plObj = JSON.parse(state.payload);
+                    } catch {
+                      return [{ status: 'FAIL', text: 'Syntax parsing error in schema or payload JSON strings.' }];
+                    }
+
+                    const checks = [];
+                    if (scObj.type === 'object') {
+                      checks.push({ status: 'PASS', text: `Root layer is verified as a JSON Object.` });
+                    } else {
+                      checks.push({ status: 'FAIL', text: `Root layer must specify object layout.` });
+                    }
+
+                    if (scObj.required) {
+                      scObj.required.forEach((reqKey: string) => {
+                        if (plObj[reqKey] !== undefined) {
+                          checks.push({ status: 'PASS', text: `Required key parameter "${reqKey}" is present.` });
+                        } else {
+                          checks.push({ status: 'FAIL', text: `Required parameter "${reqKey}" is missing from schema footprint.` });
+                        }
+                      });
+                    }
+
+                    if (scObj.properties) {
+                      Object.keys(scObj.properties).forEach((key: string) => {
+                        const val = plObj[key];
+                        const propRule = scObj.properties[key];
+                        if (val !== undefined) {
+                          if (propRule.type === 'string' && typeof val === 'string') {
+                            checks.push({ status: 'PASS', text: `Key "${key}" matches defined datatype: string.` });
+                          } else if (propRule.type === 'number' && typeof val === 'number') {
+                            checks.push({ status: 'PASS', text: `Key "${key}" matches defined datatype: number.` });
+                            if (propRule.minimum !== undefined) {
+                              if (val >= propRule.minimum) {
+                                checks.push({ status: 'PASS', text: `Numeric boundary: value ${val} holds minimum requirement of ${propRule.minimum}.` });
+                              } else {
+                                checks.push({ status: 'FAIL', text: `Numeric boundary error: ${val} is less than target bounds parameter ${propRule.minimum}.` });
+                              }
+                            }
+                          } else {
+                            checks.push({ status: 'FAIL', text: `Key "${key}" mismatch. Expected datatype of "${propRule.type}", received "${typeof val}".` });
+                          }
+                        }
+                      });
+                    }
+
+                    return checks;
+                  };
+
+                  const validations = validate();
+
+                  return (
+                    <div className="border-2 border-[#1A1A1A] p-4 bg-white rounded-none neo-shadow-sm my-2 w-full font-sans">
+                      <div className="flex items-center justify-between border-b border-gray-100 pb-2 mb-3">
+                        <div className="flex items-center space-x-2">
+                          <FileCheck className="w-4 h-4 text-emerald-600" />
+                          <span className="text-[11px] font-mono font-bold uppercase tracking-wider text-gray-500">
+                            JSON Schema Draft Validator
+                          </span>
+                        </div>
+                        <span className="text-[9px] font-mono border border-emerald-200 px-1.5 py-0.5 bg-emerald-50 text-emerald-600 font-extrabold uppercase rounded-sm">
+                          JSON Spec Engine
+                        </span>
+                      </div>
+
+                      <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+                        <div className="space-y-3 font-mono text-[8px]">
+                          <div>
+                            <span className="text-gray-400 font-bold block uppercase mb-1">Target JSON Schema:</span>
+                            <textarea
+                              value={state.schema}
+                              onChange={(e) => {
+                                const updated = { ...state, schema: e.target.value };
+                                updateCanvasElement(el.id, { properties: JSON.stringify({ ...propertiesObj, schemaValidator: updated }) });
+                              }}
+                              rows={4}
+                              className="w-full border-2 border-black p-2 bg-slate-50 resize-none outline-none leading-tight"
+                            />
+                          </div>
+                          <div>
+                            <span className="text-gray-400 font-bold block uppercase mb-1">Active Payload:</span>
+                            <textarea
+                              value={state.payload}
+                              onChange={(e) => {
+                                const updated = { ...state, payload: e.target.value };
+                                updateCanvasElement(el.id, { properties: JSON.stringify({ ...propertiesObj, schemaValidator: updated }) });
+                              }}
+                              rows={3}
+                              className="w-full border-2 border-black p-2 bg-slate-50 resize-none outline-none leading-tight"
+                            />
+                          </div>
+                        </div>
+
+                        <div className="border-2 border-black bg-slate-50 p-3 font-mono text-[9px] flex flex-col justify-between">
+                          <div>
+                            <span className="text-[8px] font-bold text-slate-400 uppercase block mb-1.5">Compliance Matrix Ledger:</span>
+                            <div className="space-y-1.5 max-h-48 overflow-y-auto pr-1">
+                              {validations.map((val, vIdx) => (
+                                <div key={vIdx} className="border border-black bg-white p-2 text-[8px] leading-tight flex items-start gap-1.5">
+                                  <span className={`px-1 rounded text-[7px] font-black ${
+                                    val.status === 'PASS' ? 'bg-emerald-50 text-emerald-600 border border-emerald-200' : 'bg-rose-50 text-rose-600 border border-rose-200'
+                                  }`}>
+                                    {val.status}
+                                  </span>
+                                  <span className="text-slate-600">{val.text}</span>
+                                </div>
+                              ))}
+                            </div>
+                          </div>
+
+                          <div className="border-t border-black/10 pt-2 flex items-center justify-between text-[8px] text-slate-500 font-black mt-2 font-mono">
+                            <span>TOTAL CHECKS: {validations.length}</span>
+                            <span>COMPLIANCE: {validations.some(v => v.status === 'FAIL') ? 'NON-COMPLIANT' : 'FULLY COMPLIANT'}</span>
+                          </div>
+                        </div>
+                      </div>
+                    </div>
+                  );
+                })()
+              )}
+
+              {/* CSS GRID & FLEXBOX CANVAS */}
+              {el.type === 'css_sandbox' && (
+                (() => {
+                  const state = propertiesObj.cssSandbox || {
+                    display: 'flex',
+                    flexDirection: 'row',
+                    justifyContent: 'center',
+                    gap: 4,
+                    childCount: 3
+                  };
+
+                  return (
+                    <div className="border-2 border-[#1A1A1A] p-4 bg-white rounded-none neo-shadow-sm my-2 w-full font-sans">
+                      <div className="flex items-center justify-between border-b border-gray-100 pb-2 mb-3">
+                        <div className="flex items-center space-x-2">
+                          <Grid className="w-4 h-4 text-orange-600" />
+                          <span className="text-[11px] font-mono font-bold uppercase tracking-wider text-gray-500">
+                            CSS Grid & Flexbox Canvas
+                          </span>
+                        </div>
+                        <span className="text-[9px] font-mono border border-orange-200 px-1.5 py-0.5 bg-orange-50 text-orange-600 font-extrabold uppercase rounded-sm">
+                          Box Model Canvas
+                        </span>
+                      </div>
+
+                      <div className="grid grid-cols-1 sm:grid-cols-3 gap-4">
+                        <div className="space-y-3 font-mono text-[9px]">
+                          <div>
+                            <span className="text-gray-400 font-bold block uppercase mb-1">Display Model:</span>
+                            <div className="flex gap-1">
+                              <button
+                                onClick={() => {
+                                  const updated = { ...state, display: 'flex' };
+                                  updateCanvasElement(el.id, { properties: JSON.stringify({ ...propertiesObj, cssSandbox: updated }) });
+                                }}
+                                className={`px-2 py-1 flex-1 border font-bold uppercase ${state.display === 'flex' ? 'bg-black text-white border-black' : 'bg-white text-black border-black'}`}
+                              >
+                                FLEX
+                              </button>
+                              <button
+                                onClick={() => {
+                                  const updated = { ...state, display: 'grid' };
+                                  updateCanvasElement(el.id, { properties: JSON.stringify({ ...propertiesObj, cssSandbox: updated }) });
+                                }}
+                                className={`px-2 py-1 flex-1 border font-bold uppercase ${state.display === 'grid' ? 'bg-black text-white border-black' : 'bg-white text-black border-black'}`}
+                              >
+                                GRID
+                              </button>
+                            </div>
+                          </div>
+
+                          {state.display === 'flex' && (
+                            <div>
+                              <span className="text-gray-400 font-bold block uppercase mb-1">Flex Direction:</span>
+                              <div className="flex gap-1">
+                                <button
+                                  onClick={() => {
+                                    const updated = { ...state, flexDirection: 'row' };
+                                    updateCanvasElement(el.id, { properties: JSON.stringify({ ...propertiesObj, cssSandbox: updated }) });
+                                  }}
+                                  className={`px-1.5 py-0.5 flex-1 border font-bold uppercase text-[8px] ${state.flexDirection === 'row' ? 'bg-orange-500 text-white border-black' : 'bg-white text-black border-black'}`}
+                                >
+                                  ROW
+                                </button>
+                                <button
+                                  onClick={() => {
+                                    const updated = { ...state, flexDirection: 'column' };
+                                    updateCanvasElement(el.id, { properties: JSON.stringify({ ...propertiesObj, cssSandbox: updated }) });
+                                  }}
+                                  className={`px-1.5 py-0.5 flex-1 border font-bold uppercase text-[8px] ${state.flexDirection === 'column' ? 'bg-orange-500 text-white border-black' : 'bg-white text-black border-black'}`}
+                                >
+                                  COLUMN
+                                </button>
+                              </div>
+                            </div>
+                          )}
+
+                          <div>
+                            <span className="text-gray-400 font-bold block uppercase mb-1">Justify / Alignment:</span>
+                            <select
+                              value={state.justifyContent}
+                              onChange={(e) => {
+                                const updated = { ...state, justifyContent: e.target.value };
+                                updateCanvasElement(el.id, { properties: JSON.stringify({ ...propertiesObj, cssSandbox: updated }) });
+                              }}
+                              className="w-full border border-black p-1 bg-white cursor-pointer"
+                            >
+                              <option value="start">flex-start</option>
+                              <option value="center">center</option>
+                              <option value="end">flex-end</option>
+                              <option value="between">space-between</option>
+                            </select>
+                          </div>
+
+                          <div>
+                            <span className="text-gray-400 font-bold block uppercase mb-1">Gap Dimension: {state.gap}px</span>
+                            <input 
+                              type="range" 
+                              min="2" 
+                              max="16" 
+                              step="2"
+                              value={state.gap}
+                              onChange={(e) => {
+                                const updated = { ...state, gap: parseInt(e.target.value) };
+                                updateCanvasElement(el.id, { properties: JSON.stringify({ ...propertiesObj, cssSandbox: updated }) });
+                              }}
+                              className="w-full cursor-pointer h-1 bg-slate-200 rounded"
+                            />
+                          </div>
+                        </div>
+
+                        <div className="sm:col-span-2 border-2 border-black bg-slate-50 p-3 min-h-44 flex flex-col justify-between">
+                          <div 
+                            style={{
+                              display: state.display,
+                              flexDirection: state.display === 'flex' ? state.flexDirection : undefined,
+                              gridTemplateColumns: state.display === 'grid' ? 'repeat(auto-fit, minmax(60px, 1fr))' : undefined,
+                              justifyContent: state.justifyContent === 'start' ? 'flex-start' : state.justifyContent === 'end' ? 'flex-end' : state.justifyContent === 'between' ? 'space-between' : 'center',
+                              gap: `${state.gap}px`
+                            }}
+                            className="border border-dashed border-black/40 p-2.5 bg-white flex-1 flex"
+                          >
+                            {Array.from({ length: state.childCount }).map((_, idx) => (
+                              <div key={idx} className="border-2 border-black bg-orange-100 text-orange-800 font-bold font-mono text-[10px] w-12 h-12 flex flex-col items-center justify-center rounded shadow-none">
+                                <span>#{idx + 1}</span>
+                              </div>
+                            ))}
+                          </div>
+
+                          <div className="border-t border-black/10 pt-2 font-mono text-[8px] flex justify-between items-center text-slate-500 mt-2">
+                            <span>STYLE SPEC: display: {state.display}; gap: {state.gap}px;</span>
+                            <div className="flex gap-1.5">
+                              <button
+                                onClick={() => {
+                                  const updated = { ...state, childCount: Math.max(1, state.childCount - 1) };
+                                  updateCanvasElement(el.id, { properties: JSON.stringify({ ...propertiesObj, cssSandbox: updated }) });
+                                }}
+                                className="px-1.5 border border-black bg-white cursor-pointer hover:bg-slate-50 font-black"
+                              >
+                                -
+                              </button>
+                              <button
+                                onClick={() => {
+                                  const updated = { ...state, childCount: Math.min(6, state.childCount + 1) };
+                                  updateCanvasElement(el.id, { properties: JSON.stringify({ ...propertiesObj, cssSandbox: updated }) });
+                                }}
+                                className="px-1.5 border border-black bg-white cursor-pointer hover:bg-slate-50 font-black"
+                              >
+                                +
+                              </button>
+                            </div>
+                          </div>
+                        </div>
+                      </div>
+                    </div>
+                  );
+                })()
+              )}
+
+              {/* MARKDOWN AST LEXICAL COMPILER */}
+              {el.type === 'markdown_tokenizer' && (
+                (() => {
+                  const state = propertiesObj.markdownTokenizer || {
+                    markdown: '# Document Title\nThis is a beautiful core concept of brutalist programming.\n- Interactive State\n- Client-side execution'
+                  };
+
+                  const compileTokens = (md: string) => {
+                    const lines = md.split('\n');
+                    return lines.map((line, idx) => {
+                      if (line.startsWith('# ')) {
+                        return { type: 'HEADING_1', text: line.replace('# ', ''), raw: line, index: idx };
+                      } else if (line.startsWith('## ')) {
+                        return { type: 'HEADING_2', text: line.replace('## ', ''), raw: line, index: idx };
+                      } else if (line.startsWith('- ') || line.startsWith('* ')) {
+                        return { type: 'LIST_ITEM', text: line.substring(2), raw: line, index: idx };
+                      } else if (line.trim() === '') {
+                        return { type: 'BLANK', text: '', raw: line, index: idx };
+                      } else {
+                        return { type: 'PARAGRAPH', text: line, raw: line, index: idx };
+                      }
+                    });
+                  };
+
+                  const tokens = compileTokens(state.markdown);
+
+                  return (
+                    <div className="border-2 border-[#1A1A1A] p-4 bg-white rounded-none neo-shadow-sm my-2 w-full font-sans">
+                      <div className="flex items-center justify-between border-b border-gray-100 pb-2 mb-3">
+                        <div className="flex items-center space-x-2">
+                          <FileText className="w-4 h-4 text-[#3A0CA3]" />
+                          <span className="text-[11px] font-mono font-bold uppercase tracking-wider text-gray-500">
+                            Markdown AST Lexical Compiler & Tokenizer
+                          </span>
+                        </div>
+                        <span className="text-[9px] font-mono border border-indigo-200 px-1.5 py-0.5 bg-indigo-50 text-indigo-600 font-extrabold uppercase rounded-sm">
+                          AST Tokenizer
+                        </span>
+                      </div>
+
+                      <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+                        <div className="space-y-3 font-mono text-[9px]">
+                          <div>
+                            <span className="text-gray-400 font-bold block uppercase mb-1">Raw Markdown Source:</span>
+                            <textarea
+                              value={state.markdown}
+                              onChange={(e) => {
+                                const updated = { ...state, markdown: e.target.value };
+                                updateCanvasElement(el.id, { properties: JSON.stringify({ ...propertiesObj, markdownTokenizer: updated }) });
+                              }}
+                              rows={5}
+                              className="w-full border-2 border-black p-2 bg-slate-50 resize-none outline-none leading-tight"
+                            />
+                          </div>
+                        </div>
+
+                        <div className="border-2 border-black bg-slate-900 text-indigo-300 p-3 font-mono text-[9px] flex flex-col justify-between">
+                          <div>
+                            <span className="text-[8px] font-bold text-slate-500 uppercase block mb-1">AST Node Tree Graph:</span>
+                            <div className="h-32 overflow-y-auto space-y-1 font-mono border border-slate-800 p-1.5 bg-black/40">
+                              {tokens.map((tok, tIdx) => (
+                                <div key={tIdx} className="text-[8px] border-b border-slate-800 pb-1 last:border-0 flex justify-between items-center">
+                                  <div className="truncate">
+                                    <span className={`px-1 rounded text-[7px] font-black mr-1 border ${
+                                      tok.type === 'HEADING_1' ? 'bg-rose-950 text-rose-300 border-rose-800' :
+                                      tok.type === 'LIST_ITEM' ? 'bg-indigo-950 text-indigo-300 border-indigo-800' :
+                                      'bg-slate-950 text-slate-400 border-slate-800'
+                                    }`}>
+                                      {tok.type}
+                                    </span>
+                                    <span className="text-slate-300">{tok.text || '...'}</span>
+                                  </div>
+                                  <span className="text-slate-500 text-[7px]">Line {tok.index}</span>
+                                </div>
+                              ))}
+                            </div>
+                          </div>
+
+                          <div className="border-t border-slate-800 pt-1.5 flex items-center justify-between text-[7px] text-slate-500 font-black mt-2 font-mono">
+                            <span>LEXER: TOK_STREAM</span>
+                            <span>TOTAL: {tokens.length} NODES</span>
+                          </div>
+                        </div>
+                      </div>
+                    </div>
+                  );
+                })()
+              )}
+
+              {/* SYSTEM ARCHITECTURE TOPOLOGY MAP */}
+              {el.type === 'sys_topology' && (
+                (() => {
+                  const state = propertiesObj.topology || {
+                    loadBalancer: true,
+                    serverCluster: [
+                      { id: 'srv1', active: true, load: 35 },
+                      { id: 'srv2', active: true, load: 45 }
+                    ],
+                    databaseActive: true,
+                    cacheActive: true,
+                    throughputSlider: 70
+                  };
+
+                  const getClusterLoad = () => {
+                    const activeServers = state.serverCluster.filter((s: any) => s.active);
+                    if (activeServers.length === 0) return 0;
+                    return Math.round((state.throughputSlider * 1.5) / activeServers.length);
+                  };
+
+                  const getSystemStatus = () => {
+                    const activeServers = state.serverCluster.filter((s: any) => s.active);
+                    if (!state.databaseActive) return { text: 'CRITICAL FAILURE', color: 'bg-rose-950 text-rose-400 border-rose-500' };
+                    if (activeServers.length === 0) return { text: 'OUTAGE', color: 'bg-rose-950 text-rose-400 border-rose-500' };
+                    if (getClusterLoad() > 85) return { text: 'OVERLOAD WARNING', color: 'bg-amber-950 text-amber-400 border-amber-500' };
+                    return { text: 'NORMAL', color: 'bg-emerald-950 text-emerald-400 border-emerald-500' };
+                  };
+
+                  const currentStatus = getSystemStatus();
+
+                  return (
+                    <div className="border-2 border-[#1A1A1A] p-4 bg-white rounded-none neo-shadow-sm my-2 w-full font-sans">
+                      <div className="flex items-center justify-between border-b border-gray-100 pb-2 mb-3">
+                        <div className="flex items-center space-x-2">
+                          <Layers className="w-4 h-4 text-emerald-600" />
+                          <span className="text-[11px] font-mono font-bold uppercase tracking-wider text-gray-500">
+                            System Architecture Cluster Topology
+                          </span>
+                        </div>
+                        <span className="text-[9px] font-mono border border-emerald-200 px-1.5 py-0.5 bg-emerald-50 text-emerald-600 font-extrabold uppercase rounded-sm">
+                          Dynamic Infrastructure Planner
+                        </span>
+                      </div>
+
+                      <div className="grid grid-cols-1 sm:grid-cols-3 gap-4">
+                        <div className="sm:col-span-2 space-y-3 font-mono text-[9px]">
+                          <div>
+                            <span className="text-gray-400 font-bold block uppercase mb-1">Throughput Rate Load: {state.throughputSlider} requests/sec</span>
+                            <input 
+                              type="range" 
+                              min="10" 
+                              max="150" 
+                              value={state.throughputSlider}
+                              onChange={(e) => {
+                                const updated = { ...state, throughputSlider: parseInt(e.target.value) };
+                                updateCanvasElement(el.id, { properties: JSON.stringify({ ...propertiesObj, topology: updated }) });
+                              }}
+                              className="w-full cursor-pointer h-1 bg-slate-200 rounded"
+                            />
+                          </div>
+
+                          <div className="grid grid-cols-2 gap-2 text-center text-[8px] font-bold">
+                            <div className="border border-black bg-slate-50 p-2 space-y-1.5">
+                              <span className="text-gray-400 uppercase font-bold block">App Server Clusters:</span>
+                              {state.serverCluster.map((srv: any, idx: number) => (
+                                <div key={srv.id} className="flex justify-between items-center border border-black/10 bg-white p-1">
+                                  <span>Cluster {idx + 1}</span>
+                                  <button
+                                    onClick={() => {
+                                      const nextSrv = state.serverCluster.map((s: any) => s.id === srv.id ? { ...s, active: !s.active } : s);
+                                      const updated = { ...state, serverCluster: nextSrv };
+                                      updateCanvasElement(el.id, { properties: JSON.stringify({ ...propertiesObj, topology: updated }) });
+                                    }}
+                                    className={`px-1 border font-bold text-[7px] cursor-pointer ${srv.active ? 'bg-emerald-100 text-emerald-800' : 'bg-rose-100 text-rose-800'}`}
+                                  >
+                                    {srv.active ? 'ONLINE' : 'OFFLINE'}
+                                  </button>
+                                </div>
+                              ))}
+                            </div>
+
+                            <div className="border border-black bg-slate-50 p-2 space-y-2">
+                              <span className="text-gray-400 uppercase font-bold block">Peripheral Layer:</span>
+                              <div className="flex justify-between items-center border border-black/10 bg-white p-1">
+                                <span>Redis cache</span>
+                                <button
+                                  onClick={() => {
+                                    const updated = { ...state, cacheActive: !state.cacheActive };
+                                    updateCanvasElement(el.id, { properties: JSON.stringify({ ...propertiesObj, topology: updated }) });
+                                  }}
+                                  className={`px-1 border font-bold text-[7px] cursor-pointer ${state.cacheActive ? 'bg-emerald-100 text-emerald-800' : 'bg-rose-100 text-rose-800'}`}
+                                >
+                                  {state.cacheActive ? 'ONLINE' : 'OFFLINE'}
+                                </button>
+                              </div>
+                              <div className="flex justify-between items-center border border-black/10 bg-white p-1">
+                                <span>Postgres db</span>
+                                <button
+                                  onClick={() => {
+                                    const updated = { ...state, databaseActive: !state.databaseActive };
+                                    updateCanvasElement(el.id, { properties: JSON.stringify({ ...propertiesObj, topology: updated }) });
+                                  }}
+                                  className={`px-1 border font-bold text-[7px] cursor-pointer ${state.databaseActive ? 'bg-emerald-100 text-emerald-800' : 'bg-rose-100 text-rose-800'}`}
+                                >
+                                  {state.databaseActive ? 'ONLINE' : 'OFFLINE'}
+                                </button>
+                              </div>
+                            </div>
+                          </div>
+                        </div>
+
+                        <div className="border-2 border-black bg-slate-900 text-slate-100 p-3 font-mono text-[9px] flex flex-col justify-between">
+                          <div className="space-y-2">
+                            <span className="text-[8px] font-bold text-slate-500 uppercase block">Infrastructure Health:</span>
+                            <div className="text-center py-2.5 bg-black/40 border border-slate-800">
+                              <span className={`text-[10px] font-black uppercase px-2 py-1 rounded border ${currentStatus.color}`}>
+                                {currentStatus.text}
+                              </span>
+                            </div>
+                            <div className="text-[8px] text-slate-400 space-y-0.5">
+                              <div>COMPUTED CLUSTER LOAD: {getClusterLoad()}%</div>
+                              <div>CACHE STATUS: {state.cacheActive ? 'HIT RATE 85%' : 'BYPASSING CACHE'}</div>
+                            </div>
+                          </div>
+
+                          <div className="border-t border-slate-800 pt-1.5 flex items-center justify-between text-[7px] text-slate-500 font-black mt-2 font-mono">
+                            <span>AVAILABILITY: 99.99%</span>
+                            <span>PING: 15ms</span>
                           </div>
                         </div>
                       </div>

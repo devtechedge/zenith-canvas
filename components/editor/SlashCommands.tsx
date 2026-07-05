@@ -46,11 +46,16 @@ import {
   Waves,
   Shuffle,
   GitPullRequest,
-  Workflow
+  Workflow,
+  Shield,
+  Fingerprint,
+  Eye,
+  Key,
+  FileCheck
 } from 'lucide-react';
 
 export interface CommandItem {
-  id: 'heading_1' | 'heading_2' | 'text' | 'todo' | 'callout' | 'code_sandbox' | 'collection_ref' | 'toggle_list' | 'quote' | 'page_link' | 'acoustic_wave' | 'matrix_view' | 'node_router' | 'spectrogram' | 'layout_sandbox' | 'ast_parser' | 'cycle_timeline' | 'telemetry_deck' | 'markdown_ast' | 'relation_graph' | 'search_matrix' | 'formula_grid' | 'vector_diagram' | 'sql_schema_visualizer' | 'conflict_sync_simulator' | 'audio_sampler' | 'ast_query_builder' | 'theme_engine_sandbox' | 'revision_ledger' | 'bento_composer' | 'ai_grounding_workspace' | 'uml_studio' | 'cron_scheduler' | 'db_migrator' | 'api_request_builder' | 'regex_tester' | 'kanban_orchestrator' | 'math_mesh' | 'format_converter' | 'ast_diff_viewer' | 'state_machine_designer';
+  id: 'heading_1' | 'heading_2' | 'text' | 'todo' | 'callout' | 'code_sandbox' | 'collection_ref' | 'toggle_list' | 'quote' | 'page_link' | 'acoustic_wave' | 'matrix_view' | 'node_router' | 'spectrogram' | 'layout_sandbox' | 'ast_parser' | 'cycle_timeline' | 'telemetry_deck' | 'markdown_ast' | 'relation_graph' | 'search_matrix' | 'formula_grid' | 'vector_diagram' | 'sql_schema_visualizer' | 'conflict_sync_simulator' | 'audio_sampler' | 'ast_query_builder' | 'theme_engine_sandbox' | 'revision_ledger' | 'bento_composer' | 'ai_grounding_workspace' | 'uml_studio' | 'cron_scheduler' | 'db_migrator' | 'api_request_builder' | 'regex_tester' | 'kanban_orchestrator' | 'math_mesh' | 'format_converter' | 'ast_diff_viewer' | 'state_machine_designer' | 'packet_analyzer' | 'sql_optimizer' | 'color_auditor' | 'jwt_inspector' | 'git_simulator' | 'crypto_lab' | 'schema_validator' | 'css_sandbox' | 'markdown_tokenizer' | 'sys_topology';
   title: string;
   description: string;
   icon: React.ComponentType<any>;
@@ -302,6 +307,66 @@ const COMMANDS: CommandItem[] = [
     title: 'State Machine & DFA Designer',
     description: 'Design states & trigger transitions inside an interactive live visualizer',
     icon: Workflow,
+  },
+  {
+    id: 'packet_analyzer',
+    title: 'TCP Packet Analyzer Simulator',
+    description: 'Simulate TCP 3-way handshake and analyze packet frame headers',
+    icon: Activity,
+  },
+  {
+    id: 'sql_optimizer',
+    title: 'SQL Explain Cost Optimizer',
+    description: 'Optimize queries, visualize join strategies, and inspect scan indexes',
+    icon: Database,
+  },
+  {
+    id: 'color_auditor',
+    title: 'Color Contrast Palette Auditor',
+    description: 'Check hex colors for WCAG AA/AAA compliance and contrast ratio',
+    icon: Eye,
+  },
+  {
+    id: 'jwt_inspector',
+    title: 'JWT Token Claims Decoder',
+    description: 'Decode token segment parameters and verify signatures in real-time',
+    icon: Key,
+  },
+  {
+    id: 'git_simulator',
+    title: 'Git Branch & Rebase Simulator',
+    description: 'Visualize interactive branching nodes, commit graphs, and merge conflicts',
+    icon: GitCommit,
+  },
+  {
+    id: 'crypto_lab',
+    title: 'Crypto Hash & Cipher Lab',
+    description: 'Perform secure hex conversions, hash computations, and cipher testing',
+    icon: Fingerprint,
+  },
+  {
+    id: 'schema_validator',
+    title: 'JSON Schema Draft Validator',
+    description: 'Verify dynamic payloads against draft-07 constraints',
+    icon: FileCheck,
+  },
+  {
+    id: 'css_sandbox',
+    title: 'CSS Grid & Flexbox Canvas',
+    description: 'Configure multi-dimensional layouts with live nested flex nodes',
+    icon: Grid,
+  },
+  {
+    id: 'markdown_tokenizer',
+    title: 'Markdown AST Lexical Compiler',
+    description: 'Inspect abstract syntax compilation tokens and rule mapping',
+    icon: FileText,
+  },
+  {
+    id: 'sys_topology',
+    title: 'System Architecture Topology',
+    description: 'Map microservice nodes, load balancers, and trace latency buffers',
+    icon: Layers,
   }
 ];
 
