@@ -5405,6 +5405,1407 @@ export default function CanvasEditor({ canvasId, isLocked = false }: CanvasEdito
                   );
                 })()
               )}
+
+              {/* MULTI-VARIABLE FORMULA COMPILER */}
+              {el.type === 'formula_compiler' && (
+                (() => {
+                  const state = propertiesObj.formulaCompiler || {
+                    expression: 'X * 2 + Y * Y',
+                    X: 5,
+                    Y: 3
+                  };
+
+                  const evaluateFormula = (expr: string, xVal: number, yVal: number) => {
+                    try {
+                      const processed = expr
+                        .replace(/\bX\b/g, xVal.toString())
+                        .replace(/\bY\b/g, yVal.toString())
+                        .replace(/\s+/g, '');
+
+                      if (/[^-+*/\d().^]/.test(processed)) {
+                        return { result: null, error: 'Illegal characters in expression.' };
+                      }
+
+                      let index = 0;
+                      const peek = () => processed[index] || '';
+                      const consume = () => processed[index++];
+
+                      const parseNumber = (): number => {
+                        let str = '';
+                        if (peek() === '-') {
+                          str += consume();
+                        }
+                        while (/[0-9.]/.test(peek())) {
+                          str += consume();
+                        }
+                        if (!str) throw new Error('Expected number');
+                        return parseFloat(str);
+                      };
+
+                      const parseFactor = (): number => {
+                        if (peek() === '(') {
+                          consume(); // '('
+                          const val = parseExpression();
+                          if (peek() === ')') consume(); // ')'
+                          return val;
+                        }
+                        return parseNumber();
+                      };
+
+                      const parseExponent = (): number => {
+                        let val = parseFactor();
+                        while (peek() === '^') {
+                          consume(); // '^'
+                          const exp = parseFactor();
+                          val = Math.pow(val, exp);
+                        }
+                        return val;
+                      };
+
+                      const parseTerm = (): number => {
+                        let val = parseExponent();
+                        while (peek() === '*' || peek() === '/') {
+                          const op = consume();
+                          const next = parseExponent();
+                          if (op === '*') val *= next;
+                          else {
+                            if (next === 0) throw new Error('Division by zero');
+                            val /= next;
+                          }
+                        }
+                        return val;
+                      };
+
+                      const parseExpression = (): number => {
+                        let val = parseTerm();
+                        while (peek() === '+' || peek() === '-') {
+                          const op = consume();
+                          const next = parseTerm();
+                          if (op === '+') val += next;
+                          else val -= next;
+                        }
+                        return val;
+                      };
+
+                      const result = parseExpression();
+                      if (index < processed.length) throw new Error('Extra characters');
+                      return { result, error: null };
+                    } catch (err: any) {
+                      return { result: null, error: err.message || 'Evaluation Syntax Error' };
+                    }
+                  };
+
+                  const currentEval = evaluateFormula(state.expression, state.X, state.Y);
+
+                  const points = Array.from({ length: 11 }).map((_, idx) => {
+                    const xTest = idx;
+                    const evalTest = evaluateFormula(state.expression, xTest, state.Y);
+                    return { x: xTest, y: evalTest.result !== null ? evalTest.result : 0 };
+                  });
+
+                  return (
+                    <div className="border-2 border-[#1A1A1A] p-4 bg-white rounded-none neo-shadow-sm my-2 w-full font-sans">
+                      <div className="flex items-center justify-between border-b border-gray-100 pb-2 mb-3">
+                        <div className="flex items-center space-x-2">
+                          <Calculator className="w-4 h-4 text-rose-600" />
+                          <span className="text-[11px] font-mono font-bold uppercase tracking-wider text-gray-500">
+                            Multi-Variable Formula Compiler
+                          </span>
+                        </div>
+                        <span className="text-[9px] font-mono border border-rose-200 px-1.5 py-0.5 bg-rose-50 text-rose-600 font-extrabold uppercase rounded-sm">
+                          Formula Core
+                        </span>
+                      </div>
+
+                      <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+                        <div className="space-y-3 font-mono text-[9px]">
+                          <div>
+                            <span className="text-gray-400 font-bold block uppercase mb-1">Mathematical Formula (supports X & Y):</span>
+                            <input
+                              type="text"
+                              value={state.expression}
+                              onChange={(e) => {
+                                const updated = { ...state, expression: e.target.value };
+                                updateCanvasElement(el.id, { properties: JSON.stringify({ ...propertiesObj, formulaCompiler: updated }) });
+                              }}
+                              className="w-full border-2 border-black p-2 bg-slate-50 text-xs font-bold outline-none font-mono"
+                              placeholder="e.g. X * 2 + Y * Y"
+                            />
+                          </div>
+
+                          <div className="space-y-2">
+                            <div>
+                              <span className="text-gray-400 font-bold block uppercase mb-1">Variable X Slider Value: {state.X}</span>
+                              <input 
+                                type="range" 
+                                min="0" 
+                                max="20" 
+                                value={state.X}
+                                onChange={(e) => {
+                                  const updated = { ...state, X: parseInt(e.target.value) };
+                                  updateCanvasElement(el.id, { properties: JSON.stringify({ ...propertiesObj, formulaCompiler: updated }) });
+                                }}
+                                className="w-full cursor-pointer h-1 bg-slate-200 rounded"
+                              />
+                            </div>
+                            <div>
+                              <span className="text-gray-400 font-bold block uppercase mb-1">Variable Y Slider Value: {state.Y}</span>
+                              <input 
+                                type="range" 
+                                min="0" 
+                                max="20" 
+                                value={state.Y}
+                                onChange={(e) => {
+                                  const updated = { ...state, Y: parseInt(e.target.value) };
+                                  updateCanvasElement(el.id, { properties: JSON.stringify({ ...propertiesObj, formulaCompiler: updated }) });
+                                }}
+                                className="w-full cursor-pointer h-1 bg-slate-200 rounded"
+                              />
+                            </div>
+                          </div>
+                        </div>
+
+                        <div className="border-2 border-black bg-slate-950 text-slate-100 p-3 font-mono text-[9px] flex flex-col justify-between">
+                          <div className="space-y-2">
+                            <span className="text-[8px] font-bold text-slate-500 uppercase block">Compiler Calculation Result:</span>
+                            {currentEval.error ? (
+                              <div className="text-rose-400 bg-rose-950/40 border border-rose-900 p-2 text-center font-bold">
+                                {currentEval.error}
+                              </div>
+                            ) : (
+                              <div className="text-emerald-400 bg-emerald-950/40 border border-emerald-900 p-2 text-center text-xs font-black">
+                                EVAL: {currentEval.result}
+                              </div>
+                            )}
+
+                            <span className="text-[8px] font-bold text-slate-500 uppercase block mt-2">X-Curve Evaluation Matrix (X: 0 to 10):</span>
+                            <div className="flex items-end justify-between gap-1 h-14 bg-black/50 border border-slate-800 p-1">
+                              {points.map((p, pIdx) => {
+                                const maxVal = Math.max(...points.map(pt => pt.y), 1);
+                                const heightPercent = Math.min(100, Math.max(10, (p.y / maxVal) * 100));
+                                return (
+                                  <div 
+                                    key={pIdx} 
+                                    style={{ height: `${heightPercent}%` }} 
+                                    className="bg-rose-500 hover:bg-rose-400 transition-all flex-1"
+                                    title={`X=${p.x}, Y=${p.y}`}
+                                  />
+                                );
+                              })}
+                            </div>
+                          </div>
+
+                          <div className="border-t border-slate-900 pt-1.5 flex items-center justify-between text-[7px] text-slate-500 font-black mt-2 font-mono">
+                            <span>PRECISION: DECIMAL64</span>
+                            <span>STATUS: STABLE</span>
+                          </div>
+                        </div>
+                      </div>
+                    </div>
+                  );
+                })()
+              )}
+
+              {/* CROSS-NODE RELATIONAL LINKER */}
+              {el.type === 'cross_node_linker' && (
+                (() => {
+                  const state = propertiesObj.crossNodeLinker || {
+                    links: [
+                      { id: 'l1', source: 'Auth Service', target: 'Audit Logs', event: 'user_login', throughput: 140 },
+                      { id: 'l2', source: 'Checkout API', target: 'Payment Gateway', event: 'txn_initiated', throughput: 85 }
+                    ],
+                    newSource: '',
+                    newTarget: '',
+                    newEvent: '',
+                    newThroughput: 50
+                  };
+
+                  const addLink = () => {
+                    if (!state.newSource || !state.newTarget) return;
+                    const newLink = {
+                      id: 'l_' + Date.now(),
+                      source: state.newSource,
+                      target: state.newTarget,
+                      event: state.newEvent || 'event_trigger',
+                      throughput: state.newThroughput || 10
+                    };
+                    const updated = {
+                      ...state,
+                      links: [...state.links, newLink],
+                      newSource: '',
+                      newTarget: '',
+                      newEvent: '',
+                      newThroughput: 50
+                    };
+                    updateCanvasElement(el.id, { properties: JSON.stringify({ ...propertiesObj, crossNodeLinker: updated }) });
+                  };
+
+                  const removeLink = (id: string) => {
+                    const updated = {
+                      ...state,
+                      links: state.links.filter((l: any) => l.id !== id)
+                    };
+                    updateCanvasElement(el.id, { properties: JSON.stringify({ ...propertiesObj, crossNodeLinker: updated }) });
+                  };
+
+                  return (
+                    <div className="border-2 border-[#1A1A1A] p-4 bg-white rounded-none neo-shadow-sm my-2 w-full font-sans">
+                      <div className="flex items-center justify-between border-b border-gray-100 pb-2 mb-3">
+                        <div className="flex items-center space-x-2">
+                          <Share2 className="w-4 h-4 text-violet-600" />
+                          <span className="text-[11px] font-mono font-bold uppercase tracking-wider text-gray-500">
+                            Cross-Node Relational Linker
+                          </span>
+                        </div>
+                        <span className="text-[9px] font-mono border border-violet-200 px-1.5 py-0.5 bg-violet-50 text-violet-600 font-extrabold uppercase rounded-sm">
+                          Relational Map
+                        </span>
+                      </div>
+
+                      <div className="grid grid-cols-1 sm:grid-cols-3 gap-4">
+                        <div className="space-y-2 font-mono text-[9px] border-r-0 sm:border-r border-black/10 pr-0 sm:pr-3">
+                          <span className="text-gray-400 font-black block uppercase mb-1">Configure New Node Link:</span>
+                          <div className="space-y-1.5">
+                            <input
+                              type="text"
+                              value={state.newSource}
+                              onChange={(e) => {
+                                const updated = { ...state, newSource: e.target.value };
+                                updateCanvasElement(el.id, { properties: JSON.stringify({ ...propertiesObj, crossNodeLinker: updated }) });
+                              }}
+                              placeholder="Source Node (e.g. Auth Service)"
+                              className="w-full border border-black p-1 bg-slate-50 outline-none text-[9px]"
+                            />
+                            <input
+                              type="text"
+                              value={state.newTarget}
+                              onChange={(e) => {
+                                const updated = { ...state, newTarget: e.target.value };
+                                updateCanvasElement(el.id, { properties: JSON.stringify({ ...propertiesObj, crossNodeLinker: updated }) });
+                              }}
+                              placeholder="Target Node (e.g. Database)"
+                              className="w-full border border-black p-1 bg-slate-50 outline-none text-[9px]"
+                            />
+                            <input
+                              type="text"
+                              value={state.newEvent}
+                              onChange={(e) => {
+                                const updated = { ...state, newEvent: e.target.value };
+                                updateCanvasElement(el.id, { properties: JSON.stringify({ ...propertiesObj, crossNodeLinker: updated }) });
+                              }}
+                              placeholder="Trigger Event (e.g. user_logged_in)"
+                              className="w-full border border-black p-1 bg-slate-50 outline-none text-[9px]"
+                            />
+                            <div>
+                              <span className="text-gray-400 text-[8px] font-bold block uppercase mb-0.5">Throughput: {state.newThroughput} req/s</span>
+                              <input 
+                                type="range" 
+                                min="10" 
+                                max="500" 
+                                value={state.newThroughput}
+                                onChange={(e) => {
+                                  const updated = { ...state, newThroughput: parseInt(e.target.value) };
+                                  updateCanvasElement(el.id, { properties: JSON.stringify({ ...propertiesObj, crossNodeLinker: updated }) });
+                                }}
+                                className="w-full cursor-pointer h-1 bg-slate-200 rounded"
+                              />
+                            </div>
+                            <button
+                              onClick={addLink}
+                              className="w-full bg-violet-600 text-white border border-black font-bold py-1 cursor-pointer text-[9px] hover:bg-violet-700 uppercase"
+                            >
+                              Add Relation Link
+                            </button>
+                          </div>
+                        </div>
+
+                        <div className="sm:col-span-2 space-y-2">
+                          <span className="text-[8px] font-bold text-slate-400 font-mono uppercase block">Active Data Flow Graph Pipes:</span>
+                          <div className="space-y-1.5 max-h-48 overflow-y-auto pr-1">
+                            {state.links.map((link: any) => (
+                              <div key={link.id} className="border border-black bg-slate-50 p-2 font-mono text-[8px] leading-tight flex items-center justify-between">
+                                <div className="flex-1 truncate">
+                                  <span className="text-violet-600 font-bold">{link.source}</span>
+                                  <span className="text-slate-400 px-1">{"-->"}</span>
+                                  <span className="text-indigo-600 font-bold">{link.target}</span>
+                                  <div className="text-slate-500 text-[7px] mt-0.5 font-bold uppercase">
+                                    EVENT: {link.event} | RATE: {link.throughput} reqs/sec
+                                  </div>
+                                </div>
+                                <button
+                                  onClick={() => removeLink(link.id)}
+                                  className="border border-rose-300 text-rose-500 bg-white px-1 py-0.5 hover:bg-rose-50 font-black cursor-pointer text-[8px]"
+                                >
+                                  DELETE
+                                </button>
+                              </div>
+                            ))}
+                          </div>
+                        </div>
+                      </div>
+                    </div>
+                  );
+                })()
+              )}
+
+              {/* MULTI-COLUMN FILTER MATRIX */}
+              {el.type === 'filter_matrix' && (
+                (() => {
+                  const state = propertiesObj.filterMatrix || {
+                    rules: [
+                      { id: 'r1', col: 'amount', op: 'gt', val: '100' }
+                    ],
+                    dataset: [
+                      { name: 'Subscription Premium', amount: 150, status: 'ACTIVE', category: 'SaaS' },
+                      { name: 'Hardware Repair', amount: 80, status: 'PENDING', category: 'Hardware' },
+                      { name: 'Marketing Ads', amount: 450, status: 'ACTIVE', category: 'Growth' },
+                      { name: 'Database Hosting', amount: 200, status: 'ACTIVE', category: 'Cloud' }
+                    ],
+                    newCol: 'amount',
+                    newOp: 'gt',
+                    newVal: ''
+                  };
+
+                  const addRule = () => {
+                    const newRule = {
+                      id: 'r_' + Date.now(),
+                      col: state.newCol,
+                      op: state.newOp,
+                      val: state.newVal || '0'
+                    };
+                    const updated = {
+                      ...state,
+                      rules: [...state.rules, newRule],
+                      newVal: ''
+                    };
+                    updateCanvasElement(el.id, { properties: JSON.stringify({ ...propertiesObj, filterMatrix: updated }) });
+                  };
+
+                  const removeRule = (id: string) => {
+                    const updated = {
+                      ...state,
+                      rules: state.rules.filter((r: any) => r.id !== id)
+                    };
+                    updateCanvasElement(el.id, { properties: JSON.stringify({ ...propertiesObj, filterMatrix: updated }) });
+                  };
+
+                  const filteredData = state.dataset.filter((row: any) => {
+                    return state.rules.every((rule: any) => {
+                      const cell = row[rule.col];
+                      if (rule.op === 'gt') return Number(cell) > Number(rule.val);
+                      if (rule.op === 'lt') return Number(cell) < Number(rule.val);
+                      if (rule.op === 'eq') return String(cell).toLowerCase() === String(rule.val).toLowerCase();
+                      if (rule.op === 'contains') return String(cell).toLowerCase().includes(String(rule.val).toLowerCase());
+                      return true;
+                    });
+                  });
+
+                  return (
+                    <div className="border-2 border-[#1A1A1A] p-4 bg-white rounded-none neo-shadow-sm my-2 w-full font-sans">
+                      <div className="flex items-center justify-between border-b border-gray-100 pb-2 mb-3">
+                        <div className="flex items-center space-x-2">
+                          <Filter className="w-4 h-4 text-amber-600" />
+                          <span className="text-[11px] font-mono font-bold uppercase tracking-wider text-gray-500">
+                            Multi-Column Filter Matrix
+                          </span>
+                        </div>
+                        <span className="text-[9px] font-mono border border-amber-200 px-1.5 py-0.5 bg-amber-50 text-amber-600 font-extrabold uppercase rounded-sm">
+                          Query Compiler
+                        </span>
+                      </div>
+
+                      <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+                        <div className="space-y-3 font-mono text-[9px]">
+                          <span className="text-gray-400 font-bold block uppercase mb-1">Assemble Query Filters:</span>
+                          <div className="grid grid-cols-3 gap-1">
+                            <select
+                              value={state.newCol}
+                              onChange={(e) => {
+                                const updated = { ...state, newCol: e.target.value };
+                                updateCanvasElement(el.id, { properties: JSON.stringify({ ...propertiesObj, filterMatrix: updated }) });
+                              }}
+                              className="border border-black p-1 bg-white cursor-pointer text-[9px]"
+                            >
+                              <option value="amount">Amount</option>
+                              <option value="status">Status</option>
+                              <option value="category">Category</option>
+                            </select>
+
+                            <select
+                              value={state.newOp}
+                              onChange={(e) => {
+                                const updated = { ...state, newOp: e.target.value };
+                                updateCanvasElement(el.id, { properties: JSON.stringify({ ...propertiesObj, filterMatrix: updated }) });
+                              }}
+                              className="border border-black p-1 bg-white cursor-pointer text-[9px]"
+                            >
+                              <option value="gt">{">"}</option>
+                              <option value="lt">{"<"}</option>
+                              <option value="eq">==</option>
+                              <option value="contains">CONTAINS</option>
+                            </select>
+
+                            <input
+                              type="text"
+                              value={state.newVal}
+                              onChange={(e) => {
+                                const updated = { ...state, newVal: e.target.value };
+                                updateCanvasElement(el.id, { properties: JSON.stringify({ ...propertiesObj, filterMatrix: updated }) });
+                              }}
+                              placeholder="Match val"
+                              className="border border-black p-1 bg-slate-50 outline-none text-[9px] w-full"
+                            />
+                          </div>
+
+                          <button
+                            onClick={addRule}
+                            className="w-full bg-amber-500 text-[#1A1A1A] border-2 border-black font-black py-1 cursor-pointer hover:bg-amber-400 uppercase text-[9px]"
+                          >
+                            Add Matrix Rule
+                          </button>
+
+                          <div className="space-y-1 max-h-24 overflow-y-auto">
+                            {state.rules.map((rule: any) => (
+                              <div key={rule.id} className="border border-black/20 bg-slate-50 p-1 px-2 flex justify-between items-center text-[8px]">
+                                <span>{rule.col.toUpperCase()} {rule.op === 'gt' ? '>' : rule.op === 'lt' ? '<' : '=='} {rule.val}</span>
+                                <button
+                                  onClick={() => removeRule(rule.id)}
+                                  className="text-rose-500 font-bold hover:underline cursor-pointer"
+                                >
+                                  REPLACE
+                                </button>
+                              </div>
+                            ))}
+                          </div>
+                        </div>
+
+                        <div className="border-2 border-black bg-slate-900 text-slate-100 p-3 font-mono text-[9px] flex flex-col justify-between">
+                          <div>
+                            <span className="text-[8px] font-bold text-slate-500 uppercase block mb-1">Matrix Filter Output dataset:</span>
+                            <div className="space-y-1 h-28 overflow-y-auto font-mono">
+                              {filteredData.map((row: any, rIdx: number) => (
+                                <div key={rIdx} className="border border-slate-800 p-1.5 bg-black/40 text-[8px] flex justify-between items-center">
+                                  <div className="truncate">
+                                    <span className="text-amber-400 font-bold">{row.name}</span>
+                                    <div className="text-[7px] text-slate-400">CAT: {row.category} | STATUS: {row.status}</div>
+                                  </div>
+                                  <span className="text-emerald-400 font-black">${row.amount}</span>
+                                </div>
+                              ))}
+                              {filteredData.length === 0 && (
+                                <div className="text-center text-slate-500 py-4 font-bold uppercase text-[8px]">
+                                  No records found matching filters
+                                </div>
+                              )}
+                            </div>
+                          </div>
+
+                          <div className="border-t border-slate-800 pt-1.5 flex items-center justify-between text-[7px] text-slate-500 font-black mt-1 font-mono">
+                            <span>RECORDS MATCHED: {filteredData.length} / {state.dataset.length}</span>
+                            <span>COMPILER: VERIFIED</span>
+                          </div>
+                        </div>
+                      </div>
+                    </div>
+                  );
+                })()
+              )}
+
+              {/* GRAPH SCHEMA DEPENDENCY TREE */}
+              {el.type === 'schema_dependency_visualizer' && (
+                (() => {
+                  const state = propertiesObj.schemaDependency || {
+                    tables: [
+                      { name: 'users', primary: 'id', depend: '' },
+                      { name: 'profiles', primary: 'id', depend: 'users' },
+                      { name: 'orders', primary: 'id', depend: 'users' },
+                      { name: 'transactions', primary: 'id', depend: 'orders' }
+                    ],
+                    newTable: '',
+                    newDepend: ''
+                  };
+
+                  const addTable = () => {
+                    if (!state.newTable) return;
+                    const newEntry = {
+                      name: state.newTable.toLowerCase(),
+                      primary: 'id',
+                      depend: state.newDepend || ''
+                    };
+                    const updated = {
+                      ...state,
+                      tables: [...state.tables, newEntry],
+                      newTable: '',
+                      newDepend: ''
+                    };
+                    updateCanvasElement(el.id, { properties: JSON.stringify({ ...propertiesObj, schemaDependency: updated }) });
+                  };
+
+                  const deleteTable = (name: string) => {
+                    const updated = {
+                      ...state,
+                      tables: state.tables.filter((t: any) => t.name !== name)
+                    };
+                    updateCanvasElement(el.id, { properties: JSON.stringify({ ...propertiesObj, schemaDependency: updated }) });
+                  };
+
+                  return (
+                    <div className="border-2 border-[#1A1A1A] p-4 bg-white rounded-none neo-shadow-sm my-2 w-full font-sans">
+                      <div className="flex items-center justify-between border-b border-gray-100 pb-2 mb-3">
+                        <div className="flex items-center space-x-2">
+                          <Network className="w-4 h-4 text-cyan-600" />
+                          <span className="text-[11px] font-mono font-bold uppercase tracking-wider text-gray-500">
+                            Graph Schema Dependency Tree
+                          </span>
+                        </div>
+                        <span className="text-[9px] font-mono border border-cyan-200 px-1.5 py-0.5 bg-cyan-50 text-cyan-600 font-extrabold uppercase rounded-sm">
+                          FK Dependency Tracer
+                        </span>
+                      </div>
+
+                      <div className="grid grid-cols-1 sm:grid-cols-3 gap-4">
+                        <div className="space-y-2 font-mono text-[9px] border-r-0 sm:border-r border-black/10 pr-0 sm:pr-3">
+                          <span className="text-gray-400 font-bold block uppercase mb-1">Define Schema Table:</span>
+                          <div className="space-y-1.5">
+                            <input
+                              type="text"
+                              value={state.newTable}
+                              onChange={(e) => {
+                                const updated = { ...state, newTable: e.target.value };
+                                updateCanvasElement(el.id, { properties: JSON.stringify({ ...propertiesObj, schemaDependency: updated }) });
+                              }}
+                              placeholder="Table name (e.g. comments)"
+                              className="w-full border border-black p-1 bg-slate-50 outline-none text-[9px]"
+                            />
+                            <select
+                              value={state.newDepend}
+                              onChange={(e) => {
+                                const updated = { ...state, newDepend: e.target.value };
+                                updateCanvasElement(el.id, { properties: JSON.stringify({ ...propertiesObj, schemaDependency: updated }) });
+                              }}
+                              className="w-full border border-black p-1 bg-white cursor-pointer text-[9px]"
+                            >
+                              <option value="">No Foreign Key (Root)</option>
+                              {state.tables.map((t: any) => (
+                                <option key={t.name} value={t.name}>Depends on {t.name}</option>
+                              ))}
+                            </select>
+
+                            <button
+                              onClick={addTable}
+                              className="w-full bg-cyan-600 text-white border border-black font-bold py-1 cursor-pointer text-[9px] hover:bg-cyan-700 uppercase"
+                            >
+                              Add Table Schema
+                            </button>
+                          </div>
+                        </div>
+
+                        <div className="sm:col-span-2 space-y-3">
+                          <span className="text-[8px] font-bold text-slate-400 font-mono uppercase block">Dependency Tree Path Map:</span>
+                          <div className="grid grid-cols-1 sm:grid-cols-2 gap-2 max-h-48 overflow-y-auto">
+                            {state.tables.map((t: any) => (
+                              <div key={t.name} className="border-2 border-black bg-slate-50 p-2 font-mono text-[8px] flex flex-col justify-between">
+                                <div>
+                                  <div className="flex justify-between items-center mb-1">
+                                    <span className="font-extrabold text-cyan-700 text-[10px]">{t.name}</span>
+                                    <button
+                                      onClick={() => deleteTable(t.name)}
+                                      className="text-rose-500 hover:underline text-[7px]"
+                                    >
+                                      DELETE
+                                    </button>
+                                  </div>
+                                  <div className="text-slate-500">PRIMARY KEY: {t.primary}</div>
+                                  {t.depend ? (
+                                    <div className="text-violet-600 font-bold mt-1 uppercase text-[7px]">
+                                      {"<-"} Foreign Key: {t.depend}.id
+                                    </div>
+                                  ) : (
+                                    <div className="text-emerald-600 font-bold mt-1 uppercase text-[7px]">
+                                      Root Layer Node
+                                    </div>
+                                  )}
+                                </div>
+                              </div>
+                            ))}
+                          </div>
+                        </div>
+                      </div>
+                    </div>
+                  );
+                })()
+              )}
+
+              {/* RELATIONAL ROLLUP AGGREGATOR */}
+              {el.type === 'rollup_aggregator' && (
+                (() => {
+                  const state = propertiesObj.rollupAggregator || {
+                    records: [
+                      { id: '1', ref: 'orders', amount: 45 },
+                      { id: '2', ref: 'orders', amount: 85 },
+                      { id: '3', ref: 'users', amount: 1 },
+                      { id: '4', ref: 'orders', amount: 120 }
+                    ],
+                    activeRef: 'orders',
+                    rollupOp: 'SUM',
+                    newAmount: ''
+                  };
+
+                  const addRecord = () => {
+                    const newRec = {
+                      id: String(Date.now()),
+                      ref: state.activeRef,
+                      amount: Number(state.newAmount) || 0
+                    };
+                    const updated = {
+                      ...state,
+                      records: [...state.records, newRec],
+                      newAmount: ''
+                    };
+                    updateCanvasElement(el.id, { properties: JSON.stringify({ ...propertiesObj, rollupAggregator: updated }) });
+                  };
+
+                  const deleteRecord = (id: string) => {
+                    const updated = {
+                      ...state,
+                      records: state.records.filter((r: any) => r.id !== id)
+                    };
+                    updateCanvasElement(el.id, { properties: JSON.stringify({ ...propertiesObj, rollupAggregator: updated }) });
+                  };
+
+                  const getAggregatedValue = () => {
+                    const matched = state.records.filter((r: any) => r.ref === state.activeRef);
+                    if (matched.length === 0) return 0;
+                    const vals = matched.map((r: any) => r.amount);
+
+                    if (state.rollupOp === 'SUM') return vals.reduce((a: number, b: number) => a + b, 0);
+                    if (state.rollupOp === 'AVERAGE') return Math.round(vals.reduce((a: number, b: number) => a + b, 0) / vals.length);
+                    if (state.rollupOp === 'MIN') return Math.min(...vals);
+                    if (state.rollupOp === 'MAX') return Math.max(...vals);
+                    if (state.rollupOp === 'COUNT') return vals.length;
+                    return 0;
+                  };
+
+                  return (
+                    <div className="border-2 border-[#1A1A1A] p-4 bg-white rounded-none neo-shadow-sm my-2 w-full font-sans">
+                      <div className="flex items-center justify-between border-b border-gray-100 pb-2 mb-3">
+                        <div className="flex items-center space-x-2">
+                          <Layers className="w-4 h-4 text-emerald-600" />
+                          <span className="text-[11px] font-mono font-bold uppercase tracking-wider text-gray-500">
+                            Relational Rollup Aggregator
+                          </span>
+                        </div>
+                        <span className="text-[9px] font-mono border border-emerald-200 px-1.5 py-0.5 bg-emerald-50 text-emerald-600 font-extrabold uppercase rounded-sm">
+                          Aggregation Processor
+                        </span>
+                      </div>
+
+                      <div className="grid grid-cols-1 sm:grid-cols-3 gap-4">
+                        <div className="space-y-3 font-mono text-[9px] border-r-0 sm:border-r border-black/10 pr-0 sm:pr-3">
+                          <span className="text-gray-400 font-bold block uppercase mb-1">Aggregation Target & Op:</span>
+                          <div className="space-y-2">
+                            <div>
+                              <span className="text-gray-500 block uppercase font-bold text-[8px] mb-0.5">Reference Table:</span>
+                              <div className="flex gap-1">
+                                <button
+                                  onClick={() => {
+                                    const updated = { ...state, activeRef: 'orders' };
+                                    updateCanvasElement(el.id, { properties: JSON.stringify({ ...propertiesObj, rollupAggregator: updated }) });
+                                  }}
+                                  className={`px-2 py-1 flex-1 border text-[8px] font-bold uppercase ${state.activeRef === 'orders' ? 'bg-black text-white border-black' : 'bg-white text-black border-black'}`}
+                                >
+                                  ORDERS
+                                </button>
+                                <button
+                                  onClick={() => {
+                                    const updated = { ...state, activeRef: 'users' };
+                                    updateCanvasElement(el.id, { properties: JSON.stringify({ ...propertiesObj, rollupAggregator: updated }) });
+                                  }}
+                                  className={`px-2 py-1 flex-1 border text-[8px] font-bold uppercase ${state.activeRef === 'users' ? 'bg-black text-white border-black' : 'bg-white text-black border-black'}`}
+                                >
+                                  USERS
+                                </button>
+                              </div>
+                            </div>
+
+                            <div>
+                              <span className="text-gray-500 block uppercase font-bold text-[8px] mb-0.5">Select Aggregation Type:</span>
+                              <select
+                                value={state.rollupOp}
+                                onChange={(e) => {
+                                  const updated = { ...state, rollupOp: e.target.value };
+                                  updateCanvasElement(el.id, { properties: JSON.stringify({ ...propertiesObj, rollupAggregator: updated }) });
+                                }}
+                                className="w-full border border-black p-1 bg-white cursor-pointer text-[9px]"
+                              >
+                                <option value="SUM">SUM (ADD VALUES)</option>
+                                <option value="AVERAGE">AVERAGE MEAN</option>
+                                <option value="MIN">MINIMUM BOUNDS</option>
+                                <option value="MAX">MAXIMUM BOUNDS</option>
+                                <option value="COUNT">COUNT CARDINALITY</option>
+                              </select>
+                            </div>
+
+                            <div className="border-t border-black/10 pt-2 space-y-1">
+                              <span className="text-gray-500 block uppercase font-bold text-[8px] mb-0.5">Push Metric Value:</span>
+                              <div className="flex gap-1">
+                                <input
+                                  type="number"
+                                  value={state.newAmount}
+                                  onChange={(e) => {
+                                    const updated = { ...state, newAmount: e.target.value };
+                                    updateCanvasElement(el.id, { properties: JSON.stringify({ ...propertiesObj, rollupAggregator: updated }) });
+                                  }}
+                                  placeholder="Value"
+                                  className="border border-black p-1 bg-slate-50 outline-none w-20 text-[9px]"
+                                />
+                                <button
+                                  onClick={addRecord}
+                                  className="bg-emerald-600 text-white font-bold px-2 py-1 text-[8px] border border-black cursor-pointer hover:bg-emerald-700"
+                                >
+                                  ADD
+                                </button>
+                              </div>
+                            </div>
+                          </div>
+                        </div>
+
+                        <div className="sm:col-span-2 border-2 border-black bg-slate-50 p-3 flex flex-col justify-between font-mono text-[9px]">
+                          <div>
+                            <span className="text-[8px] font-bold text-slate-400 uppercase block mb-1">Calculated Rollup Output:</span>
+                            <div className="py-3 bg-white border-2 border-dashed border-black/20 text-center text-xs font-black text-emerald-600">
+                              {state.rollupOp} OF MATCHED [{state.activeRef.toUpperCase()}] = {getAggregatedValue()}
+                            </div>
+
+                            <span className="text-[8px] font-bold text-slate-400 uppercase block mt-3 mb-1">Target Feed Row Stream:</span>
+                            <div className="space-y-1 max-h-24 overflow-y-auto">
+                              {state.records.map((r: any) => (
+                                <div key={r.id} className="border border-black bg-white p-1 px-2 text-[8px] flex justify-between items-center">
+                                  <span>Table Ref: [{r.ref.toUpperCase()}]</span>
+                                  <div className="flex items-center gap-2">
+                                    <span className="font-extrabold text-slate-700">{r.amount}</span>
+                                    <button
+                                      onClick={() => deleteRecord(r.id)}
+                                      className="text-rose-500 text-[7px]"
+                                    >
+                                      DELETE
+                                    </button>
+                                  </div>
+                                </div>
+                              ))}
+                            </div>
+                          </div>
+                        </div>
+                      </div>
+                    </div>
+                  );
+                })()
+              )}
+
+              {/* DYNAMIC SCHEMA FIELD MIGRATOR */}
+              {el.type === 'schema_migrator' && (
+                (() => {
+                  const state = propertiesObj.schemaMigrator || {
+                    columns: [
+                      { name: 'id', type: 'uuid' },
+                      { name: 'email', type: 'varchar(255)' },
+                      { name: 'is_verified', type: 'boolean' }
+                    ],
+                    newName: '',
+                    newType: 'varchar(255)',
+                    migLog: 'Migration Schema Initialized.'
+                  };
+
+                  const addColumn = () => {
+                    if (!state.newName) return;
+                    const newCol = {
+                      name: state.newName.toLowerCase().replace(/\s+/g, '_'),
+                      type: state.newType
+                    };
+                    const updated = {
+                      ...state,
+                      columns: [...state.columns, newCol],
+                      newName: '',
+                      migLog: `Column "${newCol.name}" added to migration pipeline.`
+                    };
+                    updateCanvasElement(el.id, { properties: JSON.stringify({ ...propertiesObj, schemaMigrator: updated }) });
+                  };
+
+                  const generateSQL = () => {
+                    const statements = state.columns.map((c: any) => {
+                      return `  ADD COLUMN ${c.name} ${c.type.toUpperCase()}`;
+                    }).join(',\n');
+                    const sql = `ALTER TABLE users\n${statements};`;
+                    const updated = {
+                      ...state,
+                      migLog: sql
+                    };
+                    updateCanvasElement(el.id, { properties: JSON.stringify({ ...propertiesObj, schemaMigrator: updated }) });
+                  };
+
+                  return (
+                    <div className="border-2 border-[#1A1A1A] p-4 bg-white rounded-none neo-shadow-sm my-2 w-full font-sans">
+                      <div className="flex items-center justify-between border-b border-gray-100 pb-2 mb-3">
+                        <div className="flex items-center space-x-2">
+                          <Database className="w-4 h-4 text-orange-600" />
+                          <span className="text-[11px] font-mono font-bold uppercase tracking-wider text-gray-500">
+                            Dynamic Schema Field Migrator
+                          </span>
+                        </div>
+                        <span className="text-[9px] font-mono border border-orange-200 px-1.5 py-0.5 bg-orange-50 text-orange-600 font-extrabold uppercase rounded-sm">
+                          DDL Code Generator
+                        </span>
+                      </div>
+
+                      <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+                        <div className="space-y-3 font-mono text-[9px]">
+                          <span className="text-gray-400 font-bold block uppercase mb-1">Define Schema Migration Fields:</span>
+                          <div className="flex gap-1">
+                            <input
+                              type="text"
+                              value={state.newName}
+                              onChange={(e) => {
+                                const updated = { ...state, newName: e.target.value };
+                                updateCanvasElement(el.id, { properties: JSON.stringify({ ...propertiesObj, schemaMigrator: updated }) });
+                              }}
+                              placeholder="New column name"
+                              className="border border-black p-1 bg-slate-50 outline-none flex-1 text-[9px]"
+                            />
+                            <select
+                              value={state.newType}
+                              onChange={(e) => {
+                                const updated = { ...state, newType: e.target.value };
+                                updateCanvasElement(el.id, { properties: JSON.stringify({ ...propertiesObj, schemaMigrator: updated }) });
+                              }}
+                              className="border border-black p-1 bg-white cursor-pointer text-[9px]"
+                            >
+                              <option value="varchar(255)">VARCHAR</option>
+                              <option value="uuid">UUID</option>
+                              <option value="integer">INTEGER</option>
+                              <option value="boolean">BOOLEAN</option>
+                              <option value="timestamp">TIMESTAMP</option>
+                            </select>
+
+                            <button
+                              onClick={addColumn}
+                              className="bg-orange-600 text-white font-bold px-2 py-1 text-[8px] border border-black cursor-pointer hover:bg-orange-700"
+                            >
+                              ADD
+                            </button>
+                          </div>
+
+                          <div className="space-y-1 max-h-24 overflow-y-auto">
+                            {state.columns.map((col: any, idx: number) => (
+                              <div key={idx} className="border border-black bg-slate-50 p-1 px-2 text-[8px] flex justify-between items-center">
+                                <span className="font-bold text-orange-700">{col.name}</span>
+                                <span className="text-slate-500 font-mono text-[7px]">{col.type.toUpperCase()}</span>
+                              </div>
+                            ))}
+                          </div>
+
+                          <button
+                            onClick={generateSQL}
+                            className="w-full bg-orange-500 text-white border-2 border-black font-black py-1 cursor-pointer hover:bg-orange-400 uppercase text-[9px]"
+                          >
+                            Dry-Run Migration & Generate SQL
+                          </button>
+                        </div>
+
+                        <div className="border-2 border-black bg-slate-900 text-orange-300 p-3 font-mono text-[9px] flex flex-col justify-between">
+                          <div>
+                            <span className="text-[8px] font-bold text-slate-500 uppercase block mb-1">Generated Migration Code Ledger:</span>
+                            <pre className="border border-slate-800 p-2 bg-black/40 text-[8px] leading-relaxed font-mono overflow-auto h-32 whitespace-pre-wrap">
+                              {state.migLog}
+                            </pre>
+                          </div>
+
+                          <div className="border-t border-slate-800 pt-1.5 flex items-center justify-between text-[7px] text-slate-500 font-black mt-1 font-mono">
+                            <span>DBMS: POSTGRESQL</span>
+                            <span>VERSION: 16.2</span>
+                          </div>
+                        </div>
+                      </div>
+                    </div>
+                  );
+                })()
+              )}
+
+              {/* GRAPH LINK TOPOLOGY ROUTER */}
+              {el.type === 'graph_router' && (
+                (() => {
+                  const state = propertiesObj.graphRouter || {
+                    edges: [
+                      { from: 'A', to: 'B', cost: 10 },
+                      { from: 'B', to: 'C', cost: 15 },
+                      { from: 'A', to: 'C', cost: 35 },
+                      { from: 'C', to: 'D', cost: 5 }
+                    ],
+                    startNode: 'A',
+                    endNode: 'D'
+                  };
+
+                  const calculatePath = () => {
+                    const edges = state.edges;
+                    const costAB = edges.find((e: any) => e.from === 'A' && e.to === 'B')?.cost || 10;
+                    const costBC = edges.find((e: any) => e.from === 'B' && e.to === 'C')?.cost || 15;
+                    const costAC = edges.find((e: any) => e.from === 'A' && e.to === 'C')?.cost || 35;
+                    const costCD = edges.find((e: any) => e.from === 'C' && e.to === 'D')?.cost || 5;
+
+                    const dynamicPaths = [
+                      { path: ['A', 'B', 'C', 'D'], cost: costAB + costBC + costCD },
+                      { path: ['A', 'C', 'D'], cost: costAC + costCD }
+                    ];
+
+                    dynamicPaths.sort((a: any, b: any) => a.cost - b.cost);
+                    return dynamicPaths[0];
+                  };
+
+                  const bestPath = calculatePath();
+
+                  return (
+                    <div className="border-2 border-[#1A1A1A] p-4 bg-white rounded-none neo-shadow-sm my-2 w-full font-sans">
+                      <div className="flex items-center justify-between border-b border-gray-100 pb-2 mb-3">
+                        <div className="flex items-center space-x-2">
+                          <GitFork className="w-4 h-4 text-rose-600" />
+                          <span className="text-[11px] font-mono font-bold uppercase tracking-wider text-gray-500">
+                            Graph Link Topology Router
+                          </span>
+                        </div>
+                        <span className="text-[9px] font-mono border border-rose-200 px-1.5 py-0.5 bg-rose-50 text-rose-600 font-extrabold uppercase rounded-sm">
+                          Shortest Path Solver
+                        </span>
+                      </div>
+
+                      <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+                        <div className="space-y-3 font-mono text-[9px]">
+                          <span className="text-gray-400 font-bold block uppercase mb-1">Topology Edge Costs:</span>
+                          <div className="space-y-2">
+                            {state.edges.map((edge: any, idx: number) => (
+                              <div key={idx} className="space-y-1">
+                                <div className="flex justify-between items-center text-[8px]">
+                                  <span>Edge Node {edge.from} {"-->"} Node {edge.to}</span>
+                                  <span className="font-extrabold text-rose-600">Cost: {edge.cost}ms</span>
+                                </div>
+                                <input 
+                                  type="range" 
+                                  min="2" 
+                                  max="80" 
+                                  value={edge.cost}
+                                  onChange={(e) => {
+                                    const nextEdges = state.edges.map((ed: any, edIdx: number) => edIdx === idx ? { ...ed, cost: parseInt(e.target.value) } : ed);
+                                    const updated = { ...state, edges: nextEdges };
+                                    updateCanvasElement(el.id, { properties: JSON.stringify({ ...propertiesObj, graphRouter: updated }) });
+                                  }}
+                                  className="w-full cursor-pointer h-1 bg-slate-200 rounded"
+                                />
+                              </div>
+                            ))}
+                          </div>
+                        </div>
+
+                        <div className="border-2 border-black bg-slate-900 text-slate-100 p-3 font-mono text-[9px] flex flex-col justify-between">
+                          <div>
+                            <span className="text-[8px] font-bold text-slate-500 uppercase block mb-1">Dijkstra Computation Trace:</span>
+                            <div className="border border-slate-800 p-2 bg-black/40 space-y-1 text-[8px] text-slate-300">
+                              <div>COMPUTING: Shortest path from {state.startNode} to {state.endNode}</div>
+                              <div>EVALUATING PATHS:</div>
+                              <div className="pl-3">1. Path [A-B-C-D] Cost: {state.edges[0].cost + state.edges[1].cost + state.edges[3].cost}ms</div>
+                              <div className="pl-3">2. Path [A-C-D] Cost: {state.edges[2].cost + state.edges[3].cost}ms</div>
+                            </div>
+
+                            <span className="text-[8px] font-bold text-slate-500 uppercase block mt-3 mb-1">Optimal Solved Route:</span>
+                            <div className="p-2 bg-rose-950/40 border border-rose-900 text-rose-300 font-extrabold text-[10px] text-center uppercase">
+                              Route: {bestPath.path.join(' -> ')} (Cost={bestPath.cost}ms)
+                            </div>
+                          </div>
+
+                          <div className="border-t border-slate-800 pt-1.5 flex items-center justify-between text-[7px] text-slate-500 font-black mt-1 font-mono">
+                            <span>ALGORITHM: DIJKSTRA</span>
+                            <span>STATUS: SOLVED</span>
+                          </div>
+                        </div>
+                      </div>
+                    </div>
+                  );
+                })()
+              )}
+
+              {/* RELATIONAL DB JOINT INSPECTOR */}
+              {el.type === 'db_join_inspector' && (
+                (() => {
+                  const state = propertiesObj.dbJoin || {
+                    joinType: 'INNER',
+                    leftSet: [
+                      { id: 1, name: 'Users Table', joinKey: '100' },
+                      { id: 2, name: 'Orders Table', joinKey: '200' },
+                      { id: 3, name: 'Products Table', joinKey: '300' }
+                    ],
+                    rightSet: [
+                      { id: 1, detail: 'Billing Profile', joinKey: '100' },
+                      { id: 2, detail: 'Shipping Profile', joinKey: '200' },
+                      { id: 3, detail: 'Refund Ledger', joinKey: '400' }
+                    ]
+                  };
+
+                  const getJoinMatches = () => {
+                    const output: any[] = [];
+                    if (state.joinType === 'INNER') {
+                      state.leftSet.forEach((l: any) => {
+                        state.rightSet.forEach((r: any) => {
+                          if (l.joinKey === r.joinKey) {
+                            output.push({ key: l.joinKey, left: l.name, right: r.detail });
+                          }
+                        });
+                      });
+                    } else if (state.joinType === 'LEFT') {
+                      state.leftSet.forEach((l: any) => {
+                        let matched = false;
+                        state.rightSet.forEach((r: any) => {
+                          if (l.joinKey === r.joinKey) {
+                            output.push({ key: l.joinKey, left: l.name, right: r.detail });
+                            matched = true;
+                          }
+                        });
+                        if (!matched) {
+                          output.push({ key: l.joinKey, left: l.name, right: 'NULL' });
+                        }
+                      });
+                    } else if (state.joinType === 'RIGHT') {
+                      state.rightSet.forEach((r: any) => {
+                        let matched = false;
+                        state.leftSet.forEach((l: any) => {
+                          if (l.joinKey === r.joinKey) {
+                            output.push({ key: r.joinKey, left: l.name, right: r.detail });
+                            matched = true;
+                          }
+                        });
+                        if (!matched) {
+                          output.push({ key: r.joinKey, left: 'NULL', right: r.detail });
+                        }
+                      });
+                    } else {
+                      const leftMatchedKeys: string[] = [];
+                      state.leftSet.forEach((l: any) => {
+                        let matched = false;
+                        state.rightSet.forEach((r: any) => {
+                          if (l.joinKey === r.joinKey) {
+                            output.push({ key: l.joinKey, left: l.name, right: r.detail });
+                            matched = true;
+                            leftMatchedKeys.push(l.joinKey);
+                          }
+                        });
+                        if (!matched) {
+                          output.push({ key: l.joinKey, left: l.name, right: 'NULL' });
+                        }
+                      });
+                      state.rightSet.forEach((r: any) => {
+                        if (!leftMatchedKeys.includes(r.joinKey)) {
+                          output.push({ key: r.joinKey, left: 'NULL', right: r.detail });
+                        }
+                      });
+                    }
+                    return output;
+                  };
+
+                  const matches = getJoinMatches();
+
+                  return (
+                    <div className="border-2 border-[#1A1A1A] p-4 bg-white rounded-none neo-shadow-sm my-2 w-full font-sans">
+                      <div className="flex items-center justify-between border-b border-gray-100 pb-2 mb-3">
+                        <div className="flex items-center space-x-2">
+                          <GitCompare className="w-4 h-4 text-emerald-600" />
+                          <span className="text-[11px] font-mono font-bold uppercase tracking-wider text-gray-500">
+                            Relational DB Joint Inspector
+                          </span>
+                        </div>
+                        <span className="text-[9px] font-mono border border-emerald-200 px-1.5 py-0.5 bg-emerald-50 text-emerald-600 font-extrabold uppercase rounded-sm">
+                          Set Intersector
+                        </span>
+                      </div>
+
+                      <div className="grid grid-cols-1 sm:grid-cols-3 gap-4">
+                        <div className="space-y-3 font-mono text-[9px] border-r-0 sm:border-r border-black/10 pr-0 sm:pr-3">
+                          <span className="text-gray-400 font-bold block uppercase mb-1">Choose SQL Join Operator:</span>
+                          <div className="space-y-1">
+                            {['INNER', 'LEFT', 'RIGHT', 'FULL'].map((type) => (
+                              <button
+                                key={type}
+                                onClick={() => {
+                                  const updated = { ...state, joinType: type };
+                                  updateCanvasElement(el.id, { properties: JSON.stringify({ ...propertiesObj, dbJoin: updated }) });
+                                }}
+                                className={`w-full text-left px-2 py-1 border font-bold uppercase text-[8px] cursor-pointer ${state.joinType === type ? 'bg-emerald-600 text-white border-black' : 'bg-white text-black border-black'}`}
+                              >
+                                {type} OUTER JOIN
+                              </button>
+                            ))}
+                          </div>
+                        </div>
+
+                        <div className="sm:col-span-2 border-2 border-black bg-slate-50 p-3 flex flex-col justify-between font-mono text-[9px]">
+                          <div>
+                            <span className="text-[8px] font-bold text-slate-400 uppercase block mb-1">Relational Join Output Table:</span>
+                            <div className="space-y-1 max-h-40 overflow-y-auto">
+                              <div className="grid grid-cols-3 border border-black bg-slate-200 font-extrabold p-1 text-[7px] uppercase">
+                                <span>Left Table Row</span>
+                                <span>Key ID</span>
+                                <span>Right Table Row</span>
+                              </div>
+                              {matches.map((row: any, rIdx: number) => (
+                                <div key={rIdx} className="grid grid-cols-3 border border-black/10 bg-white p-1 text-[8px]">
+                                  <span className={row.left === 'NULL' ? 'text-rose-500 font-bold' : 'text-slate-800'}>{row.left}</span>
+                                  <span className="text-slate-500 font-bold">{row.key}</span>
+                                  <span className={row.right === 'NULL' ? 'text-rose-500 font-bold' : 'text-slate-800'}>{row.right}</span>
+                                </div>
+                              ))}
+                            </div>
+                          </div>
+                        </div>
+                      </div>
+                    </div>
+                  );
+                })()
+              )}
+
+              {/* CASCADING STATE LIFECYCLE MACHINE */}
+              {el.type === 'cascading_states' && (
+                (() => {
+                  const state = propertiesObj.cascadingStates || {
+                    t1: 'PENDING',
+                    t2: 'LOCKED',
+                    t3: 'DISABLED'
+                  };
+
+                  const triggerCascade = (status: string) => {
+                    let updatedT2 = state.t2;
+                    let updatedT3 = state.t3;
+
+                    if (status === 'APPROVED') {
+                      updatedT2 = 'UNLOCKED';
+                      updatedT3 = 'READY_TO_DEPLOY';
+                    } else if (status === 'REJECTED') {
+                      updatedT2 = 'ARCHIVED';
+                      updatedT3 = 'CANCELLED';
+                    } else {
+                      updatedT2 = 'LOCKED';
+                      updatedT3 = 'DISABLED';
+                    }
+
+                    const updated = {
+                      t1: status,
+                      t2: updatedT2,
+                      t3: updatedT3
+                    };
+                    updateCanvasElement(el.id, { properties: JSON.stringify({ ...propertiesObj, cascadingStates: updated }) });
+                  };
+
+                  return (
+                    <div className="border-2 border-[#1A1A1A] p-4 bg-white rounded-none neo-shadow-sm my-2 w-full font-sans">
+                      <div className="flex items-center justify-between border-b border-gray-100 pb-2 mb-3">
+                        <div className="flex items-center space-x-2">
+                          <Workflow className="w-4 h-4 text-sky-600" />
+                          <span className="text-[11px] font-mono font-bold uppercase tracking-wider text-gray-500">
+                            Cascading State Lifecycle Machine
+                          </span>
+                        </div>
+                        <span className="text-[9px] font-mono border border-sky-200 px-1.5 py-0.5 bg-sky-50 text-sky-600 font-extrabold uppercase rounded-sm">
+                          FSM State Cascade
+                        </span>
+                      </div>
+
+                      <div className="grid grid-cols-1 sm:grid-cols-3 gap-4">
+                        <div className="space-y-3 font-mono text-[9px] border-r-0 sm:border-r border-black/10 pr-0 sm:pr-3">
+                          <span className="text-gray-400 font-bold block uppercase mb-1">Set Tier 1 Status:</span>
+                          <div className="space-y-1">
+                            {['PENDING', 'APPROVED', 'REJECTED'].map((st) => (
+                              <button
+                                key={st}
+                                onClick={() => triggerCascade(st)}
+                                className={`w-full text-left px-2 py-1 border font-bold uppercase text-[8px] cursor-pointer ${state.t1 === st ? 'bg-sky-600 text-white border-black' : 'bg-white text-black border-black'}`}
+                              >
+                                {st}
+                              </button>
+                            ))}
+                          </div>
+                        </div>
+
+                        <div className="sm:col-span-2 border-2 border-black bg-slate-50 p-3 flex flex-col justify-between font-mono text-[9px]">
+                          <div>
+                            <span className="text-[8px] font-bold text-slate-400 uppercase block mb-1.5">Cascade Flow Nodes & State Check:</span>
+                            <div className="space-y-2">
+                              <div className="border border-black bg-white p-2 flex justify-between items-center">
+                                <span className="font-bold text-slate-500">TIER 1 (TRIGGER GATE)</span>
+                                <span className={`px-1.5 rounded text-[8px] font-black uppercase ${
+                                  state.t1 === 'APPROVED' ? 'bg-emerald-50 text-emerald-600 border border-emerald-200' :
+                                  state.t1 === 'REJECTED' ? 'bg-rose-50 text-rose-600 border border-rose-200' :
+                                  'bg-amber-50 text-amber-600 border border-amber-200'
+                                }`}>
+                                  {state.t1}
+                                </span>
+                              </div>
+
+                              <div className="text-center text-slate-400 text-[8px] py-0.5">{"|| CAS_VAL_PASS -->"}</div>
+
+                              <div className="border border-black bg-white p-2 flex justify-between items-center">
+                                <span className="font-bold text-slate-500">TIER 2 (DATA INTEGRITY LOCK)</span>
+                                <span className={`px-1.5 rounded text-[8px] font-black uppercase ${
+                                  state.t2 === 'UNLOCKED' ? 'bg-emerald-50 text-emerald-600 border border-emerald-200' : 'bg-rose-50 text-rose-600 border border-rose-200'
+                                }`}>
+                                  {state.t2}
+                                </span>
+                              </div>
+
+                              <div className="text-center text-slate-400 text-[8px] py-0.5">{"|| CAS_DEP_SYS -->"}</div>
+
+                              <div className="border border-black bg-white p-2 flex justify-between items-center">
+                                <span className="font-bold text-slate-500">TIER 3 (DEPLOYABLE GATE)</span>
+                                <span className={`px-1.5 rounded text-[8px] font-black uppercase ${
+                                  state.t3 === 'READY_TO_DEPLOY' ? 'bg-emerald-50 text-emerald-600 border border-emerald-200' : 'bg-rose-50 text-rose-600 border border-rose-200'
+                                }`}>
+                                  {state.t3}
+                                </span>
+                              </div>
+                            </div>
+                          </div>
+                        </div>
+                      </div>
+                    </div>
+                  );
+                })()
+              )}
+
+              {/* COMPOSITE INDEX OPTIMIZER SANDBOX */}
+              {el.type === 'index_sandbox' && (
+                (() => {
+                  const state = propertiesObj.indexSandbox || {
+                    fields: ['tenant_id', 'status', 'created_at'],
+                    tenantQuery: true,
+                    statusQuery: true,
+                    dateQuery: false
+                  };
+
+                  const calculateIndexMetrics = () => {
+                    let cost = 100;
+                    let scanMode = 'Seq Scan (Table scan)';
+                    let rating = 'CRITICAL FAILURE - NO INDEX USABLE';
+
+                    if (state.tenantQuery && state.statusQuery && state.dateQuery) {
+                      scanMode = 'Index Scan using idx_tenant_status_created';
+                      cost = 5;
+                      rating = 'EXCELLENT - PERFECT TRIPLE-COLUMN PREF MATCH';
+                    } else if (state.tenantQuery && state.statusQuery) {
+                      scanMode = 'Index Scan using idx_tenant_status_created';
+                      cost = 10;
+                      rating = 'GREAT - DUAL-COLUMN MATCH';
+                    } else if (state.tenantQuery && state.dateQuery) {
+                      scanMode = 'Index Skip Scan / Partial Scan';
+                      cost = 45;
+                      rating = 'FAIR - LEAPED OVER STATUS COLUMN';
+                    } else if (state.tenantQuery) {
+                      scanMode = 'Index Scan (tenant_id prefix)';
+                      cost = 15;
+                      rating = 'GOOD - BASE PREFIX MATCHED';
+                    } else if (state.statusQuery || state.dateQuery) {
+                      scanMode = 'Seq Scan on unindexed queries';
+                      cost = 95;
+                      rating = 'POOR - PREFIX BROKEN (Must search all records)';
+                    }
+
+                    return { cost, scanMode, rating };
+                  };
+
+                  const metrics = calculateIndexMetrics();
+
+                  return (
+                    <div className="border-2 border-[#1A1A1A] p-4 bg-white rounded-none neo-shadow-sm my-2 w-full font-sans">
+                      <div className="flex items-center justify-between border-b border-gray-100 pb-2 mb-3">
+                        <div className="flex items-center space-x-2">
+                          <Search className="w-4 h-4 text-emerald-600" />
+                          <span className="text-[11px] font-mono font-bold uppercase tracking-wider text-gray-500">
+                            Composite Index Optimizer Sandbox
+                          </span>
+                        </div>
+                        <span className="text-[9px] font-mono border border-emerald-200 px-1.5 py-0.5 bg-emerald-50 text-emerald-600 font-extrabold uppercase rounded-sm">
+                          Index Optimizer
+                        </span>
+                      </div>
+
+                      <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+                        <div className="space-y-3 font-mono text-[9px]">
+                          <span className="text-gray-400 font-bold block uppercase mb-1">Index Definition: (tenant_id, status, created_at)</span>
+                          
+                          <div className="border border-black bg-slate-50 p-2 space-y-1">
+                            <span className="text-gray-400 font-bold block uppercase text-[8px] mb-1">Toggle Query Filters in WHERE clause:</span>
+                            
+                            <label className="flex items-center space-x-2 cursor-pointer py-0.5">
+                              <input 
+                                type="checkbox"
+                                checked={state.tenantQuery}
+                                onChange={(e) => {
+                                  const updated = { ...state, tenantQuery: e.target.checked };
+                                  updateCanvasElement(el.id, { properties: JSON.stringify({ ...propertiesObj, indexSandbox: updated }) });
+                                }}
+                                className="w-3.5 h-3.5 border-2 border-black rounded-none cursor-pointer"
+                              />
+                              <span>WHERE tenant_id = ?</span>
+                            </label>
+
+                            <label className="flex items-center space-x-2 cursor-pointer py-0.5">
+                              <input 
+                                type="checkbox"
+                                checked={state.statusQuery}
+                                onChange={(e) => {
+                                  const updated = { ...state, statusQuery: e.target.checked };
+                                  updateCanvasElement(el.id, { properties: JSON.stringify({ ...propertiesObj, indexSandbox: updated }) });
+                                }}
+                                className="w-3.5 h-3.5 border-2 border-black rounded-none cursor-pointer"
+                              />
+                              <span>AND status = ?</span>
+                            </label>
+
+                            <label className="flex items-center space-x-2 cursor-pointer py-0.5">
+                              <input 
+                                type="checkbox"
+                                checked={state.dateQuery}
+                                onChange={(e) => {
+                                  const updated = { ...state, dateQuery: e.target.checked };
+                                  updateCanvasElement(el.id, { properties: JSON.stringify({ ...propertiesObj, indexSandbox: updated }) });
+                                }}
+                                className="w-3.5 h-3.5 border-2 border-black rounded-none cursor-pointer"
+                              />
+                              <span>AND created_at {">"} ?</span>
+                            </label>
+                          </div>
+                        </div>
+
+                        <div className="border-2 border-black bg-slate-900 text-slate-100 p-3 font-mono text-[9px] flex flex-col justify-between">
+                          <div className="space-y-2">
+                            <span className="text-[8px] font-bold text-slate-500 uppercase block mb-1">Query Planner Execution Analysis:</span>
+                            <div className="border border-slate-800 p-2 bg-black/40 text-[8px] text-slate-300">
+                              <div>MODE: {metrics.scanMode}</div>
+                              <div>COST VALUE: {metrics.cost} relative units</div>
+                            </div>
+
+                            <span className="text-[8px] font-bold text-slate-500 uppercase block mt-2">Optimization Efficiency:</span>
+                            <div className={`p-2 border text-center font-extrabold text-[8px] uppercase ${
+                              metrics.cost < 20 ? 'bg-emerald-950 text-emerald-400 border-emerald-800' :
+                              metrics.cost < 50 ? 'bg-amber-950 text-amber-400 border-amber-800' :
+                              'bg-rose-950 text-rose-400 border-rose-800'
+                            }`}>
+                              {metrics.rating}
+                            </div>
+                          </div>
+
+                          <div className="border-t border-slate-800 pt-1.5 flex items-center justify-between text-[7px] text-slate-500 font-black mt-1 font-mono">
+                            <span>OPTIMIZER: AUTO-GEN</span>
+                            <span>INDEX TYPE: B-TREE</span>
+                          </div>
+                        </div>
+                      </div>
+                    </div>
+                  );
+                })()
+              )}
             </ElementWrapper>
           );
         })}

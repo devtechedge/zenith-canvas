@@ -55,7 +55,7 @@ import {
 } from 'lucide-react';
 
 export interface CommandItem {
-  id: 'heading_1' | 'heading_2' | 'text' | 'todo' | 'callout' | 'code_sandbox' | 'collection_ref' | 'toggle_list' | 'quote' | 'page_link' | 'acoustic_wave' | 'matrix_view' | 'node_router' | 'spectrogram' | 'layout_sandbox' | 'ast_parser' | 'cycle_timeline' | 'telemetry_deck' | 'markdown_ast' | 'relation_graph' | 'search_matrix' | 'formula_grid' | 'vector_diagram' | 'sql_schema_visualizer' | 'conflict_sync_simulator' | 'audio_sampler' | 'ast_query_builder' | 'theme_engine_sandbox' | 'revision_ledger' | 'bento_composer' | 'ai_grounding_workspace' | 'uml_studio' | 'cron_scheduler' | 'db_migrator' | 'api_request_builder' | 'regex_tester' | 'kanban_orchestrator' | 'math_mesh' | 'format_converter' | 'ast_diff_viewer' | 'state_machine_designer' | 'packet_analyzer' | 'sql_optimizer' | 'color_auditor' | 'jwt_inspector' | 'git_simulator' | 'crypto_lab' | 'schema_validator' | 'css_sandbox' | 'markdown_tokenizer' | 'sys_topology';
+  id: 'heading_1' | 'heading_2' | 'text' | 'todo' | 'callout' | 'code_sandbox' | 'collection_ref' | 'toggle_list' | 'quote' | 'page_link' | 'acoustic_wave' | 'matrix_view' | 'node_router' | 'spectrogram' | 'layout_sandbox' | 'ast_parser' | 'cycle_timeline' | 'telemetry_deck' | 'markdown_ast' | 'relation_graph' | 'search_matrix' | 'formula_grid' | 'vector_diagram' | 'sql_schema_visualizer' | 'conflict_sync_simulator' | 'audio_sampler' | 'ast_query_builder' | 'theme_engine_sandbox' | 'revision_ledger' | 'bento_composer' | 'ai_grounding_workspace' | 'uml_studio' | 'cron_scheduler' | 'db_migrator' | 'api_request_builder' | 'regex_tester' | 'kanban_orchestrator' | 'math_mesh' | 'format_converter' | 'ast_diff_viewer' | 'state_machine_designer' | 'packet_analyzer' | 'sql_optimizer' | 'color_auditor' | 'jwt_inspector' | 'git_simulator' | 'crypto_lab' | 'schema_validator' | 'css_sandbox' | 'markdown_tokenizer' | 'sys_topology' | 'formula_compiler' | 'cross_node_linker' | 'filter_matrix' | 'schema_dependency_visualizer' | 'rollup_aggregator' | 'schema_migrator' | 'graph_router' | 'db_join_inspector' | 'cascading_states' | 'index_sandbox';
   title: string;
   description: string;
   icon: React.ComponentType<any>;
@@ -367,6 +367,66 @@ const COMMANDS: CommandItem[] = [
     title: 'System Architecture Topology',
     description: 'Map microservice nodes, load balancers, and trace latency buffers',
     icon: Layers,
+  },
+  {
+    id: 'formula_compiler',
+    title: 'Multi-Variable Formula Compiler',
+    description: 'Design mathematical equations and render dynamic curves with real-time sliders',
+    icon: Calculator,
+  },
+  {
+    id: 'cross_node_linker',
+    title: 'Cross-Node Relational Linker',
+    description: 'Link distinct canvas nodes to map property flows, events, and metrics',
+    icon: Share2,
+  },
+  {
+    id: 'filter_matrix',
+    title: 'Multi-Column Filter Matrix',
+    description: 'Construct complex compound queries and visual condition sets with instant counts',
+    icon: Filter,
+  },
+  {
+    id: 'schema_dependency_visualizer',
+    title: 'Graph Schema Dependency Tree',
+    description: 'Visualize databases, foreign key connections, and cascading action flows',
+    icon: Network,
+  },
+  {
+    id: 'rollup_aggregator',
+    title: 'Relational Rollup Aggregator',
+    description: 'Apply high-end math rollups over interactive dataset streams',
+    icon: Layers,
+  },
+  {
+    id: 'schema_migrator',
+    title: 'Dynamic Schema Field Migrator',
+    description: 'Plan model modifications, type casts, and generate safe SQL migration steps',
+    icon: Database,
+  },
+  {
+    id: 'graph_router',
+    title: 'Graph Link Topology Router',
+    description: 'Place path nodes and run shortest-path route traversals step-by-step',
+    icon: GitFork,
+  },
+  {
+    id: 'db_join_inspector',
+    title: 'Relational DB Joint Inspector',
+    description: 'Inspect Inner, Left, and Outer joins with Venn interactive sets',
+    icon: GitCompare,
+  },
+  {
+    id: 'cascading_states',
+    title: 'Cascading State Lifecycle Machine',
+    description: 'Define cross-tier state machines with automatic dependency checks',
+    icon: Workflow,
+  },
+  {
+    id: 'index_sandbox',
+    title: 'Composite Index Optimizer Sandbox',
+    description: 'Measure query cost reduction and index skip-scans with field ordering rules',
+    icon: Search,
   }
 ];
 
