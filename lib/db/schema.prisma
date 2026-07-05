@@ -1,0 +1,70 @@
+datasource db {
+  provider = "postgresql"
+  url      = env("VERCEL_POSTGRES_PRISMA_URL")
+}
+
+generator client {
+  provider = "prisma-client-js"
+}
+
+model AccountWorkspace {
+  id          String    @id @default(uuid())
+  title       String
+  createdAt   DateTime  @default(now())
+  updatedAt   DateTime  @updatedAt
+  canvases    Canvas[]
+}
+
+model Canvas {
+  id          String            @id @default(uuid())
+  workspaceId String
+  parentId    String?
+  title       String            @default("Untitled Document")
+  icon        String?
+  coverImage  String?
+  isArchived  Boolean           @default(false)
+  updatedAt   DateTime          @updatedAt
+  elements    CanvasElement[]
+  collections CollectionTable[]
+
+  workspace   AccountWorkspace  @relation(fields: [workspaceId], references: [id], onDelete: Cascade)
+  parent      Canvas?           @relation("NestedCanvases", fields: [parentId], references: [id], onDelete: Cascade)
+  children    Canvas[]          @relation("NestedCanvases")
+
+  @@index([workspaceId])
+  @@index([parentId])
+}
+
+model CanvasElement {
+  id         String   @id @default(uuid())
+  canvasId   String
+  type       String   // "heading_1", "heading_2", "text", "todo", "callout", "code_sandbox", "collection_ref"
+  content    String   @db.Text
+  properties String   @default("{}") // JSON string containing language, checked state, or styling overrides
+  sortOrder  Float
+  updatedAt  DateTime @updatedAt
+
+  canvas     Canvas   @relation(fields: [canvasId], references: [id], onDelete: Cascade)
+
+  @@index([canvasId])
+  @@index([sortOrder])
+}
+
+model CollectionTable {
+  id         String             @id @default(uuid())
+  canvasId   String
+  name       String
+  schema     String             @default("[]") // JSON defining column IDs, Types (Text, Number, Select, MultiSelect, Date)
+  canvas     Canvas             @relation(fields: [canvasId], references: [id], onDelete: Cascade)
+  rows       CollectionRow[]
+}
+
+model CollectionRow {
+  id           String           @id @default(uuid())
+  tableId      String
+  cells        String           @default("{}") // Key-Value JSON matching Schema column IDs to explicit cell values
+  sortOrder    Float
+  table        CollectionTable  @relation(fields: [tableId], references: [id], onDelete: Cascade)
+
+  @@index([tableId])
+}

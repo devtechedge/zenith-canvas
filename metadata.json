@@ -1,0 +1,6 @@
+{
+  "name": "Zenith Canvas",
+  "description": "An enterprise-grade offline-first distributed block-based workspace and relational database application.",
+  "requestFramePermissions": [],
+  "majorCapabilities": ["MAJOR_CAPABILITY_SERVER_SIDE_GEMINI_API"]
+}

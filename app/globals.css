@@ -1,0 +1,25 @@
+@import "tailwindcss";
+@import "tw-animate-css";
+
+@theme {
+  --font-sans: var(--font-sans), system-ui, -apple-system, sans-serif;
+  --font-mono: var(--font-mono), monospace;
+}
+
+@layer utilities {
+  .neo-shadow {
+    box-shadow: 4px 4px 0px 0px #1A1A1A;
+  }
+  .neo-shadow-sm {
+    box-shadow: 2px 2px 0px 0px #1A1A1A;
+  }
+  .neo-shadow-lg {
+    box-shadow: 8px 8px 0px 0px #1A1A1A;
+  }
+  .neo-shadow-primary {
+    box-shadow: 4px 4px 0px 0px #2D6A4F;
+  }
+  .neo-shadow-amber {
+    box-shadow: 4px 4px 0px 0px #FFB703;
+  }
+}
