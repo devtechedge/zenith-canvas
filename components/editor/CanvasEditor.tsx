@@ -440,6 +440,7 @@ export default function CanvasEditor({ canvasId, isLocked = false, isCozyStoryMo
   }, [canvasId]) || [];
 
   const canvasesList = useLiveQuery(() => db.canvases.where('isArchived').equals(0).toArray()) || [];
+  const allExistingTables = useLiveQuery(() => db.collections.toArray()) || [];
 
   // Local state for active slash command panel
   const [slashCommandState, setSlashCommandState] = useState<{
@@ -459,6 +460,9 @@ export default function CanvasEditor({ canvasId, isLocked = false, isCozyStoryMo
 
   // Terminal sandbox running states
   const [sandboxOutputs, setSandboxOutputs] = useState<Record<string, string[]>>({});
+
+  // Replicated table linking targets for Feature 20
+  const [tableLinkTargets, setTableLinkTargets] = useState<Record<string, string>>({});
 
   // Ensure canvas has at least one paragraph element on first load
   useEffect(() => {
@@ -1406,12 +1410,53 @@ export default function CanvasEditor({ canvasId, isLocked = false, isCozyStoryMo
                       <p className="text-xs text-gray-500 max-w-md mx-auto mb-4 leading-relaxed font-sans">
                         Create a beautiful table to track your school homework assignments, favorite gaming scores, daily home chores, or book reviews. Tap below to launch your grid!
                       </p>
-                      <button
-                        onClick={() => handleProvisionDataGrid(el.id, propertiesObj.tableId)}
-                        className="px-4 py-2 border-2 border-[#1A1A1A] bg-[#FFB703] text-xs font-bold uppercase neo-shadow-sm hover:translate-x-[1px] hover:translate-y-[1px] hover:shadow-none transition-all cursor-pointer"
-                      >
-                        ✨ Create Smart Table View
-                      </button>
+                      
+                      <div className="flex flex-col items-center justify-center space-y-4">
+                        <button
+                          onClick={() => handleProvisionDataGrid(el.id, propertiesObj.tableId)}
+                          className="px-4 py-2 border-2 border-[#1A1A1A] bg-[#FFB703] text-xs font-bold uppercase neo-shadow-sm hover:translate-x-[1px] hover:translate-y-[1px] hover:shadow-none transition-all cursor-pointer"
+                        >
+                          ✨ Create Fresh Smart Table
+                        </button>
+
+                        {allExistingTables.length > 0 && (
+                          <div className="mt-3 pt-3 border-t-2 border-dashed border-gray-300 w-full max-w-xs space-y-1.5">
+                            <span className="text-[10px] font-mono font-bold uppercase text-gray-400 block">
+                              🔗 Replicate/Link Existing Table
+                            </span>
+                            <div className="flex items-center space-x-1.5 justify-center">
+                              <select
+                                value={tableLinkTargets[el.id] || ''}
+                                onChange={(e) => setTableLinkTargets(prev => ({ ...prev, [el.id]: e.target.value }))}
+                                className="text-[11px] font-mono border-2 border-[#1A1A1A] p-1.5 bg-white rounded-none outline-none text-slate-700 font-bold"
+                              >
+                                <option value="">-- Choose Existing Table --</option>
+                                {allExistingTables.map(t => (
+                                  <option key={t.id} value={t.id}>
+                                    {t.name || 'Untitled Table'}
+                                  </option>
+                                ))}
+                              </select>
+                              <button
+                                onClick={async () => {
+                                  const targetId = tableLinkTargets[el.id];
+                                  if (!targetId) {
+                                    alert("Please select an existing table first!");
+                                    return;
+                                  }
+                                  await updateCanvasElement(el.id, {
+                                    properties: JSON.stringify({ tableId: targetId, provisioned: true })
+                                  });
+                                }}
+                                disabled={!tableLinkTargets[el.id]}
+                                className="px-2.5 py-1.5 bg-indigo-600 hover:bg-indigo-700 disabled:opacity-50 border-2 border-black text-white text-[10px] font-bold uppercase cursor-pointer shadow-[2px_2px_0px_0px_rgba(0,0,0,1)] active:translate-y-0.5 transition-all"
+                              >
+                                Link
+                              </button>
+                            </div>
+                          </div>
+                        )}
+                      </div>
                     </div>
                   )}
                 </div>
