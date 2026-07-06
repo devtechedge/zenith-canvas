@@ -161,6 +161,10 @@ export default function CanvasWorkspaceClient() {
     return localStorage.getItem(`zenith-theme-${canvasId}`) || 'default';
   });
   const [isFocusMode, setIsFocusMode] = useState<boolean>(false);
+  const [isCozyStoryMode, setIsCozyStoryMode] = useState<boolean>(() => {
+    if (typeof window === 'undefined') return false;
+    return localStorage.getItem(`zenith-cozy-mode-${canvasId}`) === 'true';
+  });
   const [isMobileSidebarOpen, setIsMobileSidebarOpen] = useState(false);
   const [isLocked, setIsLocked] = useState<boolean>(() => {
     if (typeof window === 'undefined') return false;
@@ -1038,7 +1042,7 @@ export default function CanvasWorkspaceClient() {
           </div>
  
           {/* Poly-morphic block list Canvas Editor */}
-          <CanvasEditor canvasId={canvasId} isLocked={isLocked} />
+          <CanvasEditor canvasId={canvasId} isLocked={isLocked} isCozyStoryMode={isCozyStoryMode} />
  
           {/* Bi-directional Backlinks Section */}
           {backlinks.length > 0 && (
@@ -1197,6 +1201,11 @@ export default function CanvasWorkspaceClient() {
         setIsFocusMode={setIsFocusMode}
         accentTheme={accentTheme}
         setAccentTheme={setAccentTheme}
+        isCozyStoryMode={isCozyStoryMode}
+        setIsCozyStoryMode={(val) => {
+          setIsCozyStoryMode(val);
+          localStorage.setItem(`zenith-cozy-mode-${canvasId}`, val ? 'true' : 'false');
+        }}
       />
     </div>
   );

@@ -138,6 +138,8 @@ interface OpsControlDeckProps {
   setIsFocusMode: (val: boolean) => void;
   accentTheme: string;
   setAccentTheme: (val: string) => void;
+  isCozyStoryMode: boolean;
+  setIsCozyStoryMode: (val: boolean) => void;
 }
 
 export default function OpsControlDeck({ 
@@ -145,7 +147,9 @@ export default function OpsControlDeck({
   isFocusMode, 
   setIsFocusMode,
   accentTheme,
-  setAccentTheme
+  setAccentTheme,
+  isCozyStoryMode,
+  setIsCozyStoryMode
 }: OpsControlDeckProps) {
   const [isOpen, setIsOpen] = useState(false);
   const [activeTab, setActiveTab] = useState<'ledger' | 'scratchpad' | 'ast' | 'snapshots' | 'themes'>('scratchpad');
@@ -952,6 +956,34 @@ export default function OpsControlDeck({
                         </button>
                       ))}
                     </div>
+                  </div>
+
+                  {/* Cozy Story Mode Spacing Toggle (Feature 8) */}
+                  <div className="space-y-2 pt-2 border-t border-gray-300">
+                    <div>
+                      <h4 className="text-xs font-black uppercase text-[#1A1A1A]">Cozy Story Mode Spacing</h4>
+                      <p className="text-[9px] text-gray-500 leading-normal">
+                        Makes text larger and adds loose, extra-cozy spacing — perfect for writing stories or journaling on a tablet/phone!
+                      </p>
+                    </div>
+
+                    <button
+                      onClick={() => {
+                        setIsCozyStoryMode(!isCozyStoryMode);
+                        addCliLog(`[THEME] Cozy Story Mode Spacing turned ${!isCozyStoryMode ? 'ON' : 'OFF'}.`);
+                      }}
+                      className={`w-full border-2 border-[#1A1A1A] p-2 flex items-center justify-between rounded-none text-left transition-all cursor-pointer ${
+                        isCozyStoryMode ? 'bg-[#FFB703]/20 font-bold' : 'bg-white font-medium hover:bg-gray-50'
+                      }`}
+                    >
+                      <div className="flex items-center space-x-2">
+                        <Sparkles className={`w-4 h-4 ${isCozyStoryMode ? 'text-amber-500 animate-spin' : 'text-gray-400'}`} />
+                        <span className="text-[10px] uppercase font-bold text-[#1A1A1A]">Cozy Spacing Layout</span>
+                      </div>
+                      <span className="text-[9px] font-mono px-1.5 py-0.5 border border-[#1A1A1A] bg-white select-none">
+                        {isCozyStoryMode ? 'COZY' : 'DEFAULT'}
+                      </span>
+                    </button>
                   </div>
 
                   {/* Ambient focus sound controllers & typewriter toggle */}

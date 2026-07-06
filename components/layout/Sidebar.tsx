@@ -156,7 +156,6 @@ export default function Sidebar({ onOpenCommandPalette, mobileOpen = false, onCl
               </button>
 
               <span className="text-sm select-none">{canvas.icon || '📄'}</span>
-              <span className="text-[8px] font-mono font-black border border-[#1A1A1A] px-1 bg-[#1A1A1A] text-[#FFB703] rounded-sm uppercase tracking-tighter select-none flex-shrink-0">LEVEL {depth + 1}</span>
               <span className="text-sm font-medium truncate select-none">{canvas.title || 'Untitled'}</span>
             </div>
 

@@ -57,7 +57,8 @@ import {
   Eye,
   Key,
   FileCheck,
-  Grid
+  Grid,
+  Mic
 } from 'lucide-react';
 
 const playTypewriterSound = (isSpace: boolean) => {
@@ -105,9 +106,10 @@ const generateTableId = () => {
 interface CanvasEditorProps {
   canvasId: string;
   isLocked?: boolean;
+  isCozyStoryMode?: boolean;
 }
 
-export default function CanvasEditor({ canvasId, isLocked = false }: CanvasEditorProps) {
+export default function CanvasEditor({ canvasId, isLocked = false, isCozyStoryMode = false }: CanvasEditorProps) {
   const { 
     createCanvasElement, 
     updateCanvasElement, 
@@ -118,92 +120,316 @@ export default function CanvasEditor({ canvasId, isLocked = false }: CanvasEdito
   const [focusedId, setFocusedId] = useState<string | null>(null);
   const initializedCanvasIds = useRef<Record<string, boolean>>({});
 
+  // Floating look up dictionary state (Feature 6)
+  const [definitionPopup, setDefinitionPopup] = useState<{
+    word: string;
+    top: number;
+    left: number;
+    definition?: string;
+    phonetic?: string;
+    loading?: boolean;
+    error?: string;
+  } | null>(null);
+
+  // Speech-to-Text state (Feature 5)
+  const [speechActiveId, setSpeechActiveId] = useState<string | null>(null);
+  const recognitionRef = useRef<any>(null);
+
+  // 10. Dynamic Date Badges Relative Date Math (Feature 10)
+  const calculateTargetDate = (phrase: string): string => {
+    const today = new Date();
+    const target = new Date(today);
+    const p = phrase.toLowerCase().trim();
+    if (p === 'today') {
+      // Keep today
+    } else if (p === 'tomorrow') {
+      target.setDate(today.getDate() + 1);
+    } else if (p === 'yesterday') {
+      target.setDate(today.getDate() - 1);
+    } else if (p === 'next week') {
+      target.setDate(today.getDate() + 7);
+    } else if (p.startsWith('in ') && p.endsWith(' days')) {
+      const days = parseInt(p.replace(/[^\d]/g, ''), 10);
+      if (!isNaN(days)) {
+        target.setDate(today.getDate() + days);
+      }
+    } else if (p.startsWith('next ')) {
+      const daysOfWeek = ['sunday', 'monday', 'tuesday', 'wednesday', 'thursday', 'friday', 'saturday'];
+      const targetDayName = p.replace('next ', '').trim();
+      const targetDayIndex = daysOfWeek.indexOf(targetDayName);
+      if (targetDayIndex !== -1) {
+        let currentDayIndex = today.getDay();
+        let daysToAdd = (targetDayIndex - currentDayIndex + 7) % 7;
+        if (daysToAdd === 0) daysToAdd = 7;
+        target.setDate(today.getDate() + daysToAdd);
+      }
+    }
+    return target.toLocaleDateString('en-US', { weekday: 'short', month: 'short', day: 'numeric', year: 'numeric' });
+  };
+
+  // 2. Magic Word Expander Dictionary presets (Feature 2)
+  const getShortcutMap = () => {
+    const defaultMap: Record<string, string> = {
+      hw: '🏫 School Homework Planner\n- [ ] 📚 Subject 1 homework\n- [ ] 🧪 Science assignment',
+      todo: '📝 Daily Checklist\n- [ ] Task 1\n- [ ] Task 2',
+      recipe: '🍎 Special Family Recipe\n⏱️ Prep Time: 15 mins | 🍲 Servings: 4\n🥣 Ingredients:\n- \n- \n🍳 Steps:\n1. ',
+      quote: '💬 Words of Encouragement\n"Believe you can and you are halfway there." - Theodore Roosevelt',
+      story: '📖 Cozy Story Page\nOnce upon a time, in a bright creative digital canvas...',
+      notes: '💡 Quick Spark Notes\n- Key idea 1\n- Key idea 2'
+    };
+
+    try {
+      const stored = localStorage.getItem('zenith-custom-shortcuts');
+      if (stored) {
+        const parsed = JSON.parse(stored);
+        return { ...defaultMap, ...parsed };
+      }
+    } catch {}
+    return defaultMap;
+  };
+
+  // Speech Recorder trigger handler (Feature 5)
+  const handleToggleSpeech = (elementId: string) => {
+    if (speechActiveId === elementId) {
+      if (recognitionRef.current) {
+        recognitionRef.current.stop();
+      }
+      setSpeechActiveId(null);
+    } else {
+      const SpeechRecognition = (window as any).SpeechRecognition || (window as any).webkitSpeechRecognition;
+      if (!SpeechRecognition) {
+        alert("Sorry, your browser doesn't support speech recognition. Try Google Chrome!");
+        return;
+      }
+
+      const rec = new SpeechRecognition();
+      rec.continuous = true;
+      rec.interimResults = true;
+      rec.lang = 'en-US';
+
+      rec.onstart = () => {
+        setSpeechActiveId(elementId);
+      };
+
+      rec.onresult = (event: any) => {
+        let transcript = '';
+        for (let i = event.resultIndex; i < event.results.length; ++i) {
+          if (event.results[i].isFinal) {
+            transcript += event.results[i][0].transcript;
+          }
+        }
+        if (transcript) {
+          db.elements.get(elementId).then((existing) => {
+            if (existing) {
+              const updatedContent = existing.content 
+                ? existing.content + ' ' + transcript 
+                : transcript;
+              updateCanvasElement(elementId, { content: updatedContent.trim() });
+            }
+          });
+        }
+      };
+
+      rec.onerror = (e: any) => {
+        console.error("Speech recognition error:", e);
+        setSpeechActiveId(null);
+      };
+
+      rec.onend = () => {
+        setSpeechActiveId(null);
+      };
+
+      recognitionRef.current = rec;
+      rec.start();
+    }
+  };
+
+  // Word definition lookup handler (Feature 6)
+  const handleFetchDefinition = async (word: string) => {
+    if (!definitionPopup) return;
+    setDefinitionPopup(prev => prev ? { ...prev, loading: true, error: undefined } : null);
+    try {
+      const res = await fetch(`https://api.dictionaryapi.dev/api/v2/entries/en/${word.toLowerCase()}`);
+      if (!res.ok) throw new Error("Meaning not found");
+      const data = await res.json();
+      const def = data[0]?.meanings[0]?.definitions[0]?.definition || "No definition available.";
+      const partOfSpeech = data[0]?.meanings[0]?.partOfSpeech || "";
+      const phonetic = data[0]?.phonetic || "";
+      
+      setDefinitionPopup(prev => prev ? {
+        ...prev,
+        loading: false,
+        definition: `${partOfSpeech ? `(${partOfSpeech}) ` : ''}${def}`,
+        phonetic
+      } : null);
+    } catch {
+      setDefinitionPopup(prev => prev ? {
+        ...prev,
+        loading: false,
+        definition: "We couldn't find a dictionary definition for this word. Try double-clicking another word!",
+        error: "Not found"
+      } : null);
+    }
+  };
+
+  // Mouse selection lookup listener (Feature 6)
+  const handleTextSelection = () => {
+    if (typeof window === 'undefined') return;
+    const sel = window.getSelection();
+    if (!sel) return;
+    
+    const selectedText = sel.toString().trim();
+    if (selectedText && selectedText.length > 1 && selectedText.length < 25 && /^[a-zA-Z'\-]+$/.test(selectedText)) {
+      const range = sel.getRangeAt(0);
+      const rect = range.getBoundingClientRect();
+      
+      const editorEl = document.getElementById('canvas-editor-container');
+      const editorRect = editorEl?.getBoundingClientRect();
+      
+      const top = rect.bottom - (editorRect?.top || 0) + (editorEl?.scrollTop || 0) + 8;
+      const left = rect.left - (editorRect?.left || 0) + (editorEl?.scrollLeft || 0);
+
+      setDefinitionPopup({
+        word: selectedText,
+        top,
+        left,
+        loading: false
+      });
+    }
+  };
+
   const renderDynamicContent = (text: string) => {
     if (!text || text.trim() === '') return <span className="text-gray-300 italic font-normal">Empty block</span>;
 
-    const regex = /({{[a-zA-Z0-9_]+}}|\b(?:IMPORTANT|TODO|FIXME|NOTE|DONE):)/g;
-    const tokens = text.split(regex);
-
+    const lines = text.split('\n');
     return (
-      <span className="inline-wrap">
-        {tokens.map((token, i) => {
-          if (token === '{{today}}') {
-            return (
-              <span key={i} className="inline-flex items-center mx-1 px-2 py-0.5 rounded-full text-[10px] font-bold bg-emerald-100 text-emerald-800 border border-emerald-300 font-mono select-none">
-                📅 {new Date().toISOString().split('T')[0]}
-              </span>
-            );
+      <div className="space-y-1 w-full">
+        {lines.map((line, lineIdx) => {
+          let content = line;
+          let isBullet = false;
+          let bulletChar = '';
+
+          // 4. Auto-Formatting List Items (Feature 4)
+          if (content.startsWith('* ')) {
+            isBullet = true;
+            bulletChar = '⭐';
+            content = content.substring(2);
+          } else if (content.startsWith('- ')) {
+            isBullet = true;
+            bulletChar = '•';
+            content = content.substring(2);
           }
-          if (token === '{{total_blocks}}') {
+
+          // 7. Smart Keyword Highlighting (Feature 7) & 10. Dynamic Date Badges (Feature 10)
+          const tokenRegex = /({{[a-zA-Z0-9_]+}}|\b(?:IMPORTANT|URGENT|DONE|TODO|FIXME|NOTE|IDEA|SPARK|PENDING|INFO)(?::|\b)|\b(?:next Monday|next Tuesday|next Wednesday|next Thursday|next Friday|next Saturday|next Sunday|tomorrow|today|yesterday|next week|in \d+ days)\b)/gi;
+          const tokens = content.split(tokenRegex);
+
+          const lineElement = (
+            <span key={lineIdx} className="inline-wrap leading-relaxed">
+              {tokens.map((token, i) => {
+                const lowerToken = token.toLowerCase();
+                
+                // Placeholders
+                if (token === '{{today}}') {
+                  return (
+                    <span key={i} className="inline-flex items-center mx-1 px-2 py-0.5 rounded-full text-[10px] font-bold bg-emerald-100 text-emerald-800 border border-emerald-300 font-mono select-none">
+                      📅 {new Date().toISOString().split('T')[0]}
+                    </span>
+                  );
+                }
+                if (token === '{{total_blocks}}') {
+                  return (
+                    <span key={i} className="inline-flex items-center mx-1 px-2 py-0.5 rounded-full text-[10px] font-bold bg-sky-100 text-sky-800 border border-sky-300 font-mono select-none">
+                      🔢 {elements.length} blocks
+                    </span>
+                  );
+                }
+                if (token === '{{completed_tasks}}') {
+                  const count = elements.filter(el => {
+                    if (el.type !== 'todo') return false;
+                    try {
+                      return JSON.parse(el.properties).checked === true;
+                    } catch {
+                      return false;
+                    }
+                  }).length;
+                  return (
+                    <span key={i} className="inline-flex items-center mx-1 px-2 py-0.5 rounded-full text-[10px] font-bold bg-indigo-100 text-indigo-800 border border-indigo-300 font-mono select-none">
+                      ✅ {count} completed
+                    </span>
+                  );
+                }
+                if (token === '{{sandbox_count}}') {
+                  const count = elements.filter(el => el.type === 'code_sandbox').length;
+                  return (
+                    <span key={i} className="inline-flex items-center mx-1 px-2 py-0.5 rounded-full text-[10px] font-bold bg-purple-100 text-purple-800 border border-purple-300 font-mono select-none">
+                      💻 {count} sandboxes
+                    </span>
+                  );
+                }
+
+                // Dynamic Date Badges (Feature 10)
+                if ([
+                  'next monday', 'next tuesday', 'next wednesday', 'next thursday', 'next friday', 'next saturday', 'next sunday',
+                  'tomorrow', 'today', 'yesterday', 'next week'
+                ].includes(lowerToken) || /in \d+ days/i.test(lowerToken)) {
+                  const dateStr = calculateTargetDate(token);
+                  return (
+                    <span key={i} className="inline-flex items-center mx-1 px-2 py-0.5 rounded border border-amber-300 bg-amber-50 text-amber-800 font-bold font-mono text-[10px] shadow-sm select-none" title={`Computed deadline: ${dateStr}`}>
+                      📅 {token} ({dateStr})
+                    </span>
+                  );
+                }
+
+                // Smart Keyword Highlighting (Feature 7) - Case-sensitive or caps matching
+                const cleanKeyword = token.replace(':', '').toUpperCase();
+                if (['IMPORTANT', 'URGENT', 'DONE', 'TODO', 'FIXME', 'NOTE', 'IDEA', 'SPARK', 'PENDING', 'INFO'].includes(cleanKeyword)) {
+                  let badgeColors = 'bg-gray-100 text-gray-800 border-gray-300';
+                  let emoji = '⚪';
+                  if (cleanKeyword === 'IMPORTANT' || cleanKeyword === 'URGENT') {
+                    badgeColors = 'bg-rose-500 text-white border-rose-600';
+                    emoji = '🔴';
+                  } else if (cleanKeyword === 'DONE') {
+                    badgeColors = 'bg-emerald-500 text-white border-emerald-600';
+                    emoji = '🟢';
+                  } else if (cleanKeyword === 'TODO' || cleanKeyword === 'PENDING') {
+                    badgeColors = 'bg-amber-400 text-[#1A1A1A] border-[#1A1A1A]';
+                    emoji = '🟡';
+                  } else if (cleanKeyword === 'FIXME') {
+                    badgeColors = 'bg-orange-500 text-white border-orange-600';
+                    emoji = '🟠';
+                  } else if (cleanKeyword === 'NOTE' || cleanKeyword === 'INFO') {
+                    badgeColors = 'bg-blue-500 text-white border-blue-600';
+                    emoji = '🔵';
+                  } else if (cleanKeyword === 'IDEA' || cleanKeyword === 'SPARK') {
+                    badgeColors = 'bg-purple-500 text-white border-purple-600';
+                    emoji = '🟣';
+                  }
+
+                  return (
+                    <span key={i} className={`inline-flex items-center mx-1 px-1.5 py-0.5 rounded font-black text-[9px] tracking-wider uppercase border shadow-sm font-mono select-none ${badgeColors}`}>
+                      {emoji} {cleanKeyword}
+                    </span>
+                  );
+                }
+
+                return token;
+              })}
+            </span>
+          );
+
+          if (isBullet) {
             return (
-              <span key={i} className="inline-flex items-center mx-1 px-2 py-0.5 rounded-full text-[10px] font-bold bg-sky-100 text-sky-800 border border-sky-300 font-mono select-none">
-                🔢 {elements.length} blocks
-              </span>
-            );
-          }
-          if (token === '{{completed_tasks}}') {
-            const count = elements.filter(el => {
-              if (el.type !== 'todo') return false;
-              try {
-                return JSON.parse(el.properties).checked === true;
-              } catch {
-                return false;
-              }
-            }).length;
-            return (
-              <span key={i} className="inline-flex items-center mx-1 px-2 py-0.5 rounded-full text-[10px] font-bold bg-indigo-100 text-indigo-800 border border-indigo-300 font-mono select-none">
-                ✅ {count} completed
-              </span>
-            );
-          }
-          if (token === '{{sandbox_count}}') {
-            const count = elements.filter(el => el.type === 'code_sandbox').length;
-            return (
-              <span key={i} className="inline-flex items-center mx-1 px-2 py-0.5 rounded-full text-[10px] font-bold bg-purple-100 text-purple-800 border border-purple-300 font-mono select-none">
-                💻 {count} sandboxes
-              </span>
-            );
-          }
-          
-          if (token === 'IMPORTANT:') {
-            return (
-              <span key={i} className="inline-flex items-center mr-1.5 px-1.5 py-0.5 rounded bg-rose-500 text-white font-black text-[9px] tracking-wider uppercase border border-rose-600 shadow-sm font-mono select-none">
-                🔴 IMPORTANT
-              </span>
-            );
-          }
-          if (token === 'TODO:') {
-            return (
-              <span key={i} className="inline-flex items-center mr-1.5 px-1.5 py-0.5 rounded bg-amber-400 text-[#1A1A1A] font-black text-[9px] tracking-wider uppercase border border-amber-500 shadow-sm font-mono select-none">
-                🟡 TODO
-              </span>
-            );
-          }
-          if (token === 'FIXME:') {
-            return (
-              <span key={i} className="inline-flex items-center mr-1.5 px-1.5 py-0.5 rounded bg-orange-500 text-white font-black text-[9px] tracking-wider uppercase border border-orange-600 shadow-sm font-mono select-none">
-                🟠 FIXME
-              </span>
-            );
-          }
-          if (token === 'NOTE:') {
-            return (
-              <span key={i} className="inline-flex items-center mr-1.5 px-1.5 py-0.5 rounded bg-blue-500 text-white font-black text-[9px] tracking-wider uppercase border border-blue-600 shadow-sm font-mono select-none">
-                🔵 NOTE
-              </span>
-            );
-          }
-          if (token === 'DONE:') {
-            return (
-              <span key={i} className="inline-flex items-center mr-1.5 px-1.5 py-0.5 rounded bg-emerald-500 text-white font-black text-[9px] tracking-wider uppercase border border-emerald-600 shadow-sm font-mono select-none">
-                🟢 DONE
-              </span>
+              <div key={lineIdx} className="flex items-start space-x-2 pl-3 py-0.5">
+                <span className="text-[#FFB703] select-none font-bold mt-0.5">{bulletChar}</span>
+                <span className="flex-1">{lineElement}</span>
+              </div>
             );
           }
 
-          return token;
+          return <div key={lineIdx} className="w-full">{lineElement}</div>;
         })}
-      </span>
+      </div>
     );
   };
 
@@ -259,6 +485,27 @@ export default function CanvasEditor({ canvasId, isLocked = false }: CanvasEdito
     const textarea = e.currentTarget;
     const value = textarea.value;
     const selectionStart = textarea.selectionStart;
+
+    // Feature 2: Magic Word Expander Pop (expand shortcut on Tab)
+    if (e.key === 'Tab') {
+      const lastWordMatch = value.substring(0, selectionStart).match(/(\b\w+)$/);
+      if (lastWordMatch) {
+        const lastWord = lastWordMatch[1].toLowerCase();
+        const shortcutMap = getShortcutMap();
+
+        if (shortcutMap[lastWord]) {
+          e.preventDefault();
+          const expanded = shortcutMap[lastWord];
+          const newValue = value.substring(0, lastWordMatch.index) + expanded + value.substring(selectionStart);
+          updateCanvasElement(el.id, { content: newValue });
+          
+          setTimeout(() => {
+            textarea.selectionStart = textarea.selectionEnd = (lastWordMatch.index || 0) + expanded.length;
+          }, 50);
+          return;
+        }
+      }
+    }
 
     if (e.key === '/') {
       // Find coordinates of cursor
@@ -454,7 +701,7 @@ export default function CanvasEditor({ canvasId, isLocked = false }: CanvasEdito
   };
 
   return (
-    <div className="relative max-w-4xl mx-auto py-8 px-6 space-y-6 min-h-[500px]">
+    <div id="canvas-editor-container" onMouseUp={handleTextSelection} className="relative max-w-4xl mx-auto py-8 px-6 space-y-6 min-h-[500px]">
       {/* Floating Overlays */}
       {slashCommandState?.visible && (
         <SlashCommands
@@ -474,6 +721,53 @@ export default function CanvasEditor({ canvasId, isLocked = false }: CanvasEdito
           }}
           onClose={() => setSelectionMenuState(null)}
         />
+      )}
+
+      {/* Handy Word Meaning Pop-up Overlay (Feature 6) */}
+      {definitionPopup && (
+        <div
+          className="absolute z-50 p-4 w-72 bg-white border-4 border-black shadow-[4px_4px_0px_0px_#1A1A1A] animate-fade-in select-none"
+          style={{ top: definitionPopup.top, left: Math.min(definitionPopup.left, 500) }}
+        >
+          <div className="flex items-center justify-between border-b-2 border-black pb-1.5 mb-2 font-mono text-[10px] font-bold text-gray-500 uppercase">
+            <span>📚 Word Lookup</span>
+            <button
+              onClick={() => setDefinitionPopup(null)}
+              className="text-[#1A1A1A] hover:text-rose-500 font-extrabold cursor-pointer"
+            >
+              ✕
+            </button>
+          </div>
+
+          <h4 className="text-sm font-extrabold text-[#1A1A1A] flex items-center justify-between">
+            <span className="capitalize">&ldquo;{definitionPopup.word}&rdquo;</span>
+            {definitionPopup.phonetic && (
+              <span className="text-[10px] font-mono text-gray-400 font-normal">
+                {definitionPopup.phonetic}
+              </span>
+            )}
+          </h4>
+
+          {definitionPopup.loading ? (
+            <div className="py-3 flex flex-col items-center justify-center space-y-2 text-xs text-gray-500 font-bold font-mono">
+              <div className="w-4 h-4 border-2 border-amber-500 border-t-transparent rounded-full animate-spin" />
+              <span>Fetching definition...</span>
+            </div>
+          ) : definitionPopup.definition ? (
+            <p className="text-xs text-gray-700 leading-relaxed font-sans mt-1">
+              {definitionPopup.definition}
+            </p>
+          ) : (
+            <div className="mt-2.5">
+              <button
+                onClick={() => handleFetchDefinition(definitionPopup.word)}
+                className="w-full py-1 px-2.5 bg-[#FFB703] text-[#1A1A1A] font-extrabold text-[10px] font-mono uppercase tracking-wider border-2 border-black neo-shadow-xs hover:bg-[#ffb703d2] active:translate-y-0.5 cursor-pointer"
+              >
+                🔎 Look Up Word
+              </button>
+            </div>
+          )}
+        </div>
       )}
 
       {/* Poly-morphic Elements Flow */}
@@ -547,27 +841,93 @@ export default function CanvasEditor({ canvasId, isLocked = false }: CanvasEdito
 
               {/* PARAGRAPH TEXT ELEMENT */}
               {el.type === 'text' && (
-                focusedId === el.id && !isLocked ? (
-                  <textarea
-                    id={`textarea-${el.id}`}
-                    value={el.content}
-                    autoFocus
-                    placeholder="Start writing plain text, or type '/' for interactive data grids & checklists..."
-                    onChange={(e) => updateCanvasElement(el.id, { content: e.target.value })}
-                    onKeyDown={(e) => handleElementKeyDown(e, el)}
-                    onSelect={(e) => handleSelection(e, el)}
-                    onBlur={() => setFocusedId(null)}
-                    rows={1}
-                    className="w-full bg-transparent resize-none border-none outline-none font-medium text-sm text-[#1A1A1A] placeholder-gray-300 font-sans leading-relaxed py-1 focus:bg-white/40 rounded px-1 transition-colors"
-                  />
-                ) : (
-                  <div
-                    onClick={() => !isLocked && setFocusedId(el.id)}
-                    className="w-full font-medium text-sm text-[#1A1A1A] leading-relaxed py-1 cursor-text focus:bg-white/10 rounded px-1 min-h-[24px]"
-                  >
-                    {renderDynamicContent(el.content)}
-                  </div>
-                )
+                <div className="w-full">
+                  {focusedId === el.id && !isLocked ? (
+                    <div className="space-y-1.5 w-full">
+                      <textarea
+                        id={`textarea-${el.id}`}
+                        value={el.content}
+                        autoFocus
+                        placeholder="Start writing text here... Try typing 'hw' and pressing Tab! Or '*' for custom bullets."
+                        onChange={(e) => updateCanvasElement(el.id, { content: e.target.value })}
+                        onKeyDown={(e) => handleElementKeyDown(e, el)}
+                        onSelect={(e) => handleSelection(e, el)}
+                        onBlur={() => {
+                          // Slight delay to allow clicking mood outline buttons without immediate blur
+                          setTimeout(() => setFocusedId(null), 180);
+                        }}
+                        rows={2}
+                        className={`w-full bg-white/40 resize-none border-none outline-none font-sans text-[#1A1A1A] transition-all rounded px-1.5 ${
+                          isCozyStoryMode 
+                            ? "text-base sm:text-lg md:text-xl font-medium leading-loose py-2.5 px-3" 
+                            : "text-sm font-medium leading-relaxed py-1 px-1.5"
+                        } ${
+                          propertiesObj.emotion === 'cheerful'
+                            ? "bg-amber-50/85 border-2 border-dashed border-[#FFB703] p-3 shadow-sm"
+                            : propertiesObj.emotion === 'calm'
+                            ? "bg-emerald-50/85 border-2 border-dashed border-emerald-400 p-3 shadow-sm"
+                            : propertiesObj.emotion === 'focused'
+                            ? "bg-sky-50/85 border-2 border-dashed border-sky-400 p-3 shadow-sm"
+                            : propertiesObj.emotion === 'creative'
+                            ? "bg-purple-50/85 border-2 border-dashed border-purple-400 p-3 shadow-sm"
+                            : propertiesObj.emotion === 'energetic'
+                            ? "bg-rose-50/85 border-2 border-dashed border-rose-400 p-3 shadow-sm"
+                            : "border-2 border-transparent hover:border-gray-100"
+                        }`}
+                      />
+                      {/* Mood outline palette (Feature 1) */}
+                      <div className="flex flex-wrap items-center gap-1 mt-1 pb-1 text-[10px] font-mono font-bold text-gray-500 select-none">
+                        <span className="text-[#1A1A1A]">🎨 Border Mood:</span>
+                        {[
+                          { id: 'standard', emoji: '🧹', label: 'Plain' },
+                          { id: 'cheerful', emoji: '☀️', label: 'Cheerful' },
+                          { id: 'calm', emoji: '😌', label: 'Calm' },
+                          { id: 'focused', emoji: '🧠', label: 'Focused' },
+                          { id: 'creative', emoji: '🦄', label: 'Creative' },
+                          { id: 'energetic', emoji: '⚡', label: 'Energetic' }
+                        ].map(mood => (
+                          <button
+                            key={mood.id}
+                            onMouseDown={(e) => {
+                              e.preventDefault(); // crucial: keeps focus on text area
+                              updateCanvasElement(el.id, {
+                                properties: JSON.stringify({ ...propertiesObj, emotion: mood.id })
+                              });
+                            }}
+                            className={`px-1.5 py-0.5 border border-[#1A1A1A] text-[#1A1A1A] transition-all cursor-pointer flex items-center space-x-1 text-[9px] ${
+                              (propertiesObj.emotion || 'standard') === mood.id ? 'bg-[#FFB703] border-2 border-black font-extrabold shadow-sm' : 'bg-white hover:bg-slate-50'
+                            }`}
+                          >
+                            <span>{mood.emoji}</span> <span>{mood.label}</span>
+                          </button>
+                        ))}
+                      </div>
+                    </div>
+                  ) : (
+                    <div
+                      onClick={() => !isLocked && setFocusedId(el.id)}
+                      className={`w-full cursor-text rounded transition-all min-h-[32px] ${
+                        isCozyStoryMode 
+                          ? "text-base sm:text-lg md:text-xl font-medium leading-loose py-2 px-3" 
+                          : "text-sm font-medium leading-relaxed py-1 px-1.5"
+                      } ${
+                        propertiesObj.emotion === 'cheerful'
+                          ? "bg-amber-50/85 border-2 border-dashed border-[#FFB703] p-3 shadow-sm my-1.5"
+                          : propertiesObj.emotion === 'calm'
+                          ? "bg-emerald-50/85 border-2 border-dashed border-emerald-400 p-3 shadow-sm my-1.5"
+                          : propertiesObj.emotion === 'focused'
+                          ? "bg-sky-50/85 border-2 border-dashed border-sky-400 p-3 shadow-sm my-1.5"
+                          : propertiesObj.emotion === 'creative'
+                          ? "bg-purple-50/85 border-2 border-dashed border-purple-400 p-3 shadow-sm my-1.5"
+                          : propertiesObj.emotion === 'energetic'
+                          ? "bg-rose-50/85 border-2 border-dashed border-rose-400 p-3 shadow-sm my-1.5"
+                          : "border-2 border-transparent hover:border-gray-100"
+                      }`}
+                    >
+                      {renderDynamicContent(el.content)}
+                    </div>
+                  )}
+                </div>
               )}
 
               {/* CHECKLIST TODO ELEMENT */}
@@ -706,16 +1066,67 @@ export default function CanvasEditor({ canvasId, isLocked = false }: CanvasEdito
 
               {/* QUOTE BLOCKQUOTE ELEMENT */}
               {el.type === 'quote' && (
-                <div className="border-l-4 border-[#FFB703] bg-gray-50/60 p-4 rounded-none my-1 pl-4 w-full border-2 border-y-[#1A1A1A] border-r-[#1A1A1A]">
-                  <textarea
-                    id={`textarea-${el.id}`}
-                    value={el.content}
-                    placeholder="Blockquote statement (Press '/' for block insert...)"
-                    onChange={(e) => updateCanvasElement(el.id, { content: e.target.value })}
-                    onKeyDown={(e) => handleElementKeyDown(e, el)}
-                    rows={2}
-                    className="w-full bg-transparent resize-none border-none outline-none font-serif italic text-sm text-[#1A1A1A] placeholder-gray-300 leading-relaxed"
-                  />
+                <div className="w-full space-y-2">
+                  <div className={
+                    propertiesObj.quoteStyle === 'large_peach'
+                      ? "border-4 border-[#1A1A1A] bg-amber-50/90 p-6 md:p-8 rounded-none shadow-[4px_4px_0px_0px_#FFB703] text-center text-[#1A1A1A] transition-all w-full my-2"
+                      : propertiesObj.quoteStyle === 'vibrant_mint'
+                      ? "border-4 border-emerald-500 bg-emerald-50/90 p-6 md:p-8 rounded-none shadow-[4px_4px_0px_0px_#10B981] text-center text-[#1A1A1A] transition-all w-full my-2"
+                      : propertiesObj.quoteStyle === 'charcoal_box'
+                      ? "border-4 border-black bg-[#1F2833] p-6 md:p-8 rounded-none shadow-[4px_4px_0px_0px_#000000] text-center text-white transition-all w-full my-2 animate-fade-in"
+                      : "border-l-4 border-[#FFB703] bg-gray-50/60 p-4 rounded-none my-1 pl-4 w-full border-2 border-y-[#1A1A1A] border-r-[#1A1A1A]"
+                  }>
+                    {/* Decorative quote marks */}
+                    {propertiesObj.quoteStyle && propertiesObj.quoteStyle !== 'standard' && (
+                      <span className="block text-3xl font-serif leading-none mb-1 text-amber-500 select-none">
+                        “
+                      </span>
+                    )}
+                    <textarea
+                      id={`textarea-${el.id}`}
+                      value={el.content}
+                      disabled={isLocked}
+                      placeholder="Inspirational Quote, words of encouragement, or a special family recipe step..."
+                      onChange={(e) => updateCanvasElement(el.id, { content: e.target.value })}
+                      onKeyDown={(e) => handleElementKeyDown(e, el)}
+                      rows={propertiesObj.quoteStyle && propertiesObj.quoteStyle !== 'standard' ? 3 : 2}
+                      className={`w-full bg-transparent resize-none border-none outline-none font-serif italic leading-relaxed ${
+                        propertiesObj.quoteStyle === 'charcoal_box' ? 'text-white placeholder-slate-500' : 'text-[#1A1A1A] placeholder-slate-400'
+                      } ${
+                        propertiesObj.quoteStyle && propertiesObj.quoteStyle !== 'standard' ? 'text-center text-base sm:text-lg font-bold' : 'text-sm font-medium'
+                      }`}
+                    />
+                    {propertiesObj.quoteStyle && propertiesObj.quoteStyle !== 'standard' && (
+                      <span className="block text-3xl font-serif leading-none mt-1 text-amber-500 select-none">
+                        ”
+                      </span>
+                    )}
+                  </div>
+
+                  {/* One-Tap Large Quote Cards Presets Selector (Feature 3) */}
+                  {!isLocked && (
+                    <div className="flex flex-wrap items-center gap-1 text-[10px] font-mono font-bold text-gray-500 select-none pt-1">
+                      <span className="text-[#1A1A1A]">💬 Quote Layout Preset:</span>
+                      {[
+                        { id: 'standard', emoji: '📄', label: 'Default' },
+                        { id: 'large_peach', emoji: '🍑', label: 'Large Peach' },
+                        { id: 'vibrant_mint', emoji: '🌿', label: 'Vibrant Mint' },
+                        { id: 'charcoal_box', emoji: '🖤', label: 'Charcoal Box' }
+                      ].map(preset => (
+                        <button
+                          key={preset.id}
+                          onClick={() => updateCanvasElement(el.id, {
+                            properties: JSON.stringify({ ...propertiesObj, quoteStyle: preset.id })
+                          })}
+                          className={`px-1.5 py-0.5 border border-[#1A1A1A] text-[#1A1A1A] transition-all cursor-pointer flex items-center space-x-1 text-[9px] ${
+                            (propertiesObj.quoteStyle || 'standard') === preset.id ? 'bg-[#FFB703] border-2 border-black font-extrabold shadow-sm' : 'bg-white hover:bg-slate-50'
+                          }`}
+                        >
+                          <span>{preset.emoji}</span> <span>{preset.label}</span>
+                        </button>
+                      ))}
+                    </div>
+                  )}
                 </div>
               )}
 
@@ -790,53 +1201,95 @@ export default function CanvasEditor({ canvasId, isLocked = false }: CanvasEdito
 
               {/* LIVE EXECUTABLE JAVASCRIPT SANDBOX */}
               {el.type === 'code_sandbox' && (
-                <div className="border-2 border-[#1A1A1A] bg-white rounded-none neo-shadow-sm overflow-hidden mt-1">
+                <div className="border-2 border-[#1A1A1A] bg-white rounded-none neo-shadow-sm overflow-hidden mt-1 w-full animate-fade-in">
                   {/* Top Bar */}
-                  <div className="bg-[#1F2833] text-white p-2 flex items-center justify-between border-b-2 border-[#1A1A1A]">
+                  <div className="bg-[#1F2833] text-white p-2.5 flex items-center justify-between border-b-2 border-[#1A1A1A] select-none">
                     <div className="flex items-center space-x-2">
                       <Terminal className="w-4 h-4 text-[#66FCF1]" />
                       <span className="text-[10px] font-mono uppercase tracking-wider font-extrabold text-gray-300">
-                        Executable Node Sandbox
+                        {propertiesObj.codeTheme === 'kids' ? '🦄 Learn-to-Code Playground' : 'Executable Javascript Sandbox'}
                       </span>
                     </div>
 
-                    <button
-                      onClick={() => runSandbox(el.id, el.content)}
-                      className="flex items-center space-x-1.5 px-3 py-1 bg-[#2D6A4F] hover:bg-[#1b4332] text-xs font-bold font-mono text-white border border-[#1a1a1a] neo-shadow-sm cursor-pointer"
-                    >
-                      <Play className="w-3 h-3 fill-current" />
-                      <span>RUN LOGS</span>
-                    </button>
+                    <div className="flex items-center space-x-2">
+                      <select
+                        value={propertiesObj.codeTheme || 'dark'}
+                        onChange={(e) => updateCanvasElement(el.id, {
+                          properties: JSON.stringify({ ...propertiesObj, codeTheme: e.target.value })
+                        })}
+                        className="bg-slate-800 text-white text-[9px] font-mono border border-slate-700 px-1.5 py-0.5 focus:outline-none"
+                      >
+                        <option value="dark">Retro Hacker</option>
+                        <option value="kids">Learn-to-Code</option>
+                      </select>
+
+                      <button
+                        onClick={() => runSandbox(el.id, el.content)}
+                        className="flex items-center space-x-1 px-2 py-1 bg-[#2D6A4F] hover:bg-[#1b4332] text-[10px] font-bold font-mono text-white border border-[#1a1a1a] neo-shadow-sm cursor-pointer"
+                      >
+                        <Play className="w-2.5 h-2.5 fill-current" />
+                        <span>RUN</span>
+                      </button>
+                    </div>
                   </div>
 
-                  {/* Textarea Code Editor */}
-                  <div className="p-3 bg-[#0B0C10]">
-                    <textarea
-                      id={`textarea-${el.id}`}
-                      value={el.content}
-                      onChange={(e) => updateCanvasElement(el.id, { content: e.target.value })}
-                      onKeyDown={(e) => {
-                        // Allow tab insertion in editor
-                        if (e.key === 'Tab') {
-                          e.preventDefault();
-                          const start = e.currentTarget.selectionStart;
-                          const end = e.currentTarget.selectionEnd;
-                          const val = e.currentTarget.value;
-                          const newVal = val.substring(0, start) + '  ' + val.substring(end);
-                          updateCanvasElement(el.id, { content: newVal });
-                        }
-                      }}
-                      placeholder="// Insert JS logic. Example:\nconst sum = 12 + 18;\nconsole.log('Result:', sum);"
-                      rows={6}
-                      className="w-full bg-transparent resize-none border-none outline-none font-mono text-xs text-[#66FCF1] placeholder-teal-800 leading-relaxed"
-                    />
+                  {/* Textarea Code Editor with Line Numbers Gutter (Feature 9) */}
+                  <div className={`flex font-mono text-xs overflow-hidden ${
+                    propertiesObj.codeTheme === 'kids' ? 'bg-purple-950/95 text-pink-300' : 'bg-[#0B0C10] text-[#66FCF1]'
+                  }`}>
+                    {/* Gutter with Line Numbers */}
+                    <div className={`py-3 pr-2.5 pl-3 border-r border-[#1A1A1A] select-none text-right flex flex-col font-mono text-[11px] font-bold min-w-[36px] ${
+                      propertiesObj.codeTheme === 'kids' ? 'bg-purple-900/40 text-yellow-400' : 'bg-[#1F2833]/30 text-[#66FCF1]/50'
+                    }`}>
+                      {el.content.split('\n').map((_, index) => (
+                        <span key={index} className="leading-relaxed h-5 block">
+                          {index + 1}
+                        </span>
+                      ))}
+                    </div>
+
+                    {/* Editor text area */}
+                    <div className="flex-1 p-0 relative">
+                      <textarea
+                        id={`textarea-${el.id}`}
+                        value={el.content}
+                        disabled={isLocked}
+                        onChange={(e) => updateCanvasElement(el.id, { content: e.target.value })}
+                        onKeyDown={(e) => {
+                          // Allow tab insertion in editor
+                          if (e.key === 'Tab') {
+                            e.preventDefault();
+                            const start = e.currentTarget.selectionStart;
+                            const end = e.currentTarget.selectionEnd;
+                            const val = e.currentTarget.value;
+                            const newVal = val.substring(0, start) + '  ' + val.substring(end);
+                            updateCanvasElement(el.id, { content: newVal });
+                          }
+                        }}
+                        placeholder="// Insert JS logic. Example:\nconst sum = 12 + 18;\nconsole.log('Result:', sum);"
+                        rows={Math.max(4, el.content.split('\n').length)}
+                        className={`w-full bg-transparent resize-none border-none outline-none p-3 font-mono text-[11px] leading-relaxed block focus:ring-0 ${
+                          propertiesObj.codeTheme === 'kids' ? 'text-pink-200 placeholder-purple-700' : 'text-[#66FCF1] placeholder-teal-800'
+                        }`}
+                      />
+                    </div>
                   </div>
 
                   {/* Terminal output */}
                   {sandboxOutputs[el.id] && (
-                    <div className="bg-[#1F2833] border-t border-gray-800 p-3 font-mono text-xs text-green-400 space-y-1">
-                      <div className="text-[9px] uppercase font-bold text-gray-500 border-b border-gray-800 pb-1">
-                        Console output:
+                    <div className="bg-[#1F2833] border-t border-[#1A1A1A] p-3 font-mono text-[10px] text-green-400 space-y-1">
+                      <div className="text-[9px] uppercase font-bold text-gray-500 border-b border-gray-800 pb-1 flex items-center justify-between">
+                        <span>Console output:</span>
+                        <button
+                          onClick={() => setSandboxOutputs(prev => {
+                            const copy = { ...prev };
+                            delete copy[el.id];
+                            return copy;
+                          })}
+                          className="text-gray-400 hover:text-white uppercase"
+                        >
+                          Clear
+                        </button>
                       </div>
                       {sandboxOutputs[el.id].map((out, oIdx) => (
                         <div key={oIdx} className="whitespace-pre-wrap leading-relaxed">
@@ -848,13 +1301,100 @@ export default function CanvasEditor({ canvasId, isLocked = false }: CanvasEdito
                 </div>
               )}
 
+              {/* SPEECH TO TEXT NOTEBOOK BOX (Feature 5) */}
+              {el.type === 'speech_notebook' && (
+                <div className="border-2 border-[#1A1A1A] p-4 bg-white rounded-none neo-shadow-sm my-2 w-full animate-fade-in">
+                  <div className="flex items-center justify-between border-b border-[#1A1A1A] pb-2 mb-3 select-none">
+                    <div className="flex items-center space-x-2">
+                      <div className={`w-3 h-3 rounded-full ${speechActiveId === el.id ? 'bg-rose-500 animate-ping' : 'bg-[#FFB703]'}`} />
+                      <span className="text-[11px] font-mono font-bold uppercase tracking-wider text-gray-500">
+                        Speech-to-Text Notebook Box
+                      </span>
+                    </div>
+                    {speechActiveId === el.id && (
+                      <span className="text-[9px] font-mono text-rose-500 animate-pulse font-extrabold uppercase bg-rose-50 border border-rose-300 px-1.5 py-0.5">
+                        🔴 Recording Audio...
+                      </span>
+                    )}
+                  </div>
+
+                  <div className="flex flex-col md:flex-row gap-4 items-stretch">
+                    {/* Recording Control Panel */}
+                    <div className="flex flex-col items-center justify-center p-4 bg-amber-50/50 border-2 border-dashed border-[#FFB703] min-w-[150px] text-center space-y-2 select-none">
+                      <button
+                        onClick={() => handleToggleSpeech(el.id)}
+                        className={`w-14 h-14 rounded-full flex items-center justify-center border-2 border-black neo-shadow-sm transition-all transform hover:scale-105 active:scale-95 cursor-pointer ${
+                          speechActiveId === el.id 
+                            ? 'bg-rose-500 text-white animate-pulse' 
+                            : 'bg-[#FFB703] text-[#1A1A1A]'
+                        }`}
+                        title={speechActiveId === el.id ? "Stop Transcribing" : "Start Transcribing"}
+                      >
+                        <Mic className={`w-6 h-6 ${speechActiveId === el.id ? 'animate-bounce' : ''}`} />
+                      </button>
+
+                      <span className="text-[10px] font-bold text-[#1A1A1A] uppercase tracking-wider">
+                        {speechActiveId === el.id ? 'Listening...' : 'Tap to Speak'}
+                      </span>
+
+                      {/* Visualizer bars */}
+                      {speechActiveId === el.id ? (
+                        <div className="flex items-center justify-center space-x-0.5 h-4 mt-1">
+                          {[1, 2, 3, 4, 5].map((bar) => {
+                            const delay = bar * 0.15;
+                            return (
+                              <div
+                                key={bar}
+                                className="w-1 bg-rose-500 rounded-full animate-pulse"
+                                style={{
+                                  height: `${Math.floor(Math.random() * 12) + 4}px`,
+                                  animationDelay: `${delay}s`,
+                                  animationDuration: '0.6s'
+                                }}
+                              />
+                            );
+                          })}
+                        </div>
+                      ) : (
+                        <p className="text-[9px] text-gray-400 font-medium">Uses Google Web Speech API</p>
+                      )}
+                    </div>
+
+                    {/* Text Notebook Display */}
+                    <div className="flex-1 flex flex-col">
+                      <textarea
+                        value={el.content}
+                        disabled={isLocked}
+                        onChange={(e) => updateCanvasElement(el.id, { content: e.target.value })}
+                        placeholder="Speak to see text transcribed here instantly, or type inside manually. Journal, draft notes, or record reminders!"
+                        rows={5}
+                        className="w-full flex-1 p-3 border-2 border-[#1A1A1A] text-sm text-[#1A1A1A] placeholder-gray-400 bg-slate-50 focus:bg-white focus:outline-none focus:ring-0 leading-relaxed font-sans"
+                      />
+                      <div className="flex items-center justify-between mt-2">
+                        <span className="text-[9px] font-mono text-gray-400 font-bold">
+                          CHARACTER COUNT: {el.content.length}
+                        </span>
+                        {el.content && (
+                          <button
+                            onClick={() => updateCanvasElement(el.id, { content: '' })}
+                            className="text-[9px] font-mono text-rose-500 hover:text-rose-700 font-bold uppercase cursor-pointer"
+                          >
+                            Clear Text
+                          </button>
+                        )}
+                      </div>
+                    </div>
+                  </div>
+                </div>
+              )}
+
               {/* RELATIONAL GRID INLINE COLLECTION */}
               {el.type === 'collection_ref' && (
                 <div className="border-2 border-[#1A1A1A] p-4 bg-white rounded-none neo-shadow-sm my-2">
                   <div className="flex items-center space-x-2 border-b border-gray-100 pb-2 mb-3">
                     <Database className="w-4 h-4 text-[#2D6A4F]" />
                     <span className="text-[11px] font-mono font-bold uppercase tracking-wider text-gray-500">
-                      Inline Grid Database Reference
+                      📊 Interactive Smart Table
                     </span>
                   </div>
 
@@ -862,15 +1402,15 @@ export default function CanvasEditor({ canvasId, isLocked = false }: CanvasEdito
                     <DataGrid tableId={propertiesObj.tableId} />
                   ) : (
                     <div className="p-8 text-center bg-[#F4F7F6] border-2 border-[#1A1A1A]">
-                      <h4 className="text-sm font-extrabold text-[#1A1A1A] mb-1">Grid Table Reference Unprovisioned</h4>
-                      <p className="text-xs text-gray-500 max-w-md mx-auto mb-4 leading-relaxed">
-                        To activate this inline database grid, provision a clean relational dataset with task, status, and estimation columns.
+                      <h4 className="text-sm font-extrabold text-[#1A1A1A] mb-1">Your Smart Table is Ready! 🎨</h4>
+                      <p className="text-xs text-gray-500 max-w-md mx-auto mb-4 leading-relaxed font-sans">
+                        Create a beautiful table to track your school homework assignments, favorite gaming scores, daily home chores, or book reviews. Tap below to launch your grid!
                       </p>
                       <button
                         onClick={() => handleProvisionDataGrid(el.id, propertiesObj.tableId)}
                         className="px-4 py-2 border-2 border-[#1A1A1A] bg-[#FFB703] text-xs font-bold uppercase neo-shadow-sm hover:translate-x-[1px] hover:translate-y-[1px] hover:shadow-none transition-all cursor-pointer"
                       >
-                        Provision Sprint Table View
+                        ✨ Create Smart Table View
                       </button>
                     </div>
                   )}
