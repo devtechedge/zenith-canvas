@@ -116,6 +116,7 @@ export default function CanvasEditor({ canvasId, isLocked = false }: CanvasEdito
   } = useCanvasSync();
 
   const [focusedId, setFocusedId] = useState<string | null>(null);
+  const initializedCanvasIds = useRef<Record<string, boolean>>({});
 
   const renderDynamicContent = (text: string) => {
     if (!text || text.trim() === '') return <span className="text-gray-300 italic font-normal">Empty block</span>;
@@ -235,15 +236,20 @@ export default function CanvasEditor({ canvasId, isLocked = false }: CanvasEdito
 
   // Ensure canvas has at least one paragraph element on first load
   useEffect(() => {
+    if (initializedCanvasIds.current[canvasId]) return;
+    
     const ensureFirstElement = async () => {
       const count = await db.elements.where('canvasId').equals(canvasId).count();
       if (count === 0) {
-        await createCanvasElement(canvasId, 'heading_1', 'Welcome to your new Canvas node 🎨', 1.0);
-        await createCanvasElement(canvasId, 'text', 'Start typing here. Use slash commands by typing "/" to insert checklists, database views, or live calculation sandboxes.', 2.0);
+        initializedCanvasIds.current[canvasId] = true;
+        await createCanvasElement(canvasId, 'heading_1', 'Welcome to your new page! 🎨', 1.0);
+        await createCanvasElement(canvasId, 'text', 'Start typing here. Type "/" to insert checklist boxes, smart tables, and other fun blocks.', 2.0);
+      } else {
+        initializedCanvasIds.current[canvasId] = true;
       }
     };
     ensureFirstElement();
-  }, [canvasId, elements.length]);
+  }, [canvasId, elements.length, createCanvasElement]);
 
   // Handle slash command panel visibility
   const handleElementKeyDown = (e: React.KeyboardEvent<HTMLTextAreaElement>, el: CanvasElement) => {

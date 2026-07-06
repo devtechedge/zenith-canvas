@@ -36,6 +36,63 @@ function generateElementId(prefix = 'el'): string {
   return `${prefix}-${Math.random().toString(36).substring(2, 9)}`;
 }
 
+function getFriendlyActionDescription(tx: any) {
+  let actionName = '';
+  let icon = '✏️';
+  let detail = '';
+
+  try {
+    const parsed = JSON.parse(tx.data);
+    const blockTypeMap: Record<string, string> = {
+      heading_1: 'large heading',
+      heading_2: 'sub-heading',
+      text: 'text paragraph',
+      todo: 'checklist box',
+      callout: 'callout box',
+      code_sandbox: 'code playground',
+      collection_ref: 'smart table',
+      toggle_list: 'toggle list',
+      quote: 'quote box',
+      page_link: 'page link'
+    };
+
+    if (tx.table === 'canvases') {
+      actionName = tx.action === 'insert' ? 'Created this page' : tx.action === 'delete' ? 'Deleted page' : 'Renamed page';
+      icon = '📄';
+      if (parsed.title) detail = `to "${parsed.title}"`;
+    } else if (tx.table === 'elements') {
+      const typeLabel = blockTypeMap[parsed.type] || parsed.type || 'block';
+      if (tx.action === 'insert') {
+        actionName = `Added a ${typeLabel}`;
+        icon = '➕';
+      } else if (tx.action === 'delete') {
+        actionName = `Removed a ${typeLabel}`;
+        icon = '❌';
+      } else {
+        actionName = `Edited a ${typeLabel}`;
+        icon = '📝';
+      }
+      
+      if (parsed.content) {
+        detail = `("${parsed.content.substring(0, 30)}${parsed.content.length > 30 ? '...' : ''}")`;
+      }
+    } else if (tx.table === 'collections') {
+      actionName = tx.action === 'insert' ? 'Created a new table' : 'Updated table name';
+      icon = '📊';
+      if (parsed.name) detail = `named "${parsed.name}"`;
+    } else if (tx.table === 'collectionRows') {
+      actionName = tx.action === 'insert' ? 'Added a new row to table' : tx.action === 'delete' ? 'Deleted a row from table' : 'Edited a row in table';
+      icon = '🔢';
+    } else {
+      actionName = `${tx.action === 'insert' ? 'Added' : tx.action === 'delete' ? 'Deleted' : 'Updated'} ${tx.table}`;
+    }
+  } catch {
+    actionName = `${tx.action === 'insert' ? 'Added' : tx.action === 'delete' ? 'Deleted' : 'Updated'} a change`;
+  }
+
+  return { desc: `${icon} ${actionName} ${detail}`, action: tx.action };
+}
+
 function LiveSyncQueueViewer({ canvasId }: { canvasId: string }) {
   const transactions = useLiveQuery(() => 
     db.syncQueue.orderBy('timestamp').reverse().limit(10).toArray()
@@ -43,8 +100,8 @@ function LiveSyncQueueViewer({ canvasId }: { canvasId: string }) {
 
   if (transactions.length === 0) {
     return (
-      <div className="text-emerald-400 font-black italic animate-pulse py-1">
-        [SAVED] ALL CHANGES SECURELY BACKED UP AND SYNCED.
+      <div className="text-emerald-400 font-bold py-1">
+        🟢 All edits on this page have been successfully auto-saved!
       </div>
     );
   }
@@ -52,31 +109,20 @@ function LiveSyncQueueViewer({ canvasId }: { canvasId: string }) {
   return (
     <div className="space-y-1">
       {transactions.map((tx) => {
-        let opMarker = 'UPDATE';
-        let color = 'text-blue-400';
-        if (tx.action === 'insert') {
-          opMarker = 'CREATE';
-          color = 'text-green-400';
-        } else if (tx.action === 'delete') {
-          opMarker = 'DELETE';
-          color = 'text-rose-400';
-        } else if (tx.action === 'update') {
-          opMarker = 'UPDATE';
-          color = 'text-yellow-400';
+        const { desc, action } = getFriendlyActionDescription(tx);
+        let color = 'text-blue-300';
+        if (action === 'insert') {
+          color = 'text-green-300';
+        } else if (action === 'delete') {
+          color = 'text-red-300';
+        } else if (action === 'update') {
+          color = 'text-amber-300';
         }
 
-        let detailStr = tx.recordId;
-        try {
-          const parsed = JSON.parse(tx.data);
-          if (parsed.title) detailStr += ` ("${parsed.title}")`;
-          else if (parsed.type) detailStr += ` [${parsed.type}]`;
-          else if (parsed.content) detailStr += ` ("${parsed.content.substring(0, 40)}${parsed.content.length > 40 ? '...' : ''}")`;
-        } catch {}
-
         return (
-          <div key={tx.id} className="flex flex-col sm:flex-row sm:items-center justify-between border-b border-slate-800/40 pb-1">
+          <div key={tx.id} className="flex flex-col sm:flex-row sm:items-center justify-between border-b border-slate-800/40 pb-1 text-[10px]">
             <span className={color}>
-              [{new Date(tx.timestamp).toLocaleTimeString()}] {opMarker}: {detailStr}
+              [{new Date(tx.timestamp).toLocaleTimeString()}] {desc}
             </span>
             <span className="text-[8px] text-slate-500 font-mono">
               ID: {tx.recordId.substring(0, 8)}
@@ -736,8 +782,8 @@ export default function CanvasWorkspaceClient() {
                 <ChevronLeft className="w-4 h-4" />
               </button>
             </Link>
-            <span className="text-xs font-mono font-bold text-gray-400">
-              Canvases / {canvas.title || 'Untitled Node'}
+            <span className="text-xs font-mono font-bold text-gray-400 truncate max-w-[100px] xs:max-w-[140px] sm:max-w-[180px] md:max-w-xs inline-block align-middle" title={canvas.title || 'Untitled Page'}>
+              {canvas.title || 'Untitled Page'}
             </span>
           </div>
  
@@ -1023,24 +1069,24 @@ export default function CanvasWorkspaceClient() {
               {/* Header Bar */}
               <div className="bg-[#1E293B] px-4 py-2 border-b-2 border-[#1A1A1A] flex items-center justify-between">
                 <div className="flex items-center space-x-2">
-                  <div className="w-2 h-2 rounded-full bg-rose-500 animate-pulse" />
+                  <div className="w-2 h-2 rounded-full bg-emerald-500 animate-pulse" />
                   <span className="font-mono text-[9px] font-black tracking-widest text-[#FFB703] uppercase">
-                    SYSTEM STATE: SAVED ACTIONS LOG
+                    Your Page Save History
                   </span>
                 </div>
                 <div className="flex items-center space-x-2">
                   <button
                     onClick={async () => {
-                      if (confirm("Are you sure you want to clear all queued saved actions?")) {
+                      if (confirm("Do you want to clear the save history log?")) {
                         await db.syncQueue.clear();
                       }
                     }}
                     className="font-mono text-[8px] bg-rose-600 hover:bg-rose-500 text-white font-extrabold px-1.5 py-0.5 border border-black cursor-pointer transition-colors shadow-sm uppercase"
                   >
-                    CLEAR SAVED ACTIONS
+                    Clear Save History
                   </button>
                   <span className="font-mono text-[8px] text-slate-400 font-bold hidden sm:inline">
-                    ACTIVE STREAM
+                    Live Save Log
                   </span>
                 </div>
               </div>
@@ -1048,10 +1094,10 @@ export default function CanvasWorkspaceClient() {
               {/* Log Viewport */}
               <div className="p-4 font-mono text-[10px] space-y-1.5 max-h-48 overflow-y-auto leading-relaxed scrollbar-thin select-text bg-[#030712]">
                 <div className="text-slate-500">
-                  [{sessionLogs?.establishedTime || '00:00:00 AM'}] SYSTEM_LOADER: Established secure workspace session.
+                  [{sessionLogs?.establishedTime || '00:00:00 AM'}] Editor ready. Loaded page from local memory. 🚀
                 </div>
                 <div className="text-slate-500">
-                  [{sessionLogs?.checksumTime || '00:00:00 AM'}] VALIDATE_CHANGES: Computed page code fingerprint ({checksumHash}). Verified.
+                  [{sessionLogs?.checksumTime || '00:00:00 AM'}] Page loaded successfully (Version {checksumHash}). ✅
                 </div>
                 <LiveSyncQueueViewer canvasId={canvasId} />
               </div>

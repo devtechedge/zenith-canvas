@@ -74,8 +74,8 @@ export default function WorkspaceHubClient() {
           <div className="flex items-start justify-between w-full md:w-auto">
             <div>
               <div className="flex items-center space-x-2">
-                <span className="text-[10px] font-mono font-bold bg-[#FFB703] text-[#1A1A1A] border-2 border-[#1A1A1A] px-2.5 py-0.5 uppercase rounded-none neo-shadow-sm animate-pulse">
-                  Global Workspace active
+                <span className="text-[10px] font-mono font-bold bg-[#FFB703] text-[#1A1A1A] border-2 border-[#1A1A1A] px-2.5 py-0.5 uppercase rounded-none neo-shadow-sm">
+                  Workspace Ready
                 </span>
               </div>
               <h1 className="text-3xl font-black tracking-tight mt-1 text-[#1A1A1A]">
@@ -215,10 +215,10 @@ export default function WorkspaceHubClient() {
           <div className="border-2 border-[#1A1A1A] bg-white p-5 rounded-none neo-shadow space-y-3">
             <h3 className="text-sm font-black uppercase font-mono text-[#2D6A4F] flex items-center gap-1.5">
               <Sparkles className="w-4 h-4" />
-              <span>Smart Data Tables</span>
+              <span>Smart Lists & Tables</span>
             </h3>
             <p className="text-xs font-medium text-gray-600 leading-relaxed">
-              Create databases right inside your pages. Switch easily between table grids and boards. You can easily filter and search through your rows.
+              Create clean lists and tables inside your pages to keep track of anything, like school homework, daily chores, or collections. Easily search or filter your rows anytime.
             </p>
           </div>
         </div>

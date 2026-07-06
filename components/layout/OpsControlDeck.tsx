@@ -203,9 +203,9 @@ export default function OpsControlDeck({
       try { return JSON.parse(saved); } catch {}
     }
     const initial = [
-      "💡 Refactor the triple-buffer sync ledger next Monday.",
-      "📊 Remember to align design system specs with client metrics.",
-      "⚡ API Endpoint backup payload: https://api.zenithworkspace.io/v2/fallback"
+      "💡 Study for the history quiz next Monday morning.",
+      "🍕 Ask friends what toppings they want for Friday's pizza party.",
+      "🎨 Search for a nice cover art image for my science project page."
     ];
     return initial;
   });
@@ -348,10 +348,9 @@ export default function OpsControlDeck({
   // --- Feature 7: Zenith CLI Terminal ---
   const [cliInput, setCliInput] = useState('');
   const [cliLogs, setCliLogs] = useState<string[]>(() => [
-    "Welcome to Zenith Command Box v1.5.0",
-    "Type '/help' to see list of active page commands.",
-    "Local storage state: CONNECTED",
-    "Cloud Backup state: ONLINE"
+    "Welcome to Zenith's Quick Command Box! 👋",
+    "Type '/help' to see list of things you can type here.",
+    "All your edits are being saved automatically! ✅"
   ]);
   const terminalEndRef = useRef<HTMLDivElement>(null);
 
@@ -378,7 +377,7 @@ export default function OpsControlDeck({
       addCliLog("Active Commands:");
       addCliLog("  /title <name>       Change this page's title");
       addCliLog("  /add todo <text>    Add a new checklist item");
-      addCliLog("  /add text <text>    Add a new text block");
+      addCliLog("  /add text <text>    Add a new text paragraph");
       addCliLog("  /add heading <text> Add a sub-heading section");
       addCliLog("  /snapshot           Save a page backup version");
       addCliLog("  /clear              Clear command history logs");
@@ -422,18 +421,16 @@ export default function OpsControlDeck({
 
   // --- Feature 1: Monospace Dev Sync Logs Simulation ---
   const [liveSyncLogs, setLiveSyncLogs] = useState<string[]>(() => [
-    `[DATABASE] Local offline database is ready and active`,
-    `[SYNC] Local copy and cloud backup are matching: OK`,
-    `[LAYOUT] Document page loaded. Blocks: 0`,
-    `[SYNC] All changes are backed up. Remaining: 0`
+    `✨ System status: All saved and running perfectly.`,
+    `📂 Database: Page loaded with ${elements.length} blocks.`,
+    `☁️ Backup: All changes are safe and synchronized.`
   ]);
 
   useEffect(() => {
     const presets = [
-      `[DATABASE] Local offline database is ready and active`,
-      `[SYNC] Local copy and cloud backup are matching: OK`,
-      `[LAYOUT] Document page loaded. Blocks: ${elements.length}`,
-      `[SYNC] All changes are backed up. Remaining: 0`
+      `✨ System status: All saved and running perfectly.`,
+      `📂 Database: Page loaded with ${elements.length} blocks.`,
+      `☁️ Backup: All changes are safe and synchronized.`
     ];
     const timer = setTimeout(() => {
       setLiveSyncLogs(presets);
@@ -442,10 +439,7 @@ export default function OpsControlDeck({
     // Dynamic logging
     const interval = setInterval(() => {
       if (Math.random() > 0.4) {
-        const actions = ['INSERT', 'UPDATE', 'GET'];
-        const tables = ['elements', 'canvases', 'collectionRows', 'collections'];
-        const randomId = Math.random().toString(36).substring(2, 7);
-        const log = `[SYNC] Saved update to database successfully (${Date.now() % 1000}ms)`;
+        const log = `🟢 Auto-saved your changes safely! (${Date.now() % 1000}ms)`;
         setLiveSyncLogs(prev => [log, ...prev.slice(0, 15)]);
       }
     }, 4000);
@@ -596,8 +590,8 @@ export default function OpsControlDeck({
                         key={index}
                         className="bg-white border-2 border-[#1A1A1A] neo-shadow-sm flex flex-col rounded-none overflow-hidden"
                       >
-                        {/* Hazard Tape Side Stripe */}
-                        <div className="h-2 bg-[#FFB703]" style={{ backgroundImage: 'repeating-linear-gradient(45deg, #1a1a1a, #1a1a1a 10px, transparent 10px, transparent 20px)' }} />
+                        {/* Solid Accent Color Line */}
+                        <div className="h-2 bg-[#FFB703] border-b border-[#1A1A1A]" />
                         
                         <div className="p-3 space-y-3 flex-1">
                           <p className="text-xs font-semibold text-gray-800 leading-relaxed break-words">
@@ -674,7 +668,7 @@ export default function OpsControlDeck({
                       {/* Plain text */}
                       <div className="space-y-1">
                         <div className="flex justify-between text-xs font-bold">
-                          <span>Plain Text ({astStats.paragraphs})</span>
+                          <span>Text Paragraphs ({astStats.paragraphs})</span>
                           <span>{astStats.totalBlocks > 0 ? Math.round((astStats.paragraphs / astStats.totalBlocks) * 100) : 0}%</span>
                         </div>
                         <div className="w-full h-2 bg-gray-100 border border-[#1A1A1A]">
@@ -685,7 +679,7 @@ export default function OpsControlDeck({
                       {/* Headings */}
                       <div className="space-y-1">
                         <div className="flex justify-between text-xs font-bold">
-                          <span>Headings ({astStats.headings})</span>
+                          <span>Section Titles ({astStats.headings})</span>
                           <span>{astStats.totalBlocks > 0 ? Math.round((astStats.headings / astStats.totalBlocks) * 100) : 0}%</span>
                         </div>
                         <div className="w-full h-2 bg-gray-100 border border-[#1A1A1A]">
@@ -696,7 +690,7 @@ export default function OpsControlDeck({
                       {/* To Do List */}
                       <div className="space-y-1">
                         <div className="flex justify-between text-xs font-bold">
-                          <span>Checklist Tasks ({astStats.totalTodos})</span>
+                          <span>Checklist Items ({astStats.totalTodos})</span>
                           <span>{astStats.totalBlocks > 0 ? Math.round((astStats.totalTodos / astStats.totalBlocks) * 100) : 0}%</span>
                         </div>
                         <div className="w-full h-2 bg-gray-100 border border-[#1A1A1A]">
@@ -712,7 +706,7 @@ export default function OpsControlDeck({
                       {/* Executable VM Code */}
                       <div className="space-y-1">
                         <div className="flex justify-between text-xs font-bold">
-                          <span>Code Playgrounds ({astStats.sandboxes})</span>
+                          <span>Code Playgrounds (Fun Code Boxes!) ({astStats.sandboxes})</span>
                           <span>{astStats.totalBlocks > 0 ? Math.round((astStats.sandboxes / astStats.totalBlocks) * 100) : 0}%</span>
                         </div>
                         <div className="w-full h-2 bg-gray-100 border border-[#1A1A1A]">
@@ -723,7 +717,7 @@ export default function OpsControlDeck({
                       {/* Relational Databases */}
                       <div className="space-y-1">
                         <div className="flex justify-between text-xs font-bold">
-                          <span>Data Tables ({astStats.inlineGrids})</span>
+                          <span>Data Lists & Tables ({astStats.inlineGrids})</span>
                           <span>{astStats.totalBlocks > 0 ? Math.round((astStats.inlineGrids / astStats.totalBlocks) * 100) : 0}%</span>
                         </div>
                         <div className="w-full h-2 bg-gray-100 border border-[#1A1A1A]">
@@ -734,7 +728,7 @@ export default function OpsControlDeck({
                       {/* Acoustic Wave Synthesizers */}
                       <div className="space-y-1">
                         <div className="flex justify-between text-xs font-bold">
-                          <span>Focus Sound Makers ({astStats.synthesizers})</span>
+                          <span>Focus Music Players ({astStats.synthesizers})</span>
                           <span>{astStats.totalBlocks > 0 ? Math.round((astStats.synthesizers / astStats.totalBlocks) * 100) : 0}%</span>
                         </div>
                         <div className="w-full h-2 bg-gray-100 border border-[#1A1A1A]">
@@ -884,45 +878,45 @@ export default function OpsControlDeck({
                     <button
                       onClick={async () => {
                         await updateCanvasCover(canvasId, 'preset:zebra');
-                        addCliLog("[THEME] Cover Art: Generative Zebra danger bands applied.");
+                        addCliLog("[THEME] Cover Art: Stripes applied.");
                       }}
                       className="border-2 border-[#1A1A1A] bg-white hover:bg-amber-100 p-2 flex flex-col space-y-1 text-left"
                     >
                       <div className="h-10 w-full bg-[#FFB703] border border-[#1A1A1A]" style={{ backgroundImage: 'repeating-linear-gradient(45deg, #1A1A1A, #1A1A1A 5px, transparent 5px, transparent 10px)' }} />
-                      <span className="text-[10px] font-extrabold uppercase mt-1">Zebra Danger</span>
+                      <span className="text-[10px] font-extrabold uppercase mt-1">Zebra Stripes</span>
                     </button>
 
                     <button
                       onClick={async () => {
                         await updateCanvasCover(canvasId, 'preset:grid');
-                        addCliLog("[THEME] Cover Art: Generative Brutalist Grid applied.");
+                        addCliLog("[THEME] Cover Art: Graph paper grid applied.");
                       }}
                       className="border-2 border-[#1A1A1A] bg-white hover:bg-slate-100 p-2 flex flex-col space-y-1 text-left"
                     >
                       <div className="h-10 w-full bg-[#F4F7F6] border border-[#1A1A1A]" style={{ backgroundImage: 'linear-gradient(#1A1A1A 1px, transparent 1px), linear-gradient(90deg, #1A1A1A 1px, transparent 1px)', backgroundSize: '8px 8px' }} />
-                      <span className="text-[10px] font-extrabold uppercase mt-1">Brutalist Grid</span>
+                      <span className="text-[10px] font-extrabold uppercase mt-1">Graph Paper</span>
                     </button>
 
                     <button
                       onClick={async () => {
                         await updateCanvasCover(canvasId, 'preset:cyber');
-                        addCliLog("[THEME] Cover Art: Generative Neon Cyberwave applied.");
+                        addCliLog("[THEME] Cover Art: Neon glow applied.");
                       }}
                       className="border-2 border-[#1A1A1A] bg-white hover:bg-indigo-50 p-2 flex flex-col space-y-1 text-left"
                     >
                       <div className="h-10 w-full bg-gradient-to-r from-violet-600 via-pink-500 to-indigo-600 border border-[#1A1A1A]" />
-                      <span className="text-[10px] font-extrabold uppercase mt-1">Neon Cyber</span>
+                      <span className="text-[10px] font-extrabold uppercase mt-1">Neon Glow</span>
                     </button>
 
                     <button
                       onClick={async () => {
                         await updateCanvasCover(canvasId, 'preset:dots');
-                        addCliLog("[THEME] Cover Art: Generative Void Terminal dots applied.");
+                        addCliLog("[THEME] Cover Art: Dot pattern applied.");
                       }}
                       className="border-2 border-[#1A1A1A] bg-white hover:bg-gray-100 p-2 flex flex-col space-y-1 text-left"
                     >
                       <div className="h-10 w-full bg-[#0B0C10] border border-[#1A1A1A]" style={{ backgroundImage: 'radial-gradient(#66FCF1 1px, transparent 1px)', backgroundSize: '6px 6px' }} />
-                      <span className="text-[10px] font-extrabold uppercase mt-1">Terminal Dots</span>
+                      <span className="text-[10px] font-extrabold uppercase mt-1">Dot Pattern</span>
                     </button>
                   </div>
 
