@@ -1,6 +1,6 @@
 {
   "name": "Zenith Canvas",
-  "description": "An enterprise-grade offline-first distributed block-based workspace and relational database application.",
+  "description": "A fast, simple, and beautifully designed offline-first document workspace with easy smart databases and page links.",
   "requestFramePermissions": [],
   "majorCapabilities": ["MAJOR_CAPABILITY_SERVER_SIDE_GEMINI_API"]
 }

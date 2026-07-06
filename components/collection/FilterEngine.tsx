@@ -89,7 +89,7 @@ export default function FilterEngine({
           className="flex items-center space-x-2 px-3 py-1.5 border-2 border-[#1A1A1A] bg-[#FFB703] text-xs font-bold uppercase tracking-wider rounded neo-shadow-sm hover:translate-x-[1px] hover:translate-y-[1px] hover:shadow-none transition-all cursor-pointer"
         >
           <Filter className="w-3.5 h-3.5" />
-          <span>AST Filter Engine ({filters.length})</span>
+          <span>Table Filter ({filters.length})</span>
         </button>
 
         {filters.length > 0 && (
@@ -105,10 +105,10 @@ export default function FilterEngine({
 
       {isOpen && (
         <div className="pt-2 border-t border-gray-100 space-y-3">
-          {/* Logical AST Toggle */}
+          {/* Logical Rule Toggle */}
           {filters.length > 1 && (
             <div className="flex items-center space-x-2 bg-[#F4F7F6] border border-[#1A1A1A] p-2 rounded">
-              <span className="text-xs font-bold text-gray-500 uppercase font-mono">Match logical condition:</span>
+              <span className="text-xs font-bold text-gray-500 uppercase font-mono">Match condition:</span>
               <button
                 onClick={() => onLogicalOperatorChange('AND')}
                 className={`px-2.5 py-0.5 border border-[#1A1A1A] text-xs font-bold rounded ${
@@ -135,7 +135,7 @@ export default function FilterEngine({
           {/* Rules List */}
           {filters.length === 0 ? (
             <div className="text-center py-4 text-xs font-medium text-gray-400">
-              No logical filter rules defined. Click &quot;Add Rule&quot; to compound parameters.
+              No active filter rules. Click &quot;Add Filter Rule&quot; to create a filter.
             </div>
           ) : (
             <div className="space-y-2">
@@ -179,7 +179,7 @@ export default function FilterEngine({
                     <input
                       type={col?.type === 'Number' ? 'number' : col?.type === 'Date' ? 'date' : 'text'}
                       value={rule.value}
-                      placeholder="Enter match parameter..."
+                      placeholder="Type a value to filter..."
                       onChange={(e) => handleUpdateRule(rule.id, { value: e.target.value })}
                       className="flex-1 text-xs font-medium bg-white border-2 border-[#1A1A1A] px-2 py-1 outline-none font-sans"
                     />
@@ -204,7 +204,7 @@ export default function FilterEngine({
               className="flex items-center space-x-1 px-3 py-1 bg-[#2D6A4F] text-white border-2 border-[#1A1A1A] text-xs font-bold rounded neo-shadow-sm hover:bg-[#1b4332]"
             >
               <Plus className="w-3.5 h-3.5" />
-              <span>Add Compound Rule</span>
+              <span>Add Filter Rule</span>
             </button>
           </div>
         </div>

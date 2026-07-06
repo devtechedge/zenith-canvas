@@ -3775,7 +3775,7 @@ export default function CanvasEditor({ canvasId, isLocked = false }: CanvasEdito
                                       </div>
                                     ))}
                                     <div className="bg-emerald-950/20 text-emerald-300 p-1 border border-emerald-900/30 rounded-sm">
-                                      Unified Canvas State Resulting Content: <span className="font-bold">"{zenithState.conflict.results.resolvedList?.[0]?.content}"</span>
+                                      Unified Canvas State Resulting Content: <span className="font-bold">&quot;{zenithState.conflict.results.resolvedList?.[0]?.content}&quot;</span>
                                     </div>
                                   </div>
                                 </div>

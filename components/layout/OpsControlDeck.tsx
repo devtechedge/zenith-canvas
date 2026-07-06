@@ -300,7 +300,7 @@ export default function OpsControlDeck({
   }, [canvasId]);
 
   const handleCreateSnapshot = () => {
-    const snapshotName = prompt('Enter a name for this historical checkpoint:', `Checkpoint ${new Date().toLocaleTimeString()}`);
+    const snapshotName = prompt('Enter a name for this backup version:', `Backup ${new Date().toLocaleTimeString()}`);
     if (!snapshotName) return;
 
     const newCheckpoint: Checkpoint = {
@@ -348,10 +348,10 @@ export default function OpsControlDeck({
   // --- Feature 7: Zenith CLI Terminal ---
   const [cliInput, setCliInput] = useState('');
   const [cliLogs, setCliLogs] = useState<string[]>(() => [
-    "Welcome to Zenith Core OS v1.2.8-stable",
-    "Type '/help' to list active terminal shell controllers.",
-    "Connection to IndexDB: ACTIVE",
-    "Replication state: STANDBY"
+    "Welcome to Zenith Command Box v1.5.0",
+    "Type '/help' to see list of active page commands.",
+    "Local storage state: CONNECTED",
+    "Cloud Backup state: ONLINE"
   ]);
   const terminalEndRef = useRef<HTMLDivElement>(null);
 
@@ -376,13 +376,13 @@ export default function OpsControlDeck({
 
     if (baseCmd === '/help') {
       addCliLog("Active Commands:");
-      addCliLog("  /title <name>       Update document title");
-      addCliLog("  /add todo <text>    Insert new checkbox list block");
-      addCliLog("  /add text <text>    Insert generic paragraph element");
-      addCliLog("  /add heading <text> Insert H2 visual separator");
-      addCliLog("  /snapshot           Trigger manual version snapshot");
-      addCliLog("  /clear              Flush terminal screen buffers");
-      addCliLog("  /stats              Print AST block structural metrics");
+      addCliLog("  /title <name>       Change this page's title");
+      addCliLog("  /add todo <text>    Add a new checklist item");
+      addCliLog("  /add text <text>    Add a new text block");
+      addCliLog("  /add heading <text> Add a sub-heading section");
+      addCliLog("  /snapshot           Save a page backup version");
+      addCliLog("  /clear              Clear command history logs");
+      addCliLog("  /stats              Show page block stats");
     } else if (baseCmd === '/clear') {
       setCliLogs([]);
     } else if (baseCmd === '/title') {
@@ -396,13 +396,13 @@ export default function OpsControlDeck({
     } else if (baseCmd === '/snapshot') {
       handleCreateSnapshot();
     } else if (baseCmd === '/stats') {
-      addCliLog("AST Block Analysis:");
+      addCliLog("Page Block Breakdown:");
       addCliLog(`  - Total Blocks: ${astStats.totalBlocks}`);
-      addCliLog(`  - Plain Paragraphs: ${astStats.paragraphs}`);
-      addCliLog(`  - Heading Anchors: ${astStats.headings}`);
-      addCliLog(`  - Task Items: ${astStats.completedTodos}/${astStats.totalTodos}`);
-      addCliLog(`  - Live Sandboxes: ${astStats.sandboxes}`);
-      addCliLog(`  - Relational Grids: ${astStats.inlineGrids}`);
+      addCliLog(`  - Paragraphs: ${astStats.paragraphs}`);
+      addCliLog(`  - Headings: ${astStats.headings}`);
+      addCliLog(`  - Checklist Tasks: ${astStats.completedTodos}/${astStats.totalTodos}`);
+      addCliLog(`  - Code Playgrounds: ${astStats.sandboxes}`);
+      addCliLog(`  - Data Tables: ${astStats.inlineGrids}`);
     } else if (baseCmd === '/add') {
       const typeArg = parts[1]?.toLowerCase();
       const contentArg = parts.slice(2).join(' ');
@@ -422,18 +422,18 @@ export default function OpsControlDeck({
 
   // --- Feature 1: Monospace Dev Sync Logs Simulation ---
   const [liveSyncLogs, setLiveSyncLogs] = useState<string[]>(() => [
-    `[LEDGER] IndexDB stream active on workspace 'ws-enterprise-default'`,
-    `[REPLICATOR] Verification ledger checksum matches local: OK`,
-    `[AST] Document hierarchy resolved. Blocks: 0`,
-    `[SYNC] Delta synchronized with serverless cloud router. Backlog: 0 Tx`
+    `[DATABASE] Local offline database is ready and active`,
+    `[SYNC] Local copy and cloud backup are matching: OK`,
+    `[LAYOUT] Document page loaded. Blocks: 0`,
+    `[SYNC] All changes are backed up. Remaining: 0`
   ]);
 
   useEffect(() => {
     const presets = [
-      `[LEDGER] IndexDB stream active on workspace 'ws-enterprise-default'`,
-      `[REPLICATOR] Verification ledger checksum matches local: OK`,
-      `[AST] Document hierarchy resolved. Blocks: ${elements.length}`,
-      `[SYNC] Delta synchronized with serverless cloud router. Backlog: 0 Tx`
+      `[DATABASE] Local offline database is ready and active`,
+      `[SYNC] Local copy and cloud backup are matching: OK`,
+      `[LAYOUT] Document page loaded. Blocks: ${elements.length}`,
+      `[SYNC] All changes are backed up. Remaining: 0`
     ];
     const timer = setTimeout(() => {
       setLiveSyncLogs(presets);
@@ -445,7 +445,7 @@ export default function OpsControlDeck({
         const actions = ['INSERT', 'UPDATE', 'GET'];
         const tables = ['elements', 'canvases', 'collectionRows', 'collections'];
         const randomId = Math.random().toString(36).substring(2, 7);
-        const log = `[LEDGER] ${actions[Math.floor(Math.random() * actions.length)]} on db.${tables[Math.floor(Math.random() * tables.length)]} record_id '${randomId}' success (${Date.now() % 1000}ms)`;
+        const log = `[SYNC] Saved update to database successfully (${Date.now() % 1000}ms)`;
         setLiveSyncLogs(prev => [log, ...prev.slice(0, 15)]);
       }
     }, 4000);
@@ -462,10 +462,10 @@ export default function OpsControlDeck({
       <button
         onClick={() => setIsOpen(true)}
         className="fixed right-4 bottom-4 z-40 p-3 border-2 border-[#1A1A1A] bg-[#FFB703] text-[#1A1A1A] neo-shadow hover:translate-x-[2px] hover:translate-y-[2px] hover:shadow-none transition-all font-black flex items-center space-x-1.5 cursor-pointer rounded-none"
-        title="Open Zenith Ops Deck"
+        title="Open Workspace Settings"
       >
         <Sliders className="w-4 h-4 animate-spin-slow" />
-        <span className="text-xs uppercase font-extrabold tracking-wider">Ops Center</span>
+        <span className="text-xs uppercase font-extrabold tracking-wider">Page Settings</span>
       </button>
 
       <AnimatePresence>
@@ -476,8 +476,8 @@ export default function OpsControlDeck({
               <div className="flex items-center space-x-2">
                 <Sliders className="w-5 h-5 text-[#FFB703]" />
                 <div>
-                  <h2 className="text-sm font-black tracking-wider uppercase">Zenith Control Center</h2>
-                  <p className="text-[10px] font-mono text-amber-400">Ledger OS v1.2.8 • ACTIVE</p>
+                  <h2 className="text-sm font-black tracking-wider uppercase">Page Settings</h2>
+                  <p className="text-[10px] font-mono text-amber-400">Zenith Workspace • Connected</p>
                 </div>
               </div>
               <button
@@ -490,7 +490,7 @@ export default function OpsControlDeck({
 
             {/* Focus Mode & Accent Banner Quick Bar */}
             <div className="bg-white border-b-2 border-[#1A1A1A] px-4 py-2 flex items-center justify-between">
-              <span className="text-[10px] font-mono font-bold text-gray-500 uppercase">Focus Calibration:</span>
+              <span className="text-[10px] font-mono font-bold text-gray-500 uppercase">Focus Mode:</span>
               <button
                 onClick={() => setIsFocusMode(!isFocusMode)}
                 className="flex items-center space-x-1.5 px-3 py-1 text-[10px] font-bold uppercase border border-[#1A1A1A] bg-[#F4F7F6] hover:bg-[#FFB703] transition-colors rounded-none"
@@ -498,12 +498,12 @@ export default function OpsControlDeck({
                 {isFocusMode ? (
                   <>
                     <Eye className="w-3.5 h-3.5 text-green-600" />
-                    <span>Show Rails</span>
+                    <span>Show Sidebars</span>
                   </>
                 ) : (
                   <>
                     <EyeOff className="w-3.5 h-3.5 text-gray-500" />
-                    <span>Focus (Hide)</span>
+                    <span>Focus (Hide Sidebars)</span>
                   </>
                 )}
               </button>
@@ -518,7 +518,7 @@ export default function OpsControlDeck({
                 }`}
               >
                 <Paperclip className="w-3.5 h-3.5" />
-                <span>Inbox</span>
+                <span>Quick Notes</span>
               </button>
               <button
                 onClick={() => setActiveTab('ast')}
@@ -527,7 +527,7 @@ export default function OpsControlDeck({
                 }`}
               >
                 <Layers className="w-3.5 h-3.5" />
-                <span>AST Stats</span>
+                <span>Stats</span>
               </button>
               <button
                 onClick={() => setActiveTab('snapshots')}
@@ -536,7 +536,7 @@ export default function OpsControlDeck({
                 }`}
               >
                 <History className="w-3.5 h-3.5" />
-                <span>Travel</span>
+                <span>History</span>
               </button>
               <button
                 onClick={() => setActiveTab('ledger')}
@@ -545,7 +545,7 @@ export default function OpsControlDeck({
                 }`}
               >
                 <Terminal className="w-3.5 h-3.5" />
-                <span>Shell</span>
+                <span>Commands</span>
               </button>
               <button
                 onClick={() => setActiveTab('themes')}
@@ -554,7 +554,7 @@ export default function OpsControlDeck({
                 }`}
               >
                 <Palette className="w-3.5 h-3.5" />
-                <span>Art</span>
+                <span>Design</span>
               </button>
             </div>
 
@@ -565,9 +565,9 @@ export default function OpsControlDeck({
               {activeTab === 'scratchpad' && (
                 <div className="space-y-4">
                   <div>
-                    <h3 className="text-xs font-black uppercase text-[#1A1A1A]">Ledger Tape Inbox</h3>
+                    <h3 className="text-xs font-black uppercase text-[#1A1A1A]">Quick Notes Box</h3>
                     <p className="text-[10px] text-gray-500 leading-normal">
-                      Quick capture text snippets, markdown, or temporary links. Added cards remain queued and can be dropped directly into the canvas.
+                      Quickly jot down ideas, notes, or web links here. You can insert them as blocks into your page later.
                     </p>
                   </div>
 
@@ -576,7 +576,7 @@ export default function OpsControlDeck({
                     <input
                       type="text"
                       value={newNote}
-                      placeholder="Capture idea or ledger code..."
+                      placeholder="Type a quick note or idea..."
                       onChange={(e) => setNewNote(e.target.value)}
                       onKeyDown={(e) => e.key === 'Enter' && handleAddScratchpad()}
                       className="flex-1 bg-white border-2 border-[#1A1A1A] p-2 text-xs font-mono outline-none"
@@ -605,7 +605,7 @@ export default function OpsControlDeck({
                           </p>
                           
                           <div className="flex justify-between items-center pt-2 border-t border-gray-100">
-                            <span className="text-[9px] font-mono text-gray-400">UNASSIGNED AST BLOCK</span>
+                            <span className="text-[9px] font-mono text-gray-400">QUICK NOTE</span>
                             <div className="flex space-x-2">
                               <button
                                 onClick={() => handleDeleteScratchpad(index)}
@@ -620,7 +620,7 @@ export default function OpsControlDeck({
                                 title="Insert block at bottom of document"
                               >
                                 <Plus className="w-3 h-3" />
-                                <span>Drop into Canvas</span>
+                                <span>Add to Page</span>
                               </button>
                             </div>
                           </div>
@@ -630,7 +630,7 @@ export default function OpsControlDeck({
                     {scratchpadNotes.length === 0 && (
                       <div className="text-center py-12 border-2 border-dashed border-gray-300">
                         <Paperclip className="w-8 h-8 text-gray-300 mx-auto mb-2" />
-                        <span className="text-xs text-gray-400 font-medium">Your Scratchpad tape inbox is empty.</span>
+                        <span className="text-xs text-gray-400 font-medium">Your quick notes list is empty.</span>
                       </div>
                     )}
                   </div>
@@ -641,16 +641,16 @@ export default function OpsControlDeck({
               {activeTab === 'ast' && (
                 <div className="space-y-4">
                   <div>
-                    <h3 className="text-xs font-black uppercase text-[#1A1A1A]">AST Structural Metrics</h3>
+                    <h3 className="text-xs font-black uppercase text-[#1A1A1A]">Page Stats & Info</h3>
                     <p className="text-[10px] text-gray-500 leading-normal">
-                      Detailed telemetry of polymorphic nodes and block allocations on the current canvas timeline.
+                      Check statistics about what you have written and created on this page.
                     </p>
                   </div>
 
                   <div className="grid grid-cols-2 gap-3">
                     <div className="bg-white border-2 border-[#1A1A1A] p-3 text-center">
                       <div className="text-xl font-black">{astStats.totalBlocks}</div>
-                      <div className="text-[9px] font-mono text-gray-400 uppercase font-bold">Total AST Nodes</div>
+                      <div className="text-[9px] font-mono text-gray-400 uppercase font-bold">Total Blocks</div>
                     </div>
                     <div className="bg-white border-2 border-[#1A1A1A] p-3 text-center">
                       <div className="text-xl font-black">{astStats.wordCount}</div>
@@ -658,17 +658,17 @@ export default function OpsControlDeck({
                     </div>
                     <div className="bg-white border-2 border-[#1A1A1A] p-3 text-center">
                       <div className="text-xl font-black">{astStats.readingTime}m</div>
-                      <div className="text-[9px] font-mono text-gray-400 uppercase font-bold">Estimated Reading</div>
+                      <div className="text-[9px] font-mono text-gray-400 uppercase font-bold">Reading Time</div>
                     </div>
                     <div className="bg-white border-2 border-[#1A1A1A] p-3 text-center">
                       <div className="text-xs font-black truncate">{astStats.readability}</div>
-                      <div className="text-[9px] font-mono text-gray-400 uppercase font-bold">Structural Profile</div>
+                      <div className="text-[9px] font-mono text-gray-400 uppercase font-bold">Writing Style</div>
                     </div>
                   </div>
 
                   {/* Block Density Breakdown */}
                   <div className="bg-white border-2 border-[#1A1A1A] p-4 space-y-3">
-                    <h4 className="text-[10px] font-mono font-bold text-gray-400 uppercase tracking-wider">Polymorphic Block Allocation</h4>
+                    <h4 className="text-[10px] font-mono font-bold text-gray-400 uppercase tracking-wider">Block Breakdown</h4>
                     
                     <div className="space-y-2">
                       {/* Plain text */}
@@ -685,7 +685,7 @@ export default function OpsControlDeck({
                       {/* Headings */}
                       <div className="space-y-1">
                         <div className="flex justify-between text-xs font-bold">
-                          <span>Section Headings ({astStats.headings})</span>
+                          <span>Headings ({astStats.headings})</span>
                           <span>{astStats.totalBlocks > 0 ? Math.round((astStats.headings / astStats.totalBlocks) * 100) : 0}%</span>
                         </div>
                         <div className="w-full h-2 bg-gray-100 border border-[#1A1A1A]">
@@ -712,7 +712,7 @@ export default function OpsControlDeck({
                       {/* Executable VM Code */}
                       <div className="space-y-1">
                         <div className="flex justify-between text-xs font-bold">
-                          <span>Live Code Sandboxes ({astStats.sandboxes})</span>
+                          <span>Code Playgrounds ({astStats.sandboxes})</span>
                           <span>{astStats.totalBlocks > 0 ? Math.round((astStats.sandboxes / astStats.totalBlocks) * 100) : 0}%</span>
                         </div>
                         <div className="w-full h-2 bg-gray-100 border border-[#1A1A1A]">
@@ -723,7 +723,7 @@ export default function OpsControlDeck({
                       {/* Relational Databases */}
                       <div className="space-y-1">
                         <div className="flex justify-between text-xs font-bold">
-                          <span>Dynamic Data Grids ({astStats.inlineGrids})</span>
+                          <span>Data Tables ({astStats.inlineGrids})</span>
                           <span>{astStats.totalBlocks > 0 ? Math.round((astStats.inlineGrids / astStats.totalBlocks) * 100) : 0}%</span>
                         </div>
                         <div className="w-full h-2 bg-gray-100 border border-[#1A1A1A]">
@@ -734,7 +734,7 @@ export default function OpsControlDeck({
                       {/* Acoustic Wave Synthesizers */}
                       <div className="space-y-1">
                         <div className="flex justify-between text-xs font-bold">
-                          <span>Acoustic Wave Oscillators ({astStats.synthesizers})</span>
+                          <span>Focus Sound Makers ({astStats.synthesizers})</span>
                           <span>{astStats.totalBlocks > 0 ? Math.round((astStats.synthesizers / astStats.totalBlocks) * 100) : 0}%</span>
                         </div>
                         <div className="w-full h-2 bg-gray-100 border border-[#1A1A1A]">
@@ -752,9 +752,9 @@ export default function OpsControlDeck({
                 <div className="space-y-4">
                   <div className="flex justify-between items-start">
                     <div>
-                      <h3 className="text-xs font-black uppercase text-[#1A1A1A]">Time Travel Ledger</h3>
+                      <h3 className="text-xs font-black uppercase text-[#1A1A1A]">Time Machine Backups</h3>
                       <p className="text-[10px] text-gray-500 leading-normal">
-                        Create manual checkpoints of your document. Overwrite and restore older canvas states instantly.
+                        Create manual backups of your work. You can travel back in time and restore older versions of this page at any time.
                       </p>
                     </div>
                   </div>
@@ -764,7 +764,7 @@ export default function OpsControlDeck({
                     className="w-full py-2.5 bg-[#2D6A4F] text-white hover:bg-[#1b4332] text-xs font-bold uppercase border-2 border-[#1A1A1A] neo-shadow-sm flex items-center justify-center space-x-1.5 cursor-pointer"
                   >
                     <History className="w-4 h-4" />
-                    <span>Commit Document Checkpoint</span>
+                    <span>Save a Page Backup</span>
                   </button>
 
                   <div className="space-y-2.5">
@@ -784,7 +784,7 @@ export default function OpsControlDeck({
                           <button
                             onClick={() => handleDeleteSnapshot(snap.id)}
                             className="p-1 text-red-500 hover:bg-red-50 rounded"
-                            title="Purge snapshot"
+                            title="Delete backup"
                           >
                             <Trash2 className="w-3.5 h-3.5" />
                           </button>
@@ -792,7 +792,7 @@ export default function OpsControlDeck({
 
                         <div className="flex items-center justify-between pt-1 border-t border-gray-100">
                           <span className="text-[9px] font-mono text-gray-500 uppercase font-extrabold">
-                            {snap.elementCount} blocks backed up
+                            {snap.elementCount} blocks saved
                           </span>
                           <button
                             onClick={() => handleRestoreSnapshot(snap)}
@@ -807,7 +807,7 @@ export default function OpsControlDeck({
                     {snapshots.length === 0 && (
                       <div className="text-center py-12 border-2 border-dashed border-gray-300">
                         <History className="w-8 h-8 text-gray-300 mx-auto mb-2" />
-                        <span className="text-xs text-gray-400 font-medium">No historical commits created yet.</span>
+                        <span className="text-xs text-gray-400 font-medium">No page backups saved yet.</span>
                       </div>
                     )}
                   </div>
@@ -818,9 +818,9 @@ export default function OpsControlDeck({
               {activeTab === 'ledger' && (
                 <div className="space-y-4 flex flex-col h-full min-h-[300px]">
                   <div>
-                    <h3 className="text-xs font-black uppercase text-[#1A1A1A]">Terminal Command Shell</h3>
+                    <h3 className="text-xs font-black uppercase text-[#1A1A1A]">Quick Command Box</h3>
                     <p className="text-[10px] text-gray-500 leading-normal">
-                      Command-line command injection. Direct terminal access to the AST block editor.
+                      A simple chat-like command line where you can type slash commands to update this page.
                     </p>
                   </div>
 
@@ -841,7 +841,7 @@ export default function OpsControlDeck({
                       type="text"
                       value={cliInput}
                       onChange={(e) => setCliInput(e.target.value)}
-                      placeholder="Type command (/help)..."
+                      placeholder="Type a command here (e.g. /help)..."
                       className="flex-1 bg-transparent border-none outline-none text-xs font-mono text-white placeholder-teal-800"
                     />
                     <button type="submit" className="text-[#66FCF1] hover:text-white p-1">
@@ -854,7 +854,7 @@ export default function OpsControlDeck({
                     <div className="flex items-center justify-between text-gray-400 text-[10px] font-mono font-bold uppercase">
                       <div className="flex items-center space-x-1.5">
                         <Activity className="w-3.5 h-3.5 text-[#2D6A4F]" />
-                        <span>Live Ledger Stream:</span>
+                        <span>Sync Activity Log:</span>
                       </div>
                       <span>ONLINE</span>
                     </div>
@@ -876,7 +876,7 @@ export default function OpsControlDeck({
                   <div>
                     <h3 className="text-xs font-black uppercase text-[#1A1A1A]">Cover Art presets</h3>
                     <p className="text-[10px] text-gray-500 leading-normal">
-                      Set geometric pure-CSS generative art cover banners dynamically. Absolutely clean.
+                      Add abstract cover art designs instantly to your page.
                     </p>
                   </div>
 
@@ -929,9 +929,9 @@ export default function OpsControlDeck({
                   {/* Document Accent theme */}
                   <div className="space-y-2 pt-2 border-t border-gray-300">
                     <div>
-                      <h4 className="text-xs font-black uppercase text-[#1A1A1A]">Workspace Theme Color</h4>
+                      <h4 className="text-xs font-black uppercase text-[#1A1A1A]">Workspace Accent Color</h4>
                       <p className="text-[9px] text-gray-500 leading-normal">
-                        Calibrate the site border shadow accent highlight. Re-render visual borders instantly.
+                        Choose an accent color for workspace borders and highlights.
                       </p>
                     </div>
 
@@ -963,9 +963,9 @@ export default function OpsControlDeck({
                   {/* Ambient focus sound controllers & typewriter toggle */}
                   <div className="space-y-3 pt-3 border-t border-gray-300">
                     <div>
-                      <h4 className="text-xs font-black uppercase text-[#1A1A1A]">Soundscape Calibration</h4>
+                      <h4 className="text-xs font-black uppercase text-[#1A1A1A]">Focus Sounds</h4>
                       <p className="text-[9px] text-gray-500 leading-normal">
-                        Toggle high-polish synthesized key clicks and binaural ambient sounds to block outside clutter.
+                        Turn on typing sounds or quiet background humming to help you focus.
                       </p>
                     </div>
 
@@ -979,18 +979,18 @@ export default function OpsControlDeck({
                       >
                         <div className="flex items-center space-x-2">
                           {typewriterEnabled ? <Volume2 className="w-4 h-4 text-emerald-600" /> : <VolumeX className="w-4 h-4 text-gray-400" />}
-                          <span className="text-[10px] uppercase font-bold text-[#1A1A1A]">Typewriter Key Clicks</span>
+                          <span className="text-[10px] uppercase font-bold text-[#1A1A1A]">Mechanical Keyboard Sounds</span>
                         </div>
                         <span className="text-[9px] font-mono px-1.5 py-0.5 border border-[#1A1A1A] bg-white">
-                          {typewriterEnabled ? 'ACTIVE' : 'MUTED'}
+                          {typewriterEnabled ? 'ON' : 'OFF'}
                         </span>
                       </button>
 
                       {/* Ambient Hum or Pink noise */}
                       <div className="grid grid-cols-3 gap-1.5">
                         {[
-                          { id: 'none', label: 'Mute Zen' },
-                          { id: 'hum', label: 'Zen Hum' },
+                          { id: 'none', label: 'Mute Sounds' },
+                          { id: 'hum', label: 'Deep Zen Hum' },
                           { id: 'pink_noise', label: 'Pink Noise' }
                         ].map((ambientOpt) => (
                           <button

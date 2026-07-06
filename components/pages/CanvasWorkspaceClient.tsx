@@ -44,7 +44,7 @@ function LiveSyncQueueViewer({ canvasId }: { canvasId: string }) {
   if (transactions.length === 0) {
     return (
       <div className="text-emerald-400 font-black italic animate-pulse py-1">
-        [IDLE] STREAMING ACTIVE TRANSACTION LEDGER... LEDGER SYNCHRONIZED PERFECTLY.
+        [SAVED] ALL CHANGES SECURELY BACKED UP AND SYNCED.
       </div>
     );
   }
@@ -52,16 +52,16 @@ function LiveSyncQueueViewer({ canvasId }: { canvasId: string }) {
   return (
     <div className="space-y-1">
       {transactions.map((tx) => {
-        let opMarker = 'OP_MUTATE';
+        let opMarker = 'UPDATE';
         let color = 'text-blue-400';
         if (tx.action === 'insert') {
-          opMarker = 'OP_CREATE';
+          opMarker = 'CREATE';
           color = 'text-green-400';
         } else if (tx.action === 'delete') {
-          opMarker = 'OP_DELETE';
+          opMarker = 'DELETE';
           color = 'text-rose-400';
         } else if (tx.action === 'update') {
-          opMarker = 'OP_UPDATE';
+          opMarker = 'UPDATE';
           color = 'text-yellow-400';
         }
 
@@ -76,10 +76,10 @@ function LiveSyncQueueViewer({ canvasId }: { canvasId: string }) {
         return (
           <div key={tx.id} className="flex flex-col sm:flex-row sm:items-center justify-between border-b border-slate-800/40 pb-1">
             <span className={color}>
-              [{new Date(tx.timestamp).toLocaleTimeString()}] {opMarker}_{tx.table.toUpperCase()}: {detailStr}
+              [{new Date(tx.timestamp).toLocaleTimeString()}] {opMarker}: {detailStr}
             </span>
             <span className="text-[8px] text-slate-500 font-mono">
-              HASH_SIGN: {tx.recordId.substring(0, 8)}
+              ID: {tx.recordId.substring(0, 8)}
             </span>
           </div>
         );
@@ -324,7 +324,7 @@ export default function CanvasWorkspaceClient() {
         id: generateElementId('el'),
         canvasId,
         type: 'callout',
-        content: 'Keep track of core engineering sprints and live developer tasks in this interactive ledger board.',
+        content: 'Keep track of your project tasks and milestones in this interactive board.',
         properties: JSON.stringify({ mood: 'success' }),
         sortOrder: 2.0,
         updatedAt: new Date(),
@@ -349,7 +349,7 @@ export default function CanvasWorkspaceClient() {
       await db.collections.add({
         id: tableId,
         canvasId,
-        name: 'Sprint Ledger',
+        name: 'Sprint Board',
         schema: JSON.stringify(columns)
       });
       
@@ -357,13 +357,13 @@ export default function CanvasWorkspaceClient() {
       await db.collectionRows.add({
         id: generateElementId('row'),
         tableId,
-        cells: JSON.stringify({ 'col-task': 'Refactor offline Sync transactions', 'col-status': 'In Progress', 'col-hours': 12 }),
+        cells: JSON.stringify({ 'col-task': 'Verify offline autosave', 'col-status': 'In Progress', 'col-hours': 12 }),
         sortOrder: 1.0,
       });
       await db.collectionRows.add({
         id: generateElementId('row'),
         tableId,
-        cells: JSON.stringify({ 'col-task': 'Synthesize typewriter keystroke sounds', 'col-status': 'Completed', 'col-hours': 6 }),
+        cells: JSON.stringify({ 'col-task': 'Turn on typewriter key sounds', 'col-status': 'Completed', 'col-hours': 6 }),
         sortOrder: 2.0,
       });
     } else if (templateId === 'playground') {
@@ -426,8 +426,8 @@ export default function CanvasWorkspaceClient() {
         id: generateElementId('el'),
         canvasId,
         type: 'toggle_list',
-        content: '💡 Collaborative Best Practices Ledger',
-        properties: JSON.stringify({ open: true, body: '1. Keep document pages highly linked using [[]] syntax.\n2. Leverage the time travel ledger snapshots before deleting critical sections.\n3. Turn on focus ambient binaural beats to accelerate focus flow.' }),
+        content: '💡 Quick Wiki Tips',
+        properties: JSON.stringify({ open: true, body: '1. Link pages together easily using [[]] double brackets.\n2. Save backups of your page before making major changes.\n3. Turn on typing and background sounds to help you focus.' }),
         sortOrder: 3.0,
         updatedAt: new Date(),
       });
@@ -659,7 +659,7 @@ export default function CanvasWorkspaceClient() {
         <div className="flex flex-col items-center space-y-4">
           <RefreshCw className="w-8 h-8 text-[#2D6A4F] animate-spin" />
           <p className="text-xs font-mono font-bold uppercase tracking-wider text-gray-500">
-            Resolving Zenith Node Ledger...
+            Loading your page...
           </p>
         </div>
       </div>
@@ -670,13 +670,13 @@ export default function CanvasWorkspaceClient() {
     return (
       <div className="flex items-center justify-center h-screen bg-[#F4F7F6] p-6">
         <div className="max-w-md w-full border-4 border-[#1A1A1A] bg-white neo-shadow p-6 text-center space-y-4">
-          <h2 className="text-xl font-black text-red-500">404 CANVAS NOT FOUND</h2>
+          <h2 className="text-xl font-black text-red-500">PAGE NOT FOUND</h2>
           <p className="text-xs font-medium text-gray-500">
-            This Zenith Canvas node has either been garbage collected, archived, or deleted from the local ledger.
+            This page might have been deleted or moved. Go back to your home screen to find your pages.
           </p>
           <Link href="/">
             <button className="w-full py-2 bg-[#FFB703] border-2 border-[#1A1A1A] text-xs font-bold uppercase neo-shadow-sm">
-              Return to Hub
+              Go to Home Screen
             </button>
           </Link>
         </div>
@@ -718,7 +718,7 @@ export default function CanvasWorkspaceClient() {
                 setFingerprintCopied(true);
                 setTimeout(() => setFingerprintCopied(false), 1500);
               }}
-              title="Click to copy cryptographic state checksum hash"
+              title="Click to copy page version code"
               className={`hidden sm:flex items-center space-x-1.5 px-2.5 py-1 border-2 border-[#1A1A1A] font-mono text-[9px] font-black cursor-pointer select-none transition-all ${
                 fingerprintCopied
                   ? 'bg-amber-400 text-[#1A1A1A] border-[#1A1A1A] translate-x-[1px] translate-y-[1px] shadow-none'
@@ -728,7 +728,7 @@ export default function CanvasWorkspaceClient() {
               }`}
             >
               <span className={`w-1.5 h-1.5 rounded-full ${fingerprintCopied ? 'bg-amber-800' : flashFingerprint ? 'bg-white animate-ping' : 'bg-emerald-500'}`} />
-              <span className="opacity-70">{fingerprintCopied ? 'COPIED!' : 'FINGERPRINT:'}</span>
+              <span className="opacity-70">{fingerprintCopied ? 'COPIED!' : 'PAGE CODE:'}</span>
               <span>{checksumHash}</span>
             </div>
             <Link href="/">
@@ -940,7 +940,7 @@ export default function CanvasWorkspaceClient() {
               <div className="bg-red-50 border-2 border-red-500 p-3.5 text-xs font-mono font-extrabold text-red-700 flex items-center justify-between shadow-sm">
                 <div className="flex items-center space-x-2">
                   <Lock className="w-4 h-4 text-red-500 animate-pulse" />
-                  <span>VIEW-ONLY LEDGER MODE: THIS ZENITH CANVAS NODE IS SECURELY LOCKED.</span>
+                  <span>VIEW-ONLY MODE: THIS PAGE IS SECURELY LOCKED.</span>
                 </div>
                 <button
                   onClick={toggleLock}
@@ -1025,19 +1025,19 @@ export default function CanvasWorkspaceClient() {
                 <div className="flex items-center space-x-2">
                   <div className="w-2 h-2 rounded-full bg-rose-500 animate-pulse" />
                   <span className="font-mono text-[9px] font-black tracking-widest text-[#FFB703] uppercase">
-                    SYS-DIAGNOSTIC: NODE TRANSACTION AUDIT LEDGER
+                    SYSTEM STATE: SAVED ACTIONS LOG
                   </span>
                 </div>
                 <div className="flex items-center space-x-2">
                   <button
                     onClick={async () => {
-                      if (confirm("Are you sure you want to purge all queued synchronization transactions?")) {
+                      if (confirm("Are you sure you want to clear all queued saved actions?")) {
                         await db.syncQueue.clear();
                       }
                     }}
                     className="font-mono text-[8px] bg-rose-600 hover:bg-rose-500 text-white font-extrabold px-1.5 py-0.5 border border-black cursor-pointer transition-colors shadow-sm uppercase"
                   >
-                    PURGE LEDGER QUEUE
+                    CLEAR SAVED ACTIONS
                   </button>
                   <span className="font-mono text-[8px] text-slate-400 font-bold hidden sm:inline">
                     ACTIVE STREAM
@@ -1048,10 +1048,10 @@ export default function CanvasWorkspaceClient() {
               {/* Log Viewport */}
               <div className="p-4 font-mono text-[10px] space-y-1.5 max-h-48 overflow-y-auto leading-relaxed scrollbar-thin select-text bg-[#030712]">
                 <div className="text-slate-500">
-                  [{sessionLogs?.establishedTime || '00:00:00 AM'}] CLUSTER_CLIENT: Established secure duplex transaction connection stream.
+                  [{sessionLogs?.establishedTime || '00:00:00 AM'}] SYSTEM_LOADER: Established secure workspace session.
                 </div>
                 <div className="text-slate-500">
-                  [{sessionLogs?.checksumTime || '00:00:00 AM'}] VALIDATE_CHECKSUM: Computed ledger fingerprint ({checksumHash}). Verified.
+                  [{sessionLogs?.checksumTime || '00:00:00 AM'}] VALIDATE_CHANGES: Computed page code fingerprint ({checksumHash}). Verified.
                 </div>
                 <LiveSyncQueueViewer canvasId={canvasId} />
               </div>
@@ -1082,7 +1082,7 @@ export default function CanvasWorkspaceClient() {
               className="bg-white border-4 border-[#1A1A1A] w-full max-w-2xl p-6 rounded-none neo-shadow-lg"
             >
               <div className="flex justify-between items-center pb-4 border-b-2 border-[#1A1A1A]">
-                <h3 className="text-sm font-black uppercase text-[#1A1A1A]">🌟 Choose Structural Blueprint Template</h3>
+                <h3 className="text-sm font-black uppercase text-[#1A1A1A]">🌟 Choose Page Template</h3>
                 <button 
                   onClick={() => setShowBlueprintModal(false)}
                   className="px-2 py-1 text-xs font-bold border-2 border-[#1A1A1A] hover:bg-red-500 hover:text-white"
@@ -1091,7 +1091,7 @@ export default function CanvasWorkspaceClient() {
                 </button>
               </div>
               <p className="text-[11px] text-gray-500 mt-2 leading-relaxed">
-                Applying a blueprint template will instantly seed standard modular nodes (Relational databases, Sandboxes, Callouts, Page references) into your current workspace. <strong className="text-red-600">WARNING: This will replace existing elements in this Canvas!</strong>
+                Applying a template will instantly add helpful components (like tables, coding playgrounds, callout boxes, and links) to your page. <strong className="text-red-600">WARNING: This will replace existing elements on this page!</strong>
               </p>
 
               <div className="grid grid-cols-1 md:grid-cols-3 gap-4 mt-5">

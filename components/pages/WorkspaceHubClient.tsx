@@ -82,7 +82,7 @@ export default function WorkspaceHubClient() {
                 Zenith Canvas Hub
               </h1>
               <p className="text-sm font-medium text-gray-500 mt-1">
-                Double-buffered delta replication and distributed block-based workspace.
+                A fast, offline-saved, simple document editor that lets you write notes, create tables, and stay organized.
               </p>
             </div>
 
@@ -101,7 +101,7 @@ export default function WorkspaceHubClient() {
             className="flex items-center justify-center space-x-2 px-5 py-2.5 bg-[#FFB703] border-2 border-[#1A1A1A] neo-shadow text-sm font-bold uppercase hover:translate-x-[2px] hover:translate-y-[2px] hover:shadow-none transition-all cursor-pointer w-full md:w-auto"
           >
             <Plus className="w-4 h-4" />
-            <span>Launch Canvas Node</span>
+            <span>Create New Page</span>
           </button>
         </div>
 
@@ -113,8 +113,8 @@ export default function WorkspaceHubClient() {
               <FileText className="w-5 h-5 text-[#1A1A1A]" />
             </div>
             <div>
-              <div className="text-[11px] font-mono font-bold text-gray-500 uppercase tracking-wider">Canvas Nodes</div>
-              <div className="text-2xl font-black text-[#1A1A1A] mt-0.5">{canvases.length} Active</div>
+              <div className="text-[11px] font-mono font-bold text-gray-500 uppercase tracking-wider">Total Pages</div>
+              <div className="text-2xl font-black text-[#1A1A1A] mt-0.5">{canvases.length} Pages</div>
             </div>
           </div>
 
@@ -125,7 +125,7 @@ export default function WorkspaceHubClient() {
             </div>
             <div>
               <div className="text-[11px] font-mono font-bold text-gray-500 uppercase tracking-wider">Collections</div>
-              <div className="text-2xl font-black text-[#1A1A1A] mt-0.5">{collections.length} Relational</div>
+              <div className="text-2xl font-black text-[#1A1A1A] mt-0.5">{collections.length} Tables</div>
             </div>
           </div>
 
@@ -136,7 +136,7 @@ export default function WorkspaceHubClient() {
             </div>
             <div>
               <div className="text-[11px] font-mono font-bold text-gray-500 uppercase tracking-wider">Total Blocks</div>
-              <div className="text-2xl font-black text-[#1A1A1A] mt-0.5">{elements.length} Polymorphic</div>
+              <div className="text-2xl font-black text-[#1A1A1A] mt-0.5">{elements.length} Blocks</div>
             </div>
           </div>
 
@@ -146,8 +146,8 @@ export default function WorkspaceHubClient() {
               <Clock className="w-5 h-5 text-[#2D6A4F]" />
             </div>
             <div>
-              <div className="text-[11px] font-mono font-bold text-gray-500 uppercase tracking-wider">Sync Backlog</div>
-              <div className="text-2xl font-black text-[#1A1A1A] mt-0.5">{syncQueueCount} Tx Pending</div>
+              <div className="text-[11px] font-mono font-bold text-gray-500 uppercase tracking-wider">Sync State</div>
+              <div className="text-2xl font-black text-[#1A1A1A] mt-0.5">{syncQueueCount === 0 ? 'Fully Saved' : `${syncQueueCount} Saving`}</div>
             </div>
           </div>
         </div>
@@ -155,19 +155,19 @@ export default function WorkspaceHubClient() {
         {/* Root Node List Section */}
         <div className="space-y-4">
           <h2 className="text-lg font-extrabold uppercase tracking-wider text-[#1A1A1A] flex items-center space-x-2">
-            <span>Primary Workspace Canvases</span>
+            <span>Primary Workspace Pages</span>
             <span className="w-2 h-2 rounded-full bg-[#2D6A4F]" />
           </h2>
 
           <div className="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-3 gap-6">
             {rootCanvases.length === 0 ? (
               <div className="col-span-full border-2 border-dashed border-[#1A1A1A] p-12 text-center bg-white rounded-none">
-                <p className="text-sm font-bold text-gray-500">No active root Canvases. Launch a fresh Canvas Node to get started.</p>
+                <p className="text-sm font-bold text-gray-500">No active pages yet. Create a new page to get started!</p>
                 <button
                   onClick={handleLaunchCanvas}
                   className="mt-4 px-4 py-2 bg-[#FFB703] border-2 border-[#1A1A1A] text-xs font-bold uppercase rounded-none neo-shadow-sm hover:translate-x-[1px] hover:translate-y-[1px] hover:shadow-none transition-all cursor-pointer"
                 >
-                  Create Root Canvas
+                  Create Page
                 </button>
               </div>
             ) : (
@@ -190,7 +190,7 @@ export default function WorkspaceHubClient() {
                     </div>
 
                     <div className="relative z-10 flex items-center justify-between text-xs font-extrabold text-[#2D6A4F] font-mono mt-4 pt-3 border-t border-gray-100">
-                      <span>OPEN CANVAS</span>
+                      <span>OPEN PAGE</span>
                       <ChevronRight className="w-4 h-4 group-hover:translate-x-1 transition-transform" />
                     </div>
                   </div>
@@ -205,20 +205,20 @@ export default function WorkspaceHubClient() {
           <div className="border-2 border-[#1A1A1A] bg-[#2D6A4F] text-white p-5 rounded-none neo-shadow space-y-3">
             <h3 className="text-sm font-black uppercase font-mono text-[#FFB703] flex items-center gap-1.5">
               <Zap className="w-4 h-4" />
-              <span>Offline-First Ledger Sync</span>
+              <span>Offline-Saved Pages</span>
             </h3>
             <p className="text-xs font-medium leading-relaxed opacity-90">
-              Zenith Canvas utilizes an offline-first client replication system with **IndexedDB (via Dexie.js)**. Write operations instantly update local states with zero-latency. A background sync agent flushes offline transactions dynamically to the secure server delta compression synchronizer.
+              Zenith Canvas saves your work automatically to your browser. You can write, edit, and create with zero delays. When you go online, your edits are safely backed up to the cloud.
             </p>
           </div>
 
           <div className="border-2 border-[#1A1A1A] bg-white p-5 rounded-none neo-shadow space-y-3">
             <h3 className="text-sm font-black uppercase font-mono text-[#2D6A4F] flex items-center gap-1.5">
               <Sparkles className="w-4 h-4" />
-              <span>Dynamic AST Data-Grids</span>
+              <span>Smart Data Tables</span>
             </h3>
             <p className="text-xs font-medium text-gray-600 leading-relaxed">
-              Incorporate multi-view databases inside document blocks. Toggle seamlessly between Grid (Spreadsheet), Kanban, and Gallery layouts. Filters are computed client-side using a logical AST query pipeline supporting nested matching rules.
+              Create databases right inside your pages. Switch easily between table grids and boards. You can easily filter and search through your rows.
             </p>
           </div>
         </div>
