@@ -140,6 +140,24 @@ interface OpsControlDeckProps {
   setAccentTheme: (val: string) => void;
   isCozyStoryMode: boolean;
   setIsCozyStoryMode: (val: boolean) => void;
+  stationeryTheme: 'mint' | 'dark';
+  setStationeryTheme: (val: 'mint' | 'dark') => void;
+  shadowDepth: number;
+  setShadowDepth: (val: number) => void;
+  borderWeight: 'fine' | 'classic' | 'bold';
+  setBorderWeight: (val: 'fine' | 'classic' | 'bold') => void;
+  textSize: number;
+  setTextSize: (val: number) => void;
+  smartScrollbar: boolean;
+  setSmartScrollbar: (val: boolean) => void;
+  highlightBrush: 'none' | 'yellow' | 'mint' | 'pink' | 'cyan';
+  setHighlightBrush: (val: 'none' | 'yellow' | 'mint' | 'pink' | 'cyan') => void;
+  spacingDensity: 'compact' | 'normal' | 'relaxed';
+  setSpacingDensity: (val: 'compact' | 'normal' | 'relaxed') => void;
+  headingFont: 'clean' | 'handwritten';
+  setHeadingFont: (val: 'clean' | 'handwritten') => void;
+  dividerStyle: 'straight' | 'dashed' | 'zigzag' | 'thick';
+  setDividerStyle: (val: 'straight' | 'dashed' | 'zigzag' | 'thick') => void;
 }
 
 export default function OpsControlDeck({ 
@@ -149,7 +167,25 @@ export default function OpsControlDeck({
   accentTheme,
   setAccentTheme,
   isCozyStoryMode,
-  setIsCozyStoryMode
+  setIsCozyStoryMode,
+  stationeryTheme,
+  setStationeryTheme,
+  shadowDepth,
+  setShadowDepth,
+  borderWeight,
+  setBorderWeight,
+  textSize,
+  setTextSize,
+  smartScrollbar,
+  setSmartScrollbar,
+  highlightBrush,
+  setHighlightBrush,
+  spacingDensity,
+  setSpacingDensity,
+  headingFont,
+  setHeadingFont,
+  dividerStyle,
+  setDividerStyle
 }: OpsControlDeckProps) {
   const [isOpen, setIsOpen] = useState(false);
   const [activeTab, setActiveTab] = useState<'ledger' | 'scratchpad' | 'ast' | 'snapshots' | 'themes'>('scratchpad');
@@ -953,6 +989,275 @@ export default function OpsControlDeck({
                         >
                           <div className={`w-4 h-4 rounded-none border border-[#1A1A1A] ${t.color}`} />
                           <span className="text-[9px] uppercase tracking-tighter">{t.name}</span>
+                        </button>
+                      ))}
+                    </div>
+                  </div>
+
+                  {/* Feature 31: Cozy Stationery Themes */}
+                  <div className="space-y-2 pt-2 border-t border-gray-300">
+                    <div>
+                      <h4 className="text-xs font-black uppercase text-[#1A1A1A]">Cozy Stationery Theme</h4>
+                      <p className="text-[9px] text-gray-500 leading-normal">
+                        Switch your background theme without any text layout shifting.
+                      </p>
+                    </div>
+                    <div className="grid grid-cols-2 gap-2">
+                      <button
+                        onClick={() => {
+                          setStationeryTheme('mint');
+                          localStorage.setItem(`zenith-stationery-theme-${canvasId}`, 'mint');
+                          addCliLog(`[THEME] Stationery Theme set to Mint-Tinted Gray.`);
+                        }}
+                        className={`border-2 border-[#1A1A1A] p-2 flex items-center justify-between rounded-none text-left cursor-pointer ${
+                          stationeryTheme === 'mint' ? 'bg-[#FFB703]/20 font-bold' : 'bg-white hover:bg-gray-50'
+                        }`}
+                      >
+                        <span className="text-[9px] font-mono font-bold">MINT GRAY (#F4F7F6)</span>
+                        {stationeryTheme === 'mint' && <span className="w-2 h-2 bg-emerald-500 rounded-full" />}
+                      </button>
+                      <button
+                        onClick={() => {
+                          setStationeryTheme('dark');
+                          localStorage.setItem(`zenith-stationery-theme-${canvasId}`, 'dark');
+                          addCliLog(`[THEME] Stationery Theme set to Cozy Dark Mode.`);
+                        }}
+                        className={`border-2 border-[#1A1A1A] p-2 flex items-center justify-between rounded-none text-left cursor-pointer ${
+                          stationeryTheme === 'dark' ? 'bg-[#FFB703]/20 font-bold' : 'bg-white hover:bg-gray-50'
+                        }`}
+                      >
+                        <span className="text-[9px] font-mono font-bold">COZY DARK (#0B0C10)</span>
+                        {stationeryTheme === 'dark' && <span className="w-2 h-2 bg-emerald-500 rounded-full" />}
+                      </button>
+                    </div>
+                  </div>
+
+                  {/* Feature 32: Shadow Depth Adjuster Bar */}
+                  <div className="space-y-2 pt-2 border-t border-gray-300">
+                    <div className="flex items-center justify-between">
+                      <h4 className="text-xs font-black uppercase text-[#1A1A1A]">Shadow Depth Adjuster</h4>
+                      <span className="text-[10px] font-mono font-bold px-1.5 py-0.5 border border-[#1A1A1A] bg-white">
+                        {shadowDepth}px
+                      </span>
+                    </div>
+                    <p className="text-[9px] text-gray-500 leading-normal">
+                      Adjust the neo-brutalist block drop-shadow depth.
+                    </p>
+                    <div className="flex items-center space-x-3">
+                      <span className="text-[9px] font-mono text-gray-400 font-bold">Flat</span>
+                      <input
+                        type="range"
+                        min="0"
+                        max="12"
+                        step="1"
+                        value={shadowDepth}
+                        onChange={(e) => {
+                          const depth = parseInt(e.target.value, 10);
+                          setShadowDepth(depth);
+                          localStorage.setItem(`zenith-shadow-depth-${canvasId}`, String(depth));
+                        }}
+                        className="flex-1 accent-[#FFB703] cursor-pointer"
+                      />
+                      <span className="text-[9px] font-mono text-gray-400 font-bold">Deep</span>
+                    </div>
+                  </div>
+
+                  {/* Feature 33: Bold Geometric Border Toggles */}
+                  <div className="space-y-2 pt-2 border-t border-gray-300">
+                    <div>
+                      <h4 className="text-xs font-black uppercase text-[#1A1A1A]">Bold Geometric Borders</h4>
+                      <p className="text-[9px] text-gray-500 leading-normal">
+                        Swap outlines between classic fine lines or bold notebook aesthetics.
+                      </p>
+                    </div>
+                    <div className="grid grid-cols-3 gap-1.5">
+                      {(['fine', 'classic', 'bold'] as const).map((w) => (
+                        <button
+                          key={w}
+                          onClick={() => {
+                            setBorderWeight(w);
+                            localStorage.setItem(`zenith-border-weight-${canvasId}`, w);
+                            addCliLog(`[THEME] Border weight set to "${w}".`);
+                          }}
+                          className={`border-2 border-[#1A1A1A] p-2 flex flex-col items-center justify-center space-y-1 rounded-none text-center cursor-pointer ${
+                            borderWeight === w ? 'bg-[#FFB703] font-black' : 'bg-white font-medium hover:bg-gray-50'
+                          }`}
+                        >
+                          <span className="text-[9px] uppercase tracking-tight">{w}</span>
+                        </button>
+                      ))}
+                    </div>
+                  </div>
+
+                  {/* Feature 35: Universal Text Size Controller */}
+                  <div className="space-y-2 pt-2 border-t border-gray-300">
+                    <div className="flex items-center justify-between">
+                      <h4 className="text-xs font-black uppercase text-[#1A1A1A]">Universal Text Size</h4>
+                      <span className="text-[10px] font-mono font-bold px-1.5 py-0.5 border border-[#1A1A1A] bg-white">
+                        {textSize}px
+                      </span>
+                    </div>
+                    <p className="text-[9px] text-gray-500 leading-normal">
+                      Instantly grow fonts across the workspace from compact to senior-friendly.
+                    </p>
+                    <div className="flex items-center space-x-3">
+                      <span className="text-[9px] font-mono text-gray-400 font-bold">Compact</span>
+                      <input
+                        type="range"
+                        min="12"
+                        max="24"
+                        step="1"
+                        value={textSize}
+                        onChange={(e) => {
+                          const size = parseInt(e.target.value, 10);
+                          setTextSize(size);
+                          localStorage.setItem(`zenith-text-size-${canvasId}`, String(size));
+                        }}
+                        className="flex-1 accent-[#FFB703] cursor-pointer"
+                      />
+                      <span className="text-[9px] font-mono text-gray-400 font-bold">Jumbo</span>
+                    </div>
+                  </div>
+
+                  {/* Feature 36: Low-Profile Smart Scrollbars Toggle */}
+                  <div className="space-y-2 pt-2 border-t border-gray-300">
+                    <div>
+                      <h4 className="text-xs font-black uppercase text-[#1A1A1A]">Smart Scrollbars</h4>
+                      <p className="text-[9px] text-gray-500 leading-normal">
+                        Modern scroll lines that hide completely when inactive to maximize space.
+                      </p>
+                    </div>
+                    <button
+                      onClick={() => {
+                        setSmartScrollbar(!smartScrollbar);
+                        localStorage.setItem(`zenith-smart-scrollbar-${canvasId}`, String(!smartScrollbar));
+                        addCliLog(`[THEME] Smart Scrollbars turned ${!smartScrollbar ? 'ON' : 'OFF'}.`);
+                      }}
+                      className={`w-full border-2 border-[#1A1A1A] p-2 flex items-center justify-between rounded-none text-left cursor-pointer ${
+                        smartScrollbar ? 'bg-[#FFB703]/20 font-bold' : 'bg-white font-medium hover:bg-gray-50'
+                      }`}
+                    >
+                      <span className="text-[9px] font-mono font-bold uppercase">Smart Low-Profile Scrollbars</span>
+                      <span className="text-[9px] font-mono px-1.5 py-0.5 border border-[#1A1A1A] bg-white">
+                        {smartScrollbar ? 'ACTIVE' : 'STANDARD'}
+                      </span>
+                    </button>
+                  </div>
+
+                  {/* Feature 37: Solid Palette Highlight Brush */}
+                  <div className="space-y-2 pt-2 border-t border-gray-300">
+                    <div>
+                      <h4 className="text-xs font-black uppercase text-[#1A1A1A]">Solid Highlight Brush</h4>
+                      <p className="text-[9px] text-gray-500 leading-normal">
+                        High-impact flat highlight colors to style header blocks without blurry gradients.
+                      </p>
+                    </div>
+                    <div className="grid grid-cols-5 gap-1">
+                      {(['none', 'yellow', 'mint', 'pink', 'cyan'] as const).map((b) => (
+                        <button
+                          key={b}
+                          onClick={() => {
+                            setHighlightBrush(b);
+                            localStorage.setItem(`zenith-highlight-brush-${canvasId}`, b);
+                            addCliLog(`[THEME] Highlight Brush set to "${b}".`);
+                          }}
+                          className={`border-2 border-[#1A1A1A] p-1.5 flex flex-col items-center justify-center space-y-1 rounded-none text-center cursor-pointer ${
+                            highlightBrush === b ? 'bg-[#FFB703] font-black' : 'bg-white font-medium hover:bg-gray-50'
+                          }`}
+                        >
+                          <span className="text-[8px] uppercase tracking-tighter truncate w-full">{b}</span>
+                        </button>
+                      ))}
+                    </div>
+                  </div>
+
+                  {/* Feature 38: Vertical Spacing Densifier Control */}
+                  <div className="space-y-2 pt-2 border-t border-gray-300">
+                    <div>
+                      <h4 className="text-xs font-black uppercase text-[#1A1A1A]">Vertical Spacing Density</h4>
+                      <p className="text-[9px] text-gray-500 leading-normal">
+                        Pack lines tightly or open them up wide for comfortable touch interactions.
+                      </p>
+                    </div>
+                    <div className="grid grid-cols-3 gap-1.5">
+                      {(['compact', 'normal', 'relaxed'] as const).map((d) => (
+                        <button
+                          key={d}
+                          onClick={() => {
+                            setSpacingDensity(d);
+                            localStorage.setItem(`zenith-spacing-density-${canvasId}`, d);
+                            addCliLog(`[THEME] Spacing Density set to "${d}".`);
+                          }}
+                          className={`border-2 border-[#1A1A1A] p-2 flex flex-col items-center justify-center space-y-1 rounded-none text-center cursor-pointer ${
+                            spacingDensity === d ? 'bg-[#FFB703] font-black' : 'bg-white font-medium hover:bg-gray-50'
+                          }`}
+                        >
+                          <span className="text-[9px] uppercase tracking-tight">{d}</span>
+                        </button>
+                      ))}
+                    </div>
+                  </div>
+
+                  {/* Feature 39: Handwritten vs Clean Font Switcher */}
+                  <div className="space-y-2 pt-2 border-t border-gray-300">
+                    <div>
+                      <h4 className="text-xs font-black uppercase text-[#1A1A1A]">Handwritten Header Font</h4>
+                      <p className="text-[9px] text-gray-500 leading-normal">
+                        Instantly alternate headings between a bold, fun display handwriting or clean layout.
+                      </p>
+                    </div>
+                    <div className="grid grid-cols-2 gap-2">
+                      <button
+                        onClick={() => {
+                          setHeadingFont('clean');
+                          localStorage.setItem(`zenith-heading-font-${canvasId}`, 'clean');
+                          addCliLog(`[THEME] Heading font set to Clean Sans.`);
+                        }}
+                        className={`border-2 border-[#1A1A1A] p-2 flex items-center justify-between rounded-none text-left cursor-pointer ${
+                          headingFont === 'clean' ? 'bg-[#FFB703]/20 font-bold' : 'bg-white hover:bg-gray-50'
+                        }`}
+                      >
+                        <span className="text-[9px] font-mono font-bold uppercase">Clean Sans</span>
+                        {headingFont === 'clean' && <span className="w-2 h-2 bg-emerald-500 rounded-full" />}
+                      </button>
+                      <button
+                        onClick={() => {
+                          setHeadingFont('handwritten');
+                          localStorage.setItem(`zenith-heading-font-${canvasId}`, 'handwritten');
+                          addCliLog(`[THEME] Heading font set to Handwritten.`);
+                        }}
+                        className={`border-2 border-[#1A1A1A] p-2 flex items-center justify-between rounded-none text-left cursor-pointer ${
+                          headingFont === 'handwritten' ? 'bg-[#FFB703]/20 font-bold' : 'bg-white hover:bg-gray-50'
+                        }`}
+                      >
+                        <span className="text-[9px] font-mono font-bold uppercase">Handwritten</span>
+                        {headingFont === 'handwritten' && <span className="w-2 h-2 bg-emerald-500 rounded-full" />}
+                      </button>
+                    </div>
+                  </div>
+
+                  {/* Feature 40: Cute Divider Accent Lines */}
+                  <div className="space-y-2 pt-2 border-t border-gray-300">
+                    <div>
+                      <h4 className="text-xs font-black uppercase text-[#1A1A1A]">Cute Divider Accent Style</h4>
+                      <p className="text-[9px] text-gray-500 leading-normal">
+                        Swap divider rules with dashed threads, cute zig-zags, or thick block steps.
+                      </p>
+                    </div>
+                    <div className="grid grid-cols-4 gap-1">
+                      {(['straight', 'dashed', 'zigzag', 'thick'] as const).map((s) => (
+                        <button
+                          key={s}
+                          onClick={() => {
+                            setDividerStyle(s);
+                            localStorage.setItem(`zenith-divider-style-${canvasId}`, s);
+                            addCliLog(`[THEME] Divider Style set to "${s}".`);
+                          }}
+                          className={`border-2 border-[#1A1A1A] p-1.5 flex flex-col items-center justify-center space-y-1 rounded-none text-center cursor-pointer ${
+                            dividerStyle === s ? 'bg-[#FFB703] font-black' : 'bg-white font-medium hover:bg-gray-50'
+                          }`}
+                        >
+                          <span className="text-[8px] uppercase tracking-tight truncate w-full">{s}</span>
                         </button>
                       ))}
                     </div>

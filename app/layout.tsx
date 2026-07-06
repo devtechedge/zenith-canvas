@@ -1,5 +1,5 @@
 import type {Metadata} from 'next';
-import { Plus_Jakarta_Sans, JetBrains_Mono } from 'next/font/google';
+import { Plus_Jakarta_Sans, JetBrains_Mono, Caveat } from 'next/font/google';
 import './globals.css'; // Global styles
 
 const plusJakartaSans = Plus_Jakarta_Sans({
@@ -12,6 +12,11 @@ const jetbrainsMono = JetBrains_Mono({
   variable: '--font-mono',
 });
 
+const caveat = Caveat({
+  subsets: ['latin'],
+  variable: '--font-handwritten',
+});
+
 export const metadata: Metadata = {
   title: 'Zenith Canvas — Distributed Workspace Engine',
   description: 'An enterprise-grade offline-first distributed block-based workspace and relational database application.',
@@ -19,7 +24,7 @@ export const metadata: Metadata = {
 
 export default function RootLayout({children}: {children: React.ReactNode}) {
   return (
-    <html lang="en" className={`${plusJakartaSans.variable} ${jetbrainsMono.variable}`}>
+    <html lang="en" className={`${plusJakartaSans.variable} ${jetbrainsMono.variable} ${caveat.variable}`}>
       <body className="font-sans antialiased text-[#1A1A1A] bg-[#F4F7F6]" suppressHydrationWarning>
         {children}
       </body>

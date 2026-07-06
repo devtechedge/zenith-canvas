@@ -180,6 +180,55 @@ export default function CanvasWorkspaceClient() {
     if (typeof window === 'undefined') return false;
     return localStorage.getItem(`zenith-cozy-mode-${canvasId}`) === 'true';
   });
+
+  // Batch 4: Look, Feeling & Personalization Customizations (Features 31-40)
+  const [stationeryTheme, setStationeryTheme] = useState<'mint' | 'dark'>(() => {
+    if (typeof window === 'undefined') return 'mint';
+    return (localStorage.getItem(`zenith-stationery-theme-${canvasId}`) as 'mint' | 'dark') || 'mint';
+  });
+
+  const [shadowDepth, setShadowDepth] = useState<number>(() => {
+    if (typeof window === 'undefined') return 4;
+    const val = localStorage.getItem(`zenith-shadow-depth-${canvasId}`);
+    return val ? parseInt(val, 10) : 4;
+  });
+
+  const [borderWeight, setBorderWeight] = useState<'fine' | 'classic' | 'bold'>(() => {
+    if (typeof window === 'undefined') return 'classic';
+    return (localStorage.getItem(`zenith-border-weight-${canvasId}`) as 'fine' | 'classic' | 'bold') || 'classic';
+  });
+
+  const [textSize, setTextSize] = useState<number>(() => {
+    if (typeof window === 'undefined') return 14;
+    const val = localStorage.getItem(`zenith-text-size-${canvasId}`);
+    return val ? parseInt(val, 10) : 14;
+  });
+
+  const [smartScrollbar, setSmartScrollbar] = useState<boolean>(() => {
+    if (typeof window === 'undefined') return true;
+    return localStorage.getItem(`zenith-smart-scrollbar-${canvasId}`) !== 'false';
+  });
+
+  const [highlightBrush, setHighlightBrush] = useState<'none' | 'yellow' | 'mint' | 'pink' | 'cyan'>(() => {
+    if (typeof window === 'undefined') return 'none';
+    return (localStorage.getItem(`zenith-highlight-brush-${canvasId}`) as 'none' | 'yellow' | 'mint' | 'pink' | 'cyan') || 'none';
+  });
+
+  const [spacingDensity, setSpacingDensity] = useState<'compact' | 'normal' | 'relaxed'>(() => {
+    if (typeof window === 'undefined') return 'normal';
+    return (localStorage.getItem(`zenith-spacing-density-${canvasId}`) as 'compact' | 'normal' | 'relaxed') || 'normal';
+  });
+
+  const [headingFont, setHeadingFont] = useState<'clean' | 'handwritten'>(() => {
+    if (typeof window === 'undefined') return 'clean';
+    return (localStorage.getItem(`zenith-heading-font-${canvasId}`) as 'clean' | 'handwritten') || 'clean';
+  });
+
+  const [dividerStyle, setDividerStyle] = useState<'straight' | 'dashed' | 'zigzag' | 'thick'>(() => {
+    if (typeof window === 'undefined') return 'straight';
+    return (localStorage.getItem(`zenith-divider-style-${canvasId}`) as 'straight' | 'dashed' | 'zigzag' | 'thick') || 'straight';
+  });
+
   const [isMobileSidebarOpen, setIsMobileSidebarOpen] = useState(false);
   const [isLocked, setIsLocked] = useState<boolean>(() => {
     if (typeof window === 'undefined') return false;
@@ -766,7 +815,31 @@ export default function CanvasWorkspaceClient() {
   }
 
   return (
-    <div className="flex h-screen overflow-hidden font-sans text-[#1A1A1A] bg-[#F4F7F6]">
+    <div 
+      className={`flex h-screen overflow-hidden font-sans transition-all duration-300 ${
+        stationeryTheme === 'dark' ? 'stationery-dark text-slate-100' : 'text-[#1A1A1A]'
+      } ${
+        smartScrollbar ? 'smart-scrollbar-active' : ''
+      } ${
+        `highlight-brush-${highlightBrush}`
+      } ${
+        `density-${spacingDensity}`
+      } ${
+        headingFont === 'handwritten' ? 'font-handwritten-active' : ''
+      }`}
+      style={{
+        backgroundColor: stationeryTheme === 'dark' ? '#0B0C10' : '#F4F7F6',
+        color: stationeryTheme === 'dark' ? '#F4F7F6' : '#1A1A1A',
+        ['--bg-stationery' as any]: stationeryTheme === 'dark' ? '#0B0C10' : '#F4F7F6',
+        ['--text-primary' as any]: stationeryTheme === 'dark' ? '#F4F7F6' : '#1A1A1A',
+        ['--bg-card' as any]: stationeryTheme === 'dark' ? '#15161E' : '#FFFFFF',
+        ['--border-color' as any]: stationeryTheme === 'dark' ? '#C5C6C7' : '#1A1A1A',
+        ['--shadow-color' as any]: stationeryTheme === 'dark' ? '#000000' : '#1A1A1A',
+        ['--shadow-depth' as any]: `${shadowDepth}px`,
+        ['--border-weight' as any]: borderWeight === 'fine' ? '1px' : borderWeight === 'bold' ? '4px' : '2px',
+        ['--font-scale' as any]: `${textSize / 14}`,
+      }}
+    >
       {/* Sidebar navigation */}
       {!isFocusMode && (
         <Sidebar 
@@ -959,7 +1032,7 @@ export default function CanvasWorkspaceClient() {
         </header>
  
         {/* Cover image area */}
-        <div className="flex-1 overflow-y-auto relative">
+        <div className="flex-1 overflow-y-auto relative canvas-personalizer-wrapper">
           {isFocusMode && <AcousticWaveOverlay />}
           
           {/* Dynamic Cover Banner */}
@@ -1082,6 +1155,59 @@ export default function CanvasWorkspaceClient() {
                       {item.label}
                     </button>
                   ))}
+                </div>
+              </div>
+
+              {/* Feature 34: Beautiful Page Cover Banners */}
+              <div className="border-t border-gray-100 pt-3">
+                <div className="text-[10px] font-bold font-mono text-gray-400 mb-2 uppercase tracking-wide">
+                  🌸 BEAUTIFUL PAGE COVER BANNERS
+                </div>
+                <div className="grid grid-cols-2 sm:grid-cols-4 gap-2">
+                  <button
+                    onClick={async () => {
+                      const url = 'https://images.unsplash.com/photo-1513151233558-d860c5398176?q=80&w=1200';
+                      await updateCanvasCover(canvasId, url);
+                      setCoverUrl(url);
+                      console.log("[THEME] Cover: Family Hub Pastel Graphics applied.");
+                    }}
+                    className="p-1.5 border-2 border-[#1A1A1A] bg-pink-100 text-[#1A1A1A] hover:bg-pink-200 text-[10px] font-black font-mono uppercase cursor-pointer text-center hover:scale-[1.02] transition-transform"
+                  >
+                    🏡 Family Hub
+                  </button>
+                  <button
+                    onClick={async () => {
+                      const url = 'https://images.unsplash.com/photo-1503676260728-1c00da094a0b?q=80&w=1200';
+                      await updateCanvasCover(canvasId, url);
+                      setCoverUrl(url);
+                      console.log("[THEME] Cover: Creative Classroom applied.");
+                    }}
+                    className="p-1.5 border-2 border-[#1A1A1A] bg-sky-100 text-[#1A1A1A] hover:bg-sky-200 text-[10px] font-black font-mono uppercase cursor-pointer text-center hover:scale-[1.02] transition-transform"
+                  >
+                    🎓 School Desk
+                  </button>
+                  <button
+                    onClick={async () => {
+                      const url = 'https://images.unsplash.com/photo-1517842645767-c639042777db?q=80&w=1200';
+                      await updateCanvasCover(canvasId, url);
+                      setCoverUrl(url);
+                      console.log("[THEME] Cover: Cute Stationery Workspace applied.");
+                    }}
+                    className="p-1.5 border-2 border-[#1A1A1A] bg-amber-100 text-[#1A1A1A] hover:bg-amber-200 text-[10px] font-black font-mono uppercase cursor-pointer text-center hover:scale-[1.02] transition-transform"
+                  >
+                    ✏️ Cozy Stationery
+                  </button>
+                  <button
+                    onClick={async () => {
+                      const url = 'https://images.unsplash.com/photo-1448375240586-882707db888b?q=80&w=1200';
+                      await updateCanvasCover(canvasId, url);
+                      setCoverUrl(url);
+                      console.log("[THEME] Cover: Lovely Botanicals applied.");
+                    }}
+                    className="p-1.5 border-2 border-[#1A1A1A] bg-emerald-100 text-[#1A1A1A] hover:bg-emerald-200 text-[10px] font-black font-mono uppercase cursor-pointer text-center hover:scale-[1.02] transition-transform"
+                  >
+                    🌿 Lovely Foliage
+                  </button>
                 </div>
               </div>
             </div>
@@ -1244,7 +1370,8 @@ export default function CanvasWorkspaceClient() {
  
           {/* Bi-directional Backlinks Section */}
           {backlinks.length > 0 && (
-            <div className="max-w-4xl mx-auto px-6 pb-12 mt-12 pt-8 border-t-2 border-dashed border-[#1A1A1A]">
+            <div className="max-w-4xl mx-auto px-6 pb-12 mt-12">
+              <div className={`cute-divider divider-${dividerStyle} mb-8`} />
               <div className="flex items-center space-x-2 text-xs font-mono font-bold text-gray-500 uppercase tracking-widest mb-4">
                 <Share2 className="w-4 h-4 text-[#2D6A4F]" />
                 <span>Bi-directional Backlinks ({backlinks.length})</span>
@@ -1266,7 +1393,8 @@ export default function CanvasWorkspaceClient() {
           )}
 
           {/* Append-Only Live Transaction Audit Ledger */}
-          <div className="max-w-4xl mx-auto px-6 pb-24 mt-8 pt-6 border-t-2 border-dashed border-[#1A1A1A]">
+          <div className="max-w-4xl mx-auto px-6 pb-24 mt-8">
+            <div className={`cute-divider divider-${dividerStyle} mb-6`} />
             <div className="border-4 border-[#1A1A1A] bg-[#0F172A] text-slate-300 rounded-none overflow-hidden neo-shadow-sm">
               {/* Header Bar */}
               <div className="bg-[#1E293B] px-4 py-2 border-b-2 border-[#1A1A1A] flex items-center justify-between">
@@ -1404,6 +1532,24 @@ export default function CanvasWorkspaceClient() {
           setIsCozyStoryMode(val);
           localStorage.setItem(`zenith-cozy-mode-${canvasId}`, val ? 'true' : 'false');
         }}
+        stationeryTheme={stationeryTheme}
+        setStationeryTheme={setStationeryTheme}
+        shadowDepth={shadowDepth}
+        setShadowDepth={setShadowDepth}
+        borderWeight={borderWeight}
+        setBorderWeight={setBorderWeight}
+        textSize={textSize}
+        setTextSize={setTextSize}
+        smartScrollbar={smartScrollbar}
+        setSmartScrollbar={setSmartScrollbar}
+        highlightBrush={highlightBrush}
+        setHighlightBrush={setHighlightBrush}
+        spacingDensity={spacingDensity}
+        setSpacingDensity={setSpacingDensity}
+        headingFont={headingFont}
+        setHeadingFont={setHeadingFont}
+        dividerStyle={dividerStyle}
+        setDividerStyle={setDividerStyle}
       />
 
       {/* Page History Timeline Slide Overlay (Feature 30) */}

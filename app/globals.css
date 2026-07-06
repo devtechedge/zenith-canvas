@@ -70,3 +70,247 @@
 *:hover {
   scrollbar-color: rgba(26, 26, 26, 0.2) transparent;
 }
+
+/* --- Personalization Theme Overrides (Features 31-40) --- */
+
+/* Cozy Stationery Theme overrides */
+.stationery-dark {
+  --bg-stationery: #0B0C10;
+  --text-primary: #F4F7F6;
+  --bg-card: #15161E;
+  --border-color: #C5C6C7;
+  --shadow-color: #000000;
+  color: var(--text-primary);
+}
+
+/* Force dark theme elements */
+.stationery-dark .bg-white,
+.stationery-dark .bg-slate-50,
+.stationery-dark .bg-gray-50,
+.stationery-dark .bg-[#FFF] {
+  background-color: var(--bg-card) !important;
+  color: var(--text-primary) !important;
+}
+
+.stationery-dark .bg-\[\#F4F7F6\] {
+  background-color: var(--bg-stationery) !important;
+}
+
+.stationery-dark .text-\[\#1A1A1A\],
+.stationery-dark .text-gray-900,
+.stationery-dark .text-gray-700,
+.stationery-dark .text-slate-800 {
+  color: var(--text-primary) !important;
+}
+
+.stationery-dark .text-gray-500,
+.stationery-dark .text-slate-500 {
+  color: #8A9A86 !important; /* warm dim green/gray for low secondary text */
+}
+
+.stationery-dark .border-\[\#1A1A1A\],
+.stationery-dark .border-black,
+.stationery-dark .border-gray-200 {
+  border-color: var(--border-color) !important;
+}
+
+.stationery-dark .border-y-\[\#1A1A1A\] {
+  border-top-color: var(--border-color) !important;
+  border-bottom-color: var(--border-color) !important;
+}
+
+.stationery-dark .border-r-\[\#1A1A1A\] {
+  border-right-color: var(--border-color) !important;
+}
+
+.stationery-dark .border-l-\[\#1A1A1A\] {
+  border-left-color: var(--border-color) !important;
+}
+
+.stationery-dark textarea,
+.stationery-dark input {
+  color: var(--text-primary) !important;
+  background-color: transparent !important;
+}
+
+/* Dynamic Shadow Depth */
+.neo-shadow, 
+[class*="shadow-[4px_4px_0px_0px_"],
+[class*="shadow-[2px_2px_0px_0px_"],
+[class*="shadow-[3px_3px_0px_"] {
+  box-shadow: var(--shadow-depth) var(--shadow-depth) 0px 0px var(--shadow-color) !important;
+}
+
+.neo-shadow-sm {
+  box-shadow: max(1px, calc(var(--shadow-depth) / 2)) max(1px, calc(var(--shadow-depth) / 2)) 0px 0px var(--shadow-color) !important;
+}
+
+.neo-shadow-lg {
+  box-shadow: calc(var(--shadow-depth) * 2) calc(var(--shadow-depth) * 2) 0px 0px var(--shadow-color) !important;
+}
+
+/* Dynamic Border weights */
+.border-2,
+.border-\[2px\],
+.border-4,
+.border-b-2 {
+  border-width: var(--border-weight) !important;
+}
+
+/* Page Spacing Density overrides */
+.density-compact #canvas-editor-container {
+  gap: 0.5rem !important; /* 8px packing */
+}
+.density-compact #canvas-editor-container > * {
+  margin-top: 0 !important;
+  margin-bottom: 0 !important;
+}
+.density-compact #canvas-editor-container .py-8 {
+  padding-top: 1rem !important;
+  padding-bottom: 1rem !important;
+}
+
+.density-relaxed #canvas-editor-container {
+  gap: 2.5rem !important; /* 40px layout wide */
+}
+.density-relaxed #canvas-editor-container > * {
+  margin-top: 0 !important;
+  margin-bottom: 0 !important;
+}
+.density-relaxed #canvas-editor-container .py-8 {
+  padding-top: 3.5rem !important;
+  padding-bottom: 3.5rem !important;
+}
+
+/* Universal Text scaling */
+.canvas-personalizer-wrapper {
+  font-size: calc(1rem * var(--font-scale)) !important;
+}
+.canvas-personalizer-wrapper p,
+.canvas-personalizer-wrapper textarea,
+.canvas-personalizer-wrapper input,
+.canvas-personalizer-wrapper .text-sm {
+  font-size: calc(0.875rem * var(--font-scale)) !important;
+}
+.canvas-personalizer-wrapper h1,
+.canvas-personalizer-wrapper .text-3xl,
+.canvas-personalizer-wrapper .text-4xl {
+  font-size: calc(1.875rem * var(--font-scale)) !important;
+}
+.canvas-personalizer-wrapper h2,
+.canvas-personalizer-wrapper .text-xl,
+.canvas-personalizer-wrapper .text-2xl {
+  font-size: calc(1.25rem * var(--font-scale)) !important;
+}
+
+/* Low-profile smart scrollbars override when enabled */
+.smart-scrollbar-active *::-webkit-scrollbar-thumb {
+  background-color: transparent !important;
+}
+.smart-scrollbar-active *:hover::-webkit-scrollbar-thumb {
+  background-color: rgba(120, 120, 120, 0.25) !important;
+}
+.stationery-dark.smart-scrollbar-active *:hover::-webkit-scrollbar-thumb {
+  background-color: rgba(255, 255, 255, 0.2) !important;
+}
+
+/* Flat Brush Highlights (for headers) */
+.highlight-brush-yellow h1, 
+.highlight-brush-yellow h2,
+.highlight-brush-yellow .text-3xl,
+.highlight-brush-yellow .text-xl {
+  background-color: #FFDE4D !important;
+  color: #1A1A1A !important;
+  padding: 4px 10px !important;
+  border: var(--border-weight) solid var(--border-color) !important;
+  box-shadow: var(--shadow-depth) var(--shadow-depth) 0px 0px var(--shadow-color) !important;
+  display: inline-block !important;
+  width: auto !important;
+  max-width: 100% !important;
+}
+
+.highlight-brush-mint h1, 
+.highlight-brush-mint h2,
+.highlight-brush-mint .text-3xl,
+.highlight-brush-mint .text-xl {
+  background-color: #A8E6CF !important;
+  color: #1A1A1A !important;
+  padding: 4px 10px !important;
+  border: var(--border-weight) solid var(--border-color) !important;
+  box-shadow: var(--shadow-depth) var(--shadow-depth) 0px 0px var(--shadow-color) !important;
+  display: inline-block !important;
+  width: auto !important;
+  max-width: 100% !important;
+}
+
+.highlight-brush-pink h1, 
+.highlight-brush-pink h2,
+.highlight-brush-pink .text-3xl,
+.highlight-brush-pink .text-xl {
+  background-color: #FFB7B2 !important;
+  color: #1A1A1A !important;
+  padding: 4px 10px !important;
+  border: var(--border-weight) solid var(--border-color) !important;
+  box-shadow: var(--shadow-depth) var(--shadow-depth) 0px 0px var(--shadow-color) !important;
+  display: inline-block !important;
+  width: auto !important;
+  max-width: 100% !important;
+}
+
+.highlight-brush-cyan h1, 
+.highlight-brush-cyan h2,
+.highlight-brush-cyan .text-3xl,
+.highlight-brush-cyan .text-xl {
+  background-color: #A2D2FF !important;
+  color: #1A1A1A !important;
+  padding: 4px 10px !important;
+  border: var(--border-weight) solid var(--border-color) !important;
+  box-shadow: var(--shadow-depth) var(--shadow-depth) 0px 0px var(--shadow-color) !important;
+  display: inline-block !important;
+  width: auto !important;
+  max-width: 100% !important;
+}
+
+/* Handwritten Headings Font switcher */
+.font-handwritten-active h1,
+.font-handwritten-active h2,
+.font-handwritten-active h3,
+.font-handwritten-active .text-3xl,
+.font-handwritten-active .text-4xl,
+.font-handwritten-active .text-xl,
+.font-handwritten-active .text-2xl {
+  font-family: var(--font-handwritten), cursive, sans-serif !important;
+  font-weight: 700 !important;
+}
+
+/* Cute Divider styles */
+.cute-divider {
+  width: 100%;
+  margin: 1.5rem 0;
+  position: relative;
+}
+
+.cute-divider.divider-straight {
+  border-bottom: var(--border-weight) solid var(--border-color) !important;
+}
+
+.cute-divider.divider-dashed {
+  border-bottom: var(--border-weight) dashed var(--border-color) !important;
+}
+
+.cute-divider.divider-zigzag {
+  border-bottom: none !important;
+  height: 8px !important;
+  background-color: var(--border-color) !important;
+  -webkit-mask-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='12' height='6' viewBox='0 0 12 6'%3E%3Cpath d='M0,6 L6,0 L12,6' fill='none' stroke='black' stroke-width='2'/%3E%3C/svg%3E") !important;
+  mask-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='12' height='6' viewBox='0 0 12 6'%3E%3Cpath d='M0,6 L6,0 L12,6' fill='none' stroke='black' stroke-width='2'/%3E%3C/svg%3E") !important;
+  -webkit-mask-size: 12px 6px !important;
+  mask-size: 12px 6px !important;
+  -webkit-mask-repeat: repeat-x !important;
+  mask-repeat: repeat-x !important;
+}
+
+.cute-divider.divider-thick {
+  border-bottom: calc(var(--border-weight) * 3) solid var(--border-color) !important;
+}
+
