@@ -103,6 +103,10 @@ const generateTableId = () => {
   return `table-${Math.random().toString(36).substring(2, 11)}`;
 };
 
+const generateCanvasId = () => {
+  return `canvas-${Math.random().toString(36).substring(2, 9)}`;
+};
+
 interface CanvasEditorProps {
   canvasId: string;
   isLocked?: boolean;
@@ -450,6 +454,16 @@ export default function CanvasEditor({ canvasId, isLocked = false, isCozyStoryMo
     elementId: string;
   } | null>(null);
 
+  // Feature 23: Quick-Jump Page Pointer state
+  const [pagePointerState, setPagePointerState] = useState<{
+    visible: boolean;
+    top: number;
+    left: number;
+    elementId: string;
+    searchQuery: string;
+    selectedIndex: number;
+  } | null>(null);
+
   // Floating text selection state
   const [selectionMenuState, setSelectionMenuState] = useState<{
     visible: boolean;
@@ -511,6 +525,24 @@ export default function CanvasEditor({ canvasId, isLocked = false, isCozyStoryMo
       }
     }
 
+    if (e.key === '[') {
+      const cursor = textarea.selectionStart;
+      if (cursor > 0 && value[cursor - 1] === '[') {
+        const { offsetLeft, offsetTop } = textarea;
+        const rect = textarea.getBoundingClientRect();
+        const parentRect = textarea.offsetParent?.getBoundingClientRect();
+
+        setPagePointerState({
+          visible: true,
+          top: offsetTop + 24,
+          left: Math.min(rect.left - (parentRect?.left || 0) + 12, 400),
+          elementId: el.id,
+          searchQuery: '',
+          selectedIndex: 0,
+        });
+      }
+    }
+
     if (e.key === '/') {
       // Find coordinates of cursor
       const { offsetLeft, offsetTop } = textarea;
@@ -544,6 +576,48 @@ export default function CanvasEditor({ canvasId, isLocked = false, isCozyStoryMo
         }
       }
     }
+  };
+
+  const handleInsertPageLink = async (targetId: string, targetTitle: string) => {
+    if (!pagePointerState) return;
+    
+    const { elementId } = pagePointerState;
+    const el = elements.find(item => item.id === elementId);
+    if (!el) {
+      setPagePointerState(null);
+      return;
+    }
+
+    // 1. Erase the trigger sequence "[[" from the element content and insert backlink
+    const textarea = document.getElementById(`textarea-${elementId}`) as HTMLTextAreaElement | null;
+    let newContent = el.content;
+    if (textarea) {
+      const cursor = textarea.selectionStart;
+      const triggerIdx = el.content.lastIndexOf('[[', cursor);
+      if (triggerIdx !== -1) {
+        newContent = el.content.substring(0, triggerIdx) + `[[${targetTitle}]] ` + el.content.substring(cursor);
+      } else {
+        newContent = el.content + ` [[${targetTitle}]]`;
+      }
+    } else {
+      newContent = el.content + ` [[${targetTitle}]]`;
+    }
+
+    await updateCanvasElement(elementId, { content: newContent });
+
+    // 2. Append a physical Wiki Page Link block right below
+    const nextSortOrder = el.sortOrder + 0.05;
+    await createCanvasElement(canvasId, 'page_link', `Link to ${targetTitle}`, nextSortOrder);
+    
+    const lastElements = await db.elements.where('canvasId').equals(canvasId).toArray();
+    const linkEl = lastElements.find(item => item.sortOrder === nextSortOrder);
+    if (linkEl) {
+      await updateCanvasElement(linkEl.id, {
+        properties: JSON.stringify({ targetCanvasId: targetId })
+      });
+    }
+
+    setPagePointerState(null);
   };
 
   const handleSlashSelect = async (commandId: CommandItem['id']) => {
@@ -725,6 +799,129 @@ export default function CanvasEditor({ canvasId, isLocked = false, isCozyStoryMo
           }}
           onClose={() => setSelectionMenuState(null)}
         />
+      )}
+
+      {/* Quick-Jump Page Pointer Overlay (Feature 23) */}
+      {pagePointerState?.visible && (
+        <div
+          className="absolute z-50 w-72 bg-white border-4 border-[#1A1A1A] shadow-[4px_4px_0px_0px_#1A1A1A] p-3 flex flex-col animate-fade-in"
+          style={{ top: pagePointerState.top, left: pagePointerState.left }}
+        >
+          <div className="text-[10px] font-mono font-black text-[#FFB703] bg-[#1A1A1A] text-center py-1 border-2 border-black uppercase tracking-widest mb-2 flex items-center justify-between px-2">
+            <span>🔗 LINK ANOTHER PAGE</span>
+            <button
+              onClick={() => setPagePointerState(null)}
+              className="text-[#FFB703] hover:text-white font-bold cursor-pointer"
+            >
+              ✕
+            </button>
+          </div>
+          
+          <input
+            type="text"
+            autoFocus
+            value={pagePointerState.searchQuery}
+            onChange={(e) => {
+              setPagePointerState(prev => prev ? {
+                ...prev,
+                searchQuery: e.target.value,
+                selectedIndex: 0
+              } : null);
+            }}
+            onKeyDown={async (e) => {
+              const query = pagePointerState.searchQuery.toLowerCase();
+              const items = canvasesList.filter(c => c.title.toLowerCase().includes(query));
+              if (e.key === 'ArrowDown') {
+                e.preventDefault();
+                setPagePointerState(prev => prev ? {
+                  ...prev,
+                  selectedIndex: (prev.selectedIndex + 1) % Math.max(1, items.length)
+                } : null);
+              } else if (e.key === 'ArrowUp') {
+                e.preventDefault();
+                setPagePointerState(prev => prev ? {
+                  ...prev,
+                  selectedIndex: (prev.selectedIndex - 1 + items.length) % Math.max(1, items.length)
+                } : null);
+              } else if (e.key === 'Enter') {
+                e.preventDefault();
+                const selected = items[pagePointerState.selectedIndex];
+                if (selected) {
+                  await handleInsertPageLink(selected.id, selected.title);
+                } else {
+                  const newId = generateCanvasId();
+                  const newTitle = pagePointerState.searchQuery.trim() || 'Untitled Connected Page';
+                  await db.canvases.add({
+                    id: newId,
+                    workspaceId: 'ws-enterprise-default',
+                    title: newTitle,
+                    icon: '🎯',
+                    isArchived: false,
+                    updatedAt: new Date()
+                  });
+                  await handleInsertPageLink(newId, newTitle);
+                }
+              } else if (e.key === 'Escape') {
+                e.preventDefault();
+                setPagePointerState(null);
+              }
+            }}
+            placeholder="Search page name..."
+            className="w-full text-xs font-bold border-2 border-[#1A1A1A] p-1.5 mb-2 outline-none bg-[#F4F7F6]"
+          />
+
+          <div className="max-h-40 overflow-y-auto space-y-1 pt-1 scrollbar-thin">
+            {canvasesList
+              .filter(c => c.title.toLowerCase().includes(pagePointerState.searchQuery.toLowerCase()))
+              .map((c, idx) => {
+                const isSelected = idx === pagePointerState.selectedIndex;
+                return (
+                  <button
+                    key={c.id}
+                    onClick={() => handleInsertPageLink(c.id, c.title)}
+                    className={`w-full text-left text-xs font-bold p-2 border-2 transition-all cursor-pointer flex items-center space-x-2 ${
+                      isSelected 
+                        ? 'bg-[#FFB703] border-[#1A1A1A] text-black neo-shadow-sm' 
+                        : 'bg-white border-transparent hover:border-[#1A1A1A] hover:bg-slate-50 text-gray-700'
+                    }`}
+                  >
+                    <span>{c.icon || '📄'}</span>
+                    <span className="truncate flex-1">{c.title || 'Untitled'}</span>
+                  </button>
+                );
+              })}
+              
+              {canvasesList.filter(c => c.title.toLowerCase().includes(pagePointerState.searchQuery.toLowerCase())).length === 0 && (
+                <div className="text-[10px] font-bold text-gray-400 p-3 text-center bg-gray-50 border border-dashed border-gray-200">
+                  No pages match this search query.
+                </div>
+              )}
+          </div>
+
+          <div className="border-t-2 border-[#1A1A1A]/10 mt-2 pt-2 flex flex-col space-y-1.5">
+            <button
+              onClick={async () => {
+                const newId = generateCanvasId();
+                const newTitle = pagePointerState.searchQuery.trim() || 'Untitled Connected Page';
+                await db.canvases.add({
+                  id: newId,
+                  workspaceId: 'ws-enterprise-default',
+                  title: newTitle,
+                  icon: '🎯',
+                  isArchived: false,
+                  updatedAt: new Date()
+                });
+                await handleInsertPageLink(newId, newTitle);
+              }}
+              className="w-full py-1 text-center bg-emerald-500 hover:bg-emerald-600 text-white text-[10px] uppercase font-black border-2 border-[#1A1A1A] cursor-pointer"
+            >
+              + Create & Link New Page
+            </button>
+            <div className="text-[8px] font-mono text-gray-400 text-center font-bold">
+              ⌨️ Use Arrow Keys & Enter to Select
+            </div>
+          </div>
+        </div>
       )}
 
       {/* Handy Word Meaning Pop-up Overlay (Feature 6) */}

@@ -22,7 +22,13 @@ import {
   Share2,
   Menu,
   Lock,
-  Unlock
+  Unlock,
+  Columns2,
+  FolderTree,
+  SlidersHorizontal,
+  History,
+  Clock,
+  Search
 } from 'lucide-react';
 import Link from 'next/link';
 import { useParams, useRouter } from 'next/navigation';
@@ -154,6 +160,15 @@ export default function CanvasWorkspaceClient() {
   const [coverUrl, setCoverUrl] = useState('');
   const [isConfirmOpen, setIsConfirmOpen] = useState(false);
   const [showBlueprintModal, setShowBlueprintModal] = useState(false);
+  const [showHistoryTimeline, setShowHistoryTimeline] = useState(false);
+
+  const transactionsList = useLiveQuery(() => 
+    db.syncQueue.orderBy('timestamp').reverse().toArray()
+  ) || [];
+
+  // Split Screen states (Feature 27)
+  const [isSplitScreen, setIsSplitScreen] = useState(false);
+  const [splitCanvasId, setSplitCanvasId] = useState<string | null>(null);
 
   // Focus & Accent Theme Settings
   const [accentTheme, setAccentTheme] = useState<string>(() => {
@@ -196,6 +211,22 @@ export default function CanvasWorkspaceClient() {
 
   // 1. Fetch current canvas details
   const canvas = useLiveQuery(() => db.canvases.get(canvasId), [canvasId]);
+
+  // Fetch all non-archived canvases for path hierarchy and split panel options (Feature 21, 27)
+  const canvases = useLiveQuery(() => db.canvases.where('isArchived').equals(0).toArray()) || [];
+
+  // Feature 21: Compute dynamic path trail from root to current canvas
+  const breadcrumbs = useMemo(() => {
+    if (!canvas || !canvases.length) return [];
+    const trail = [];
+    let current: any = canvas;
+    while (current) {
+      trail.unshift(current);
+      if (!current.parentId) break;
+      current = canvases.find(c => c.id === current?.parentId);
+    }
+    return trail;
+  }, [canvas, canvases]);
 
   // Load elements of current node layer to compute checksum
   const elements = useLiveQuery(async () => {
@@ -750,16 +781,54 @@ export default function CanvasWorkspaceClient() {
         
         {/* Top Control Header */}
         <header className="h-14 border-b-2 border-[#1A1A1A] bg-white px-6 flex items-center justify-between flex-shrink-0 z-20">
-          <div className="flex items-center space-x-2">
+          <div className="flex items-center space-x-2 min-w-0">
             {!isFocusMode && (
               <button
                 onClick={() => setIsMobileSidebarOpen(true)}
-                className="md:hidden p-1.5 border-2 border-[#1A1A1A] bg-[#FFB703] neo-shadow-sm mr-1 active:translate-x-[1px] active:translate-y-[1px] active:shadow-none cursor-pointer"
+                className="md:hidden p-1.5 border-2 border-[#1A1A1A] bg-[#FFB703] neo-shadow-sm mr-1 active:translate-x-[1px] active:translate-y-[1px] active:shadow-none cursor-pointer flex-shrink-0"
                 title="Toggle Menu"
               >
                 <Menu className="w-4 h-4 text-[#1A1A1A]" />
               </button>
             )}
+
+            {/* Feature 21: Visual Breadcrumb Trail */}
+            <div className="hidden md:flex items-center space-x-1 text-xs font-mono font-bold text-[#1A1A1A] bg-[#F4F7F6] border border-[#1A1A1A]/10 px-2 py-1 overflow-x-auto whitespace-nowrap scrollbar-none max-w-lg">
+              <Link href="/" className="hover:text-[#2D6A4F] hover:underline flex items-center space-x-1">
+                <span>🏠 root</span>
+              </Link>
+              {breadcrumbs.map((crumb, idx) => {
+                const isLast = idx === breadcrumbs.length - 1;
+                return (
+                  <div key={crumb.id} className="flex items-center space-x-1">
+                    <span className="text-gray-400">/</span>
+                    {isLast ? (
+                      <span className="bg-[#FFB703]/20 text-[#2D6A4F] px-1 font-black max-w-[120px] truncate">
+                        {crumb.icon || '📄'} {crumb.title || 'Untitled'}
+                      </span>
+                    ) : (
+                      <Link 
+                        href={`/canvas/${crumb.id}`} 
+                        className="hover:text-[#2D6A4F] hover:underline max-w-[100px] truncate"
+                      >
+                        <span>{crumb.icon || '📄'} {crumb.title || 'Untitled'}</span>
+                      </Link>
+                    )}
+                  </div>
+                );
+              })}
+            </div>
+
+            <div className="md:hidden flex items-center space-x-1">
+              <Link href="/">
+                <button className="p-1 border border-transparent hover:border-[#1A1A1A] hover:bg-gray-100 rounded text-gray-500 transition-all">
+                  <ChevronLeft className="w-4 h-4" />
+                </button>
+              </Link>
+              <span className="text-xs font-mono font-bold text-gray-400 truncate max-w-[100px]" title={canvas.title || 'Untitled Page'}>
+                {canvas.title || 'Untitled Page'}
+              </span>
+            </div>
 
             {/* Real-time Dynamic Checksum Fingerprint badge */}
             <div 
@@ -769,36 +838,60 @@ export default function CanvasWorkspaceClient() {
                 setTimeout(() => setFingerprintCopied(false), 1500);
               }}
               title="Click to copy page version code"
-              className={`hidden sm:flex items-center space-x-1.5 px-2.5 py-1 border-2 border-[#1A1A1A] font-mono text-[9px] font-black cursor-pointer select-none transition-all ${
+              className={`hidden lg:flex items-center space-x-1.5 px-2 py-1 border border-[#1A1A1A] font-mono text-[9px] font-black cursor-pointer select-none transition-all ${
                 fingerprintCopied
-                  ? 'bg-amber-400 text-[#1A1A1A] border-[#1A1A1A] translate-x-[1px] translate-y-[1px] shadow-none'
+                  ? 'bg-amber-400 text-[#1A1A1A] border-[#1A1A1A] translate-x-[1px] translate-y-[1px]'
                   : flashFingerprint 
-                    ? 'bg-emerald-500 text-white border-emerald-600 scale-[1.03] shadow-[2px_2px_0px_0px_rgba(16,185,129,1)]' 
-                    : 'bg-white text-gray-600 hover:bg-gray-50 hover:translate-x-[1px] hover:translate-y-[1px] neo-shadow-sm'
+                    ? 'bg-emerald-500 text-white border-emerald-600 scale-[1.03]' 
+                    : 'bg-white text-gray-600 hover:bg-gray-50 hover:translate-x-[1px] hover:translate-y-[1px]'
               }`}
             >
-              <span className={`w-1.5 h-1.5 rounded-full ${fingerprintCopied ? 'bg-amber-800' : flashFingerprint ? 'bg-white animate-ping' : 'bg-emerald-500'}`} />
-              <span className="opacity-70">{fingerprintCopied ? 'COPIED!' : 'PAGE CODE:'}</span>
-              <span>{checksumHash}</span>
+              <span className={`w-1 h-1 rounded-full ${fingerprintCopied ? 'bg-amber-800' : flashFingerprint ? 'bg-white animate-ping' : 'bg-emerald-500'}`} />
+              <span className="opacity-75">{fingerprintCopied ? 'COPIED!' : 'REF:'}</span>
+              <span>{checksumHash.substring(3)}</span>
             </div>
-            <Link href="/">
-              <button className="p-1 border border-transparent hover:border-[#1A1A1A] hover:bg-gray-100 rounded text-gray-500 transition-all">
-                <ChevronLeft className="w-4 h-4" />
-              </button>
-            </Link>
-            <span className="text-xs font-mono font-bold text-gray-400 truncate max-w-[100px] xs:max-w-[140px] sm:max-w-[180px] md:max-w-xs inline-block align-middle" title={canvas.title || 'Untitled Page'}>
-              {canvas.title || 'Untitled Page'}
-            </span>
           </div>
  
           <div className="flex items-center space-x-2.5">
             {/* Sync Indicators */}
-            <div className="flex items-center space-x-1.5 text-[10px] font-mono font-bold bg-[#F4F7F6] border-2 border-[#1A1A1A] px-2.5 py-1 rounded-none neo-shadow-sm">
+            <div className="hidden sm:flex items-center space-x-1.5 text-[10px] font-mono font-bold bg-[#F4F7F6] border-2 border-[#1A1A1A] px-2.5 py-1 rounded-none">
               <Cloud className={`w-3.5 h-3.5 ${isOnline ? 'text-[#2D6A4F]' : 'text-red-500'}`} />
               <span className="text-[#1A1A1A] uppercase">
                 {syncStatus === 'syncing' ? 'Syncing...' : syncStatus === 'saved' ? 'Synced' : syncStatus}
               </span>
             </div>
+
+            {/* Feature 26: Global Search trigger button */}
+            <button
+              onClick={() => setIsCommandPaletteOpen(true)}
+              className="p-1.5 border-2 border-[#1A1A1A] bg-white hover:bg-gray-50 text-gray-700 rounded-none text-xs font-bold flex items-center space-x-1 transition-colors animate-fade-in"
+              title="Search entire workspace (Ctrl+K)"
+            >
+              <Search className="w-3.5 h-3.5" />
+              <span className="hidden sm:inline">Search</span>
+            </button>
+
+            {/* Feature 27: Split Screen Viewing Toggle Button */}
+            <button
+              onClick={() => {
+                if (isSplitScreen) {
+                  setIsSplitScreen(false);
+                } else {
+                  setIsSplitScreen(true);
+                  const otherPage = canvases.find(c => c.id !== canvasId);
+                  if (otherPage) {
+                    setSplitCanvasId(otherPage.id);
+                  }
+                }
+              }}
+              className={`p-1.5 border-2 border-[#1A1A1A] rounded-none text-xs font-bold flex items-center space-x-1 transition-colors ${
+                isSplitScreen ? 'bg-amber-400 text-black' : 'bg-white hover:bg-gray-50 text-gray-700'
+              }`}
+              title="Toggle dual pane split view"
+            >
+              <Columns2 className="w-3.5 h-3.5" />
+              <span className="hidden sm:inline">{isSplitScreen ? 'Split Pane' : 'Split View'}</span>
+            </button>
  
             {/* Structural Blueprints drawer */}
             <button
@@ -808,6 +901,16 @@ export default function CanvasWorkspaceClient() {
             >
               <Sparkles className="w-3.5 h-3.5 text-black" />
               <span className="hidden sm:inline">Blueprints</span>
+            </button>
+
+            {/* Feature 30: Page History Timeline slide button */}
+            <button
+              onClick={() => setShowHistoryTimeline(true)}
+              className="p-1.5 border-2 border-[#1A1A1A] bg-[#FFB703] hover:bg-amber-400 text-black rounded-none text-xs font-bold flex items-center space-x-1 transition-colors"
+              title="View page edit and save timeline history"
+            >
+              <History className="w-3.5 h-3.5 text-black" />
+              <span className="hidden sm:inline">History</span>
             </button>
 
             {/* Portable Bundler HTML Exporter Button */}
@@ -1002,32 +1105,77 @@ export default function CanvasWorkspaceClient() {
             </div>
           )}
 
-          {/* Canvas Title, Icon Header Block */}
+          {/* Canvas Title, Icon Header Block & Mascot Selector Desk (Feature 29) */}
           <div className="max-w-4xl mx-auto px-6 pt-8 space-y-4">
             
-            {/* Emoji Icon Badge */}
-            <div className="relative inline-block">
-              <button
-                onClick={() => setShowEmojiPicker(!showEmojiPicker)}
-                className="w-16 h-16 border-4 border-[#1A1A1A] bg-white hover:bg-gray-50 neo-shadow flex items-center justify-center font-bold text-3xl transition-all cursor-pointer"
-              >
-                {canvas.icon || '📄'}
-              </button>
- 
-              {/* Popover Emoji Picker */}
-              {showEmojiPicker && (
-                <div className="absolute top-20 left-0 z-30 w-52 bg-white border-2 border-[#1A1A1A] neo-shadow-sm p-2 grid grid-cols-5 gap-1">
-                  {EMOJIS.map(emoji => (
-                    <button
-                      key={emoji}
-                      onClick={() => handleSelectEmoji(emoji)}
-                      className="w-8 h-8 flex items-center justify-center hover:bg-slate-100 rounded text-xl"
-                    >
-                      {emoji}
-                    </button>
-                  ))}
+            {/* Feature 29: Custom Page Mascot Selection Desk */}
+            <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3 bg-white border-2 border-[#1A1A1A] p-3 rounded-none neo-shadow-sm">
+              <div className="flex items-center space-x-3 min-w-0">
+                <div className="relative inline-block flex-shrink-0">
+                  <button
+                    onClick={() => setShowEmojiPicker(!showEmojiPicker)}
+                    className="w-12 h-12 border-2 border-[#1A1A1A] bg-[#FFB703] hover:bg-amber-400 flex items-center justify-center font-bold text-2xl transition-all cursor-pointer neo-shadow-sm select-none"
+                    title="Click to change companion mascot"
+                  >
+                    {canvas.icon || '📄'}
+                  </button>
+                  
+                  {showEmojiPicker && (
+                    <div className="absolute top-14 left-0 z-30 w-64 bg-white border-2 border-[#1A1A1A] shadow-[4px_4px_0px_0px_rgba(26,26,26,1)] p-2">
+                      <div className="text-[9px] font-black uppercase tracking-wider text-gray-400 mb-1.5 px-1 font-mono">Select Mascot Character:</div>
+                      <div className="grid grid-cols-6 gap-1">
+                        {EMOJIS.concat(['🐯', '🦄', '🐼', '🦊', '🐨', '🧠', '🧙', '🛸', '👾', '🍀', '🍎', '🍺']).map(emoji => (
+                          <button
+                            key={emoji}
+                            onClick={() => handleSelectEmoji(emoji)}
+                            className="w-8 h-8 flex items-center justify-center hover:bg-amber-100 border hover:border-[#1A1A1A] text-lg cursor-pointer"
+                          >
+                            {emoji}
+                          </button>
+                        ))}
+                      </div>
+                      
+                      <div className="mt-2 pt-2 border-t border-[#1A1A1A]/10 flex items-center space-x-1.5">
+                        <span className="text-[9px] font-mono font-bold text-gray-500">Or Paste:</span>
+                        <input
+                          type="text"
+                          maxLength={2}
+                          placeholder="✨"
+                          className="w-10 text-center border border-[#1A1A1A] text-xs py-0.5 outline-none font-bold"
+                          onChange={(e) => {
+                            const val = e.target.value.trim();
+                            if (val) handleSelectEmoji(val);
+                          }}
+                        />
+                      </div>
+                    </div>
+                  )}
                 </div>
-              )}
+                
+                <div className="min-w-0">
+                  <div className="text-[10px] font-mono font-black uppercase text-[#2D6A4F] tracking-wider flex items-center space-x-1">
+                    <span>Mascot Active</span>
+                  </div>
+                  <p className="text-[11px] font-bold text-gray-500 truncate mt-0.5">
+                    Click companion emoji to swap, or pick standard presets!
+                  </p>
+                </div>
+              </div>
+
+              {/* Quick Preset Choice Row */}
+              <div className="flex items-center space-x-1.5 overflow-x-auto pb-1 sm:pb-0">
+                {['🧙', '🛸', '👾', '🎯', '🚀', '🔥', '📊', '💼'].map(quickEmoji => (
+                  <button
+                    key={quickEmoji}
+                    onClick={() => handleSelectEmoji(quickEmoji)}
+                    className={`w-7 h-7 flex items-center justify-center rounded-none border border-[#1A1A1A] text-sm hover:bg-amber-100 cursor-pointer ${
+                      canvas.icon === quickEmoji ? 'bg-[#FFB703] border-2 font-bold' : 'bg-white'
+                    }`}
+                  >
+                    {quickEmoji}
+                  </button>
+                ))}
+              </div>
             </div>
  
             {/* Title Editor */}
@@ -1040,9 +1188,59 @@ export default function CanvasWorkspaceClient() {
               className="w-full bg-transparent border-none outline-none text-4xl sm:text-5xl font-black text-[#1A1A1A] tracking-tight placeholder-gray-300 font-sans disabled:cursor-not-allowed"
             />
           </div>
- 
-          {/* Poly-morphic block list Canvas Editor */}
-          <CanvasEditor canvasId={canvasId} isLocked={isLocked} isCozyStoryMode={isCozyStoryMode} />
+  
+          {/* Feature 27: Side-by-Side Dual-Pane Split-Screen Layout Grid */}
+          <div className={`flex-1 flex overflow-hidden ${isSplitScreen ? 'divide-x-4 divide-[#1A1A1A]' : ''}`}>
+            <div className="flex-1 overflow-y-auto">
+              <CanvasEditor canvasId={canvasId} isLocked={isLocked} isCozyStoryMode={isCozyStoryMode} />
+            </div>
+
+            {isSplitScreen && (
+              <div className="w-1/2 flex flex-col bg-[#F4F7F6] overflow-hidden border-l-2 border-[#1A1A1A]">
+                {/* Secondary Pane Title Control Bar */}
+                <div className="p-3 bg-white border-b-2 border-[#1A1A1A] flex items-center justify-between flex-shrink-0">
+                  <div className="flex items-center space-x-1.5 min-w-0">
+                    <span className="text-[10px] font-black font-mono bg-rose-500 text-white px-2 py-0.5 border border-black uppercase tracking-wider flex-shrink-0">
+                      SPLIT PANEL
+                    </span>
+                    <select
+                      value={splitCanvasId || ''}
+                      onChange={(e) => setSplitCanvasId(e.target.value || null)}
+                      className="text-xs font-bold border-2 border-[#1A1A1A] bg-white px-2 py-1 outline-none min-w-[120px] max-w-[200px]"
+                    >
+                      <option value="">-- Choose split doc --</option>
+                      {canvases.filter(c => c.id !== canvasId).map(c => (
+                        <option key={c.id} value={c.id}>
+                          {c.icon || '📄'} {c.title || 'Untitled'}
+                        </option>
+                      ))}
+                    </select>
+                  </div>
+                  
+                  <button
+                    onClick={() => setIsSplitScreen(false)}
+                    className="px-2.5 py-1 bg-white border-2 border-[#1A1A1A] hover:bg-rose-500 hover:text-white text-[10px] font-black uppercase transition-colors"
+                  >
+                    Close ✕
+                  </button>
+                </div>
+
+                {/* Secondary Scrollable Editor Canvas Container */}
+                <div className="flex-1 overflow-y-auto relative bg-[#F4F7F6]">
+                  {splitCanvasId ? (
+                    <CanvasEditor canvasId={splitCanvasId} isLocked={isLocked} isCozyStoryMode={isCozyStoryMode} />
+                  ) : (
+                    <div className="h-full flex flex-col items-center justify-center p-8 text-center">
+                      <FolderTree className="w-8 h-8 text-gray-300 mb-2 animate-bounce" />
+                      <p className="text-[10px] font-bold text-gray-400 font-mono uppercase tracking-widest leading-relaxed">
+                        Select a secondary document<br />from the picker above to<br />split-view side-by-side!
+                      </p>
+                    </div>
+                  )}
+                </div>
+              </div>
+            )}
+          </div>
  
           {/* Bi-directional Backlinks Section */}
           {backlinks.length > 0 && (
@@ -1207,6 +1405,124 @@ export default function CanvasWorkspaceClient() {
           localStorage.setItem(`zenith-cozy-mode-${canvasId}`, val ? 'true' : 'false');
         }}
       />
+
+      {/* Page History Timeline Slide Overlay (Feature 30) */}
+      <AnimatePresence>
+        {showHistoryTimeline && (
+          <div className="fixed inset-0 z-50 flex justify-end">
+            {/* Backdrop */}
+            <motion.div
+              initial={{ opacity: 0 }}
+              animate={{ opacity: 1 }}
+              exit={{ opacity: 0 }}
+              onClick={() => setShowHistoryTimeline(false)}
+              className="absolute inset-0 bg-black/40 backdrop-blur-xs"
+            />
+
+            {/* Sidebar drawer panel */}
+            <motion.div
+              initial={{ x: '100%' }}
+              animate={{ x: 0 }}
+              exit={{ x: '100%' }}
+              transition={{ type: 'spring', damping: 26, stiffness: 190 }}
+              className="relative w-full max-w-md h-full bg-white border-l-4 border-[#1A1A1A] p-6 flex flex-col justify-between shadow-[4px_0_24px_rgba(0,0,0,0.15)] z-10"
+            >
+              <div className="flex flex-col h-full overflow-hidden">
+                {/* Header */}
+                <div className="flex justify-between items-center pb-4 border-b-2 border-[#1A1A1A] mb-4">
+                  <div className="flex items-center space-x-2">
+                    <History className="w-5 h-5 text-[#1A1A1A]" />
+                    <h3 className="text-xs font-black uppercase text-[#1A1A1A] tracking-tight">📜 Revision Timeline</h3>
+                  </div>
+                  <button
+                    onClick={() => setShowHistoryTimeline(false)}
+                    className="p-1.5 border-2 border-[#1A1A1A] hover:bg-[#FFB703] text-black transition-colors rounded-none font-black text-[10px] cursor-pointer"
+                  >
+                    ✕ CLOSE
+                  </button>
+                </div>
+
+                <p className="text-[11px] text-gray-500 mb-4 leading-relaxed font-sans font-medium">
+                  Browse the historical save trail of elements and canvases modifications. The auto-save engine registers local snapshots on index memory continuously.
+                </p>
+
+                {/* Timeline content */}
+                <div className="flex-1 overflow-y-auto pr-1 space-y-4 scrollbar-thin">
+                  <div className="relative border-l-2 border-dashed border-[#1A1A1A] pl-5 ml-2.5 space-y-6">
+                    {transactionsList.length === 0 ? (
+                      <div className="text-center py-12 text-xs font-bold text-gray-400">
+                        No previous edits recorded for this workspace. Try making some modifications to seed history!
+                      </div>
+                    ) : (
+                      transactionsList.map((tx, idx) => {
+                        const { desc, action } = getFriendlyActionDescription(tx);
+                        let badgeColor = 'bg-blue-100 text-blue-800 border-blue-400';
+                        if (action === 'insert') {
+                          badgeColor = 'bg-emerald-100 text-emerald-800 border-emerald-400';
+                        } else if (action === 'delete') {
+                          badgeColor = 'bg-rose-100 text-rose-800 border-rose-400';
+                        } else if (action === 'update') {
+                          badgeColor = 'bg-amber-100 text-amber-800 border-amber-400';
+                        }
+
+                        return (
+                          <div key={tx.id || idx} className="relative group animate-fade-in">
+                            {/* Marker circle dot */}
+                            <div className="absolute -left-[26.5px] top-1.5 w-3 h-3 rounded-full border-2 border-black bg-white group-hover:bg-[#FFB703] transition-colors" />
+
+                            <div className="border-2 border-[#1A1A1A] p-3 bg-[#F4F7F6] shadow-[2px_2px_0px_0px_#1A1A1A] group-hover:shadow-[4px_4px_0px_0px_#1A1A1A] transition-all space-y-1.5">
+                              <div className="flex items-center justify-between">
+                                <span className="font-mono text-[9px] text-gray-400 font-extrabold flex items-center">
+                                  <Clock className="w-2.5 h-2.5 mr-1 text-[#1A1A1A]" />
+                                  {new Date(tx.timestamp).toLocaleString()}
+                                </span>
+                                <span className={`text-[8px] font-mono font-extrabold px-1.5 py-0.2 border border-[#1A1A1A] rounded-none uppercase ${badgeColor}`}>
+                                  {action}
+                                </span>
+                              </div>
+
+                              <p className="text-xs font-bold text-[#1A1A1A] leading-normal font-sans">
+                                {desc}
+                              </p>
+
+                              <div className="pt-1.5 border-t border-[#1A1A1A]/5 flex items-center justify-between text-[8px] font-mono text-gray-400">
+                                <span>Record ID: {tx.recordId.substring(0, 8)}</span>
+                                <button
+                                  onClick={async () => {
+                                    alert("Snapshot State: " + JSON.stringify(JSON.parse(tx.data), null, 2));
+                                  }}
+                                  className="text-amber-600 hover:underline font-extrabold uppercase cursor-pointer"
+                                >
+                                  Inspect Data
+                                </button>
+                              </div>
+                            </div>
+                          </div>
+                        );
+                      })
+                    )}
+                  </div>
+                </div>
+              </div>
+
+              {/* Footer */}
+              <div className="border-t-2 border-[#1A1A1A] pt-4 mt-4 text-[10px] font-mono text-gray-500 flex items-center justify-between">
+                <span>Total revisions: {transactionsList.length}</span>
+                <button
+                  onClick={async () => {
+                    if (confirm("Do you want to clear the save history log?")) {
+                      await db.syncQueue.clear();
+                    }
+                  }}
+                  className="px-2 py-0.5 border border-black bg-rose-600 hover:bg-rose-500 text-white font-extrabold uppercase transition-colors cursor-pointer"
+                >
+                  Clear History
+                </button>
+              </div>
+            </motion.div>
+          </div>
+        )}
+      </AnimatePresence>
     </div>
   );
 }
