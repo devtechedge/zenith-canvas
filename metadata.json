@@ -1,6 +1,6 @@
 {
-  "name": "Zenith Canvas",
-  "description": "A fast, simple, and beautifully designed offline-first document workspace with easy smart databases and page links.",
-  "requestFramePermissions": ["microphone"],
+  "name": "Zenith Workspace",
+  "description": "An interactive shared canvas workspace with bento elements, simulated cursor trails, activity logging, and safety pin protection.",
+  "requestFramePermissions": [],
   "majorCapabilities": ["MAJOR_CAPABILITY_SERVER_SIDE_GEMINI_API"]
 }
