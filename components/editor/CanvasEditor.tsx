@@ -58,7 +58,14 @@ import {
   Key,
   FileCheck,
   Grid,
-  Mic
+  Mic,
+  CloudSun,
+  Target,
+  Music,
+  Pin,
+  Smile,
+  Utensils,
+  ExternalLink
 } from 'lucide-react';
 
 const playTypewriterSound = (isSpace: boolean) => {
@@ -863,6 +870,135 @@ export default function CanvasEditor({
         type: 'collection_ref',
         content: 'Data-Grid Table',
         properties: JSON.stringify({ tableId }),
+      });
+    } else if (commandId === 'countdown_clock') {
+      await updateCanvasElement(elementId, {
+        type: 'countdown_clock',
+        content: 'Countdown Tracker',
+        properties: JSON.stringify({
+          countdown: {
+            targetDate: '2026-12-25T12:00',
+            eventTitle: 'Grand Family Reunion 🎉'
+          }
+        })
+      });
+    } else if (commandId === 'weather_forecast') {
+      await updateCanvasElement(elementId, {
+        type: 'weather_forecast',
+        content: 'Weather Forecast',
+        properties: JSON.stringify({
+          weather: {
+            city: 'San Francisco, CA',
+            forecast: 'Partly Cloudy with cool coastal breeze',
+            temp: '64°F',
+            humidity: '62%',
+            wind: '9 mph',
+            icon: '⛅'
+          }
+        })
+      });
+    } else if (commandId === 'family_goal') {
+      await updateCanvasElement(elementId, {
+        type: 'family_goal',
+        content: 'Family Project Tracker',
+        properties: JSON.stringify({
+          goal: {
+            goalTitle: 'Weekly Page Project Challenge 🏆',
+            autoTrackChecklists: true,
+            manualGoal: 10,
+            manualValue: 4
+          }
+        })
+      });
+    } else if (commandId === 'focus_player') {
+      await updateCanvasElement(elementId, {
+        type: 'focus_player',
+        content: 'Ambient Focus Player',
+        properties: JSON.stringify({
+          player: {
+            activeTrack: 'none',
+            playing: false,
+            volume: 50
+          }
+        })
+      });
+    } else if (commandId === 'sticky_note') {
+      await updateCanvasElement(elementId, {
+        type: 'sticky_note',
+        content: 'Important Reminder 📌',
+        properties: JSON.stringify({
+          sticky: {
+            color: '#FFD166',
+            text: 'Remember to pick up groceries: Milk, Eggs, and Bread. Call Sarah by 6 PM.'
+          }
+        })
+      });
+    } else if (commandId === 'notepad_calculator') {
+      await updateCanvasElement(elementId, {
+        type: 'notepad_calculator',
+        content: 'Math Notepad',
+        properties: JSON.stringify({
+          calc: {
+            expression: '125 + 250 * 2',
+            result: '625'
+          }
+        })
+      });
+    } else if (commandId === 'mood_selector') {
+      await updateCanvasElement(elementId, {
+        type: 'mood_selector',
+        content: 'Daily Mood Tracker',
+        properties: JSON.stringify({
+          mood: {
+            history: [
+              { date: '2026-07-05', mood: '😀', label: 'Amazing Day' },
+              { date: '2026-07-06', mood: '🙂', label: 'Productive and Calm' }
+            ]
+          }
+        })
+      });
+    } else if (commandId === 'sketch_doodle') {
+      await updateCanvasElement(elementId, {
+        type: 'sketch_doodle',
+        content: 'Creative Scribble Area',
+        properties: JSON.stringify({
+          sketch: {
+            strokeColor: '#1A1A1A',
+            lineWidth: 3,
+            lines: []
+          }
+        })
+      });
+    } else if (commandId === 'recipe_scaler') {
+      await updateCanvasElement(elementId, {
+        type: 'recipe_scaler',
+        content: 'Recipe Scaler Tool',
+        properties: JSON.stringify({
+          recipe: {
+            servings: 4,
+            baseServings: 4,
+            recipeName: 'Fluffy Family Pancakes 🥞',
+            ingredients: [
+              { name: 'All-Purpose Flour', amount: 2, unit: 'cups' },
+              { name: 'Baking Powder', amount: 2, unit: 'tsp' },
+              { name: 'Sugar', amount: 2, unit: 'tbsp' },
+              { name: 'Milk', amount: 1.5, unit: 'cups' },
+              { name: 'Butter (Melted)', amount: 4, unit: 'tbsp' },
+              { name: 'Large Egg', amount: 1, unit: 'qty' }
+            ]
+          }
+        })
+      });
+    } else if (commandId === 'web_embed') {
+      await updateCanvasElement(elementId, {
+        type: 'web_embed',
+        content: 'Interactive Web Frame',
+        properties: JSON.stringify({
+          embed: {
+            url: 'https://www.wikipedia.org/',
+            height: 350
+          }
+        })
       });
     } else {
       await updateCanvasElement(elementId, {
@@ -10436,6 +10572,107 @@ export default function CanvasEditor({
                   );
                 })()
               )}
+
+              {/* 51. SIMPLE COUNT-DOWN CLOCK BLOCK */}
+              {el.type === 'countdown_clock' && (
+                <CountdownClockBlock 
+                  el={el} 
+                  propertiesObj={propertiesObj} 
+                  updateCanvasElement={updateCanvasElement} 
+                  isLocked={isLocked} 
+                />
+              )}
+
+              {/* 52. WEATHER SNAPSHOT FORECAST PILL */}
+              {el.type === 'weather_forecast' && (
+                <WeatherForecastPill 
+                  el={el} 
+                  propertiesObj={propertiesObj} 
+                  updateCanvasElement={updateCanvasElement} 
+                  isLocked={isLocked} 
+                />
+              )}
+
+              {/* 53. FAMILY GOAL TRACKER PROGRESS BAR */}
+              {el.type === 'family_goal' && (
+                <FamilyGoalTracker 
+                  el={el} 
+                  propertiesObj={propertiesObj} 
+                  updateCanvasElement={updateCanvasElement} 
+                  isLocked={isLocked} 
+                  elements={elements}
+                />
+              )}
+
+              {/* 54. FOCUS MUSIC PLAYERS */}
+              {el.type === 'focus_player' && (
+                <FocusMusicPlayer 
+                  el={el} 
+                  propertiesObj={propertiesObj} 
+                  updateCanvasElement={updateCanvasElement} 
+                  isLocked={isLocked} 
+                />
+              )}
+
+              {/* 55. STICKY NOTE NOTICE BOXES */}
+              {el.type === 'sticky_note' && (
+                <StickyNoteBox 
+                  el={el} 
+                  propertiesObj={propertiesObj} 
+                  updateCanvasElement={updateCanvasElement} 
+                  isLocked={isLocked} 
+                />
+              )}
+
+              {/* 56. SIMPLE CALCULATOR NOTEPAD ELEMENT */}
+              {el.type === 'notepad_calculator' && (
+                <CalculatorNotepad 
+                  el={el} 
+                  propertiesObj={propertiesObj} 
+                  updateCanvasElement={updateCanvasElement} 
+                  isLocked={isLocked} 
+                />
+              )}
+
+              {/* 57. QUICK MOOD SELECTOR STAMPS */}
+              {el.type === 'mood_selector' && (
+                <MoodSelectorStamps 
+                  el={el} 
+                  propertiesObj={propertiesObj} 
+                  updateCanvasElement={updateCanvasElement} 
+                  isLocked={isLocked} 
+                />
+              )}
+
+              {/* 58. INTERACTIVE SKETCHING DOODLE BOX */}
+              {el.type === 'sketch_doodle' && (
+                <SketchDoodleBox 
+                  el={el} 
+                  propertiesObj={propertiesObj} 
+                  updateCanvasElement={updateCanvasElement} 
+                  isLocked={isLocked} 
+                />
+              )}
+
+              {/* 59. RECIPE INGREDIENT SCALER GRID */}
+              {el.type === 'recipe_scaler' && (
+                <RecipeScalerGrid 
+                  el={el} 
+                  propertiesObj={propertiesObj} 
+                  updateCanvasElement={updateCanvasElement} 
+                  isLocked={isLocked} 
+                />
+              )}
+
+              {/* 60. SIMPLE WEB EMBED BOX */}
+              {el.type === 'web_embed' && (
+                <WebEmbedBox 
+                  el={el} 
+                  propertiesObj={propertiesObj} 
+                  updateCanvasElement={updateCanvasElement} 
+                  isLocked={isLocked} 
+                />
+              )}
             </ElementWrapper>
           );
         })}
@@ -10471,6 +10708,1212 @@ export default function CanvasEditor({
           </button>
         </div>
       )}
+    </div>
+  );
+}
+
+/* ==========================================
+   BATCH 6: EVERYDAY LIFE UTILITY WIDGETS
+   ========================================== */
+
+interface WidgetProps {
+  el: any;
+  propertiesObj: any;
+  updateCanvasElement: (id: string, updates: any) => Promise<void>;
+  isLocked: boolean;
+  elements?: any[];
+}
+
+// 51. SIMPLE COUNT-DOWN CLOCK BLOCK
+function CountdownClockBlock({ el, propertiesObj, updateCanvasElement, isLocked }: WidgetProps) {
+  const state = propertiesObj.countdown || {
+    targetDate: '2026-12-25T12:00',
+    eventTitle: 'Grand Family Reunion 🎉'
+  };
+
+  const [timeLeft, setTimeLeft] = useState({ months: 0, days: 0, hours: 0, minutes: 0, seconds: 0 });
+
+  useEffect(() => {
+    const updateCountdown = () => {
+      const difference = +new Date(state.targetDate) - +new Date();
+      if (difference <= 0) {
+        setTimeLeft({ months: 0, days: 0, hours: 0, minutes: 0, seconds: 0 });
+        return;
+      }
+
+      const seconds = Math.floor((difference / 1000) % 60);
+      const minutes = Math.floor((difference / 1000 / 60) % 60);
+      const hours = Math.floor((difference / (1000 * 60 * 60)) % 24);
+      const days = Math.floor((difference / (1000 * 60 * 60 * 24)) % 30);
+      const months = Math.floor(difference / (1000 * 60 * 60 * 24 * 30));
+
+      setTimeLeft({ months, days, hours, minutes, seconds });
+    };
+
+    updateCountdown();
+    const interval = setInterval(updateCountdown, 1000);
+    return () => clearInterval(interval);
+  }, [state.targetDate]);
+
+  return (
+    <div className="border-2 border-[#1A1A1A] p-4 bg-white rounded-none neo-shadow-sm my-2 w-full font-sans">
+      <div className="flex items-center justify-between border-b border-gray-100 pb-2 mb-3">
+        <div className="flex items-center space-x-2">
+          <Clock className="w-4 h-4 text-indigo-600 animate-pulse" />
+          <span className="text-[11px] font-mono font-bold uppercase tracking-wider text-gray-500">
+            Countdown Timer Block
+          </span>
+        </div>
+      </div>
+
+      <div className="space-y-3">
+        <div className="grid grid-cols-1 sm:grid-cols-2 gap-2">
+          <div>
+            <label className="text-[8px] font-mono font-bold text-gray-400 block uppercase">Event Title</label>
+            <input
+              type="text"
+              value={state.eventTitle}
+              disabled={isLocked}
+              onChange={(e) => {
+                const updated = { ...state, eventTitle: e.target.value };
+                updateCanvasElement(el.id, { properties: JSON.stringify({ ...propertiesObj, countdown: updated }) });
+              }}
+              className="w-full text-xs font-bold border-2 border-black p-1 bg-slate-50 focus:bg-white outline-none text-[#1A1A1A]"
+            />
+          </div>
+          <div>
+            <label className="text-[8px] font-mono font-bold text-gray-400 block uppercase">Target Date & Time</label>
+            <input
+              type="datetime-local"
+              value={state.targetDate}
+              disabled={isLocked}
+              onChange={(e) => {
+                const updated = { ...state, targetDate: e.target.value };
+                updateCanvasElement(el.id, { properties: JSON.stringify({ ...propertiesObj, countdown: updated }) });
+              }}
+              className="w-full text-xs font-bold border-2 border-black p-1 bg-slate-50 focus:bg-white outline-none text-[#1A1A1A]"
+            />
+          </div>
+        </div>
+
+        <div className="bg-[#FFB703] border-2 border-[#1A1A1A] p-4 flex justify-around items-center text-center neo-shadow-xs">
+          {[
+            { label: 'Months', value: timeLeft.months },
+            { label: 'Days', value: timeLeft.days },
+            { label: 'Hours', value: timeLeft.hours },
+            { label: 'Mins', value: timeLeft.minutes },
+            { label: 'Secs', value: timeLeft.seconds }
+          ].map((item, idx) => (
+            <div key={idx} className="flex flex-col">
+              <span className="text-xl sm:text-3xl font-black text-[#1A1A1A] font-mono tracking-tight">{String(item.value).padStart(2, '0')}</span>
+              <span className="text-[7px] font-bold uppercase tracking-wider text-[#1A1A1A]/70">{item.label}</span>
+            </div>
+          ))}
+        </div>
+
+        <div className="text-[9px] text-gray-400 font-bold font-mono text-center uppercase">
+          ⏳ COUNTING DOWN TO: {new Date(state.targetDate).toLocaleString()}
+        </div>
+      </div>
+    </div>
+  );
+}
+
+// 52. WEATHER SNAPSHOT FORECAST PILL
+function WeatherForecastPill({ el, propertiesObj, updateCanvasElement, isLocked }: WidgetProps) {
+  const state = propertiesObj.weather || {
+    city: 'Chicago, IL',
+    forecast: 'Sunny with cool winds',
+    temp: '74°F',
+    humidity: '50%',
+    wind: '8 mph',
+    icon: '☀️'
+  };
+
+  const handleSimulateWeather = (condition: string) => {
+    let updated = { ...state };
+    if (condition === 'Sunny') {
+      updated = { ...updated, icon: '☀️', temp: '82°F', humidity: '40%', wind: '5 mph', forecast: 'Bright and hot, high ultraviolet index' };
+    } else if (condition === 'Rainy') {
+      updated = { ...updated, icon: '🌧️', temp: '59°F', humidity: '92%', wind: '14 mph', forecast: 'Heavy downpour, pocket umbrella recommended' };
+    } else if (condition === 'Cloudy') {
+      updated = { ...updated, icon: '⛅', temp: '68°F', humidity: '65%', wind: '9 mph', forecast: 'Partly cloudy with soft gentle breeze' };
+    } else if (condition === 'Snowy') {
+      updated = { ...updated, icon: '❄️', temp: '28°F', humidity: '80%', wind: '18 mph', forecast: 'Fresh powder blizzard, cold and dry air' };
+    } else if (condition === 'Windy') {
+      updated = { ...updated, icon: '💨', temp: '62°F', humidity: '45%', wind: '22 mph', forecast: 'High pressure gusts, hold your hat!' };
+    }
+    updateCanvasElement(el.id, { properties: JSON.stringify({ ...propertiesObj, weather: updated }) });
+  };
+
+  return (
+    <div className="border-2 border-[#1A1A1A] p-4 bg-[#F2F7F2] rounded-none neo-shadow-sm my-2 w-full font-sans text-[#1A1A1A]">
+      <div className="flex items-center justify-between border-b border-black/10 pb-2 mb-3">
+        <div className="flex items-center space-x-2">
+          <CloudSun className="w-4 h-4 text-emerald-600 animate-bounce" />
+          <span className="text-[11px] font-mono font-bold uppercase tracking-wider text-gray-500">
+            Weather Snapshot Forecast Pill
+          </span>
+        </div>
+      </div>
+
+      <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+        <div className="border-2 border-black bg-white p-3 flex flex-col justify-between neo-shadow-xs">
+          <div>
+            <label className="text-[7px] font-mono font-black text-gray-400 block uppercase">Enter Location</label>
+            <input
+              type="text"
+              value={state.city}
+              disabled={isLocked}
+              onChange={(e) => {
+                const updated = { ...state, city: e.target.value };
+                updateCanvasElement(el.id, { properties: JSON.stringify({ ...propertiesObj, weather: updated }) });
+              }}
+              className="w-full text-xs font-black border-b-2 border-black outline-none py-0.5 focus:border-emerald-500 text-[#1A1A1A]"
+            />
+          </div>
+
+          <div className="flex items-center space-x-2 mt-3">
+            <span className="text-4xl">{state.icon}</span>
+            <div>
+              <span className="text-2xl font-black font-mono">{state.temp}</span>
+              <p className="text-[8px] font-bold text-gray-500 uppercase">{state.city}</p>
+            </div>
+          </div>
+        </div>
+
+        <div className="border-2 border-black bg-white p-3 flex flex-col justify-between neo-shadow-xs col-span-1 md:col-span-2">
+          <div className="space-y-1.5">
+            <span className="text-[7px] font-mono font-black text-gray-400 block uppercase">Outside Condition Forecast</span>
+            <p className="text-xs font-extrabold text-[#1A1A1A] leading-tight">
+              &ldquo;{state.forecast}&rdquo;
+            </p>
+            <div className="grid grid-cols-3 gap-1 font-mono text-[8px] pt-1.5 text-gray-500">
+              <div>💧 HUMIDITY: <span className="font-bold text-black">{state.humidity}</span></div>
+              <div>🍃 WIND FORCE: <span className="font-bold text-black">{state.wind}</span></div>
+              <div>🌤️ INDEX: <span className="font-bold text-black">NORMAL</span></div>
+            </div>
+          </div>
+
+          {!isLocked && (
+            <div className="flex flex-wrap gap-1 mt-3 pt-2 border-t border-dashed border-gray-200">
+              <span className="text-[7px] font-bold uppercase text-gray-400 self-center mr-1">Simulate:</span>
+              {['Sunny', 'Rainy', 'Cloudy', 'Snowy', 'Windy'].map(cond => (
+                <button
+                  key={cond}
+                  onClick={() => handleSimulateWeather(cond)}
+                  className="px-1.5 py-0.5 bg-slate-100 hover:bg-black hover:text-white border border-black text-[7px] font-mono font-extrabold uppercase rounded-sm cursor-pointer text-[#1A1A1A]"
+                >
+                  {cond}
+                </button>
+              ))}
+            </div>
+          )}
+        </div>
+      </div>
+    </div>
+  );
+}
+
+// 53. FAMILY GOAL TRACKER PROGRESS BAR
+function FamilyGoalTracker({ el, propertiesObj, updateCanvasElement, isLocked, elements = [] }: WidgetProps) {
+  const state = propertiesObj.goal || {
+    goalTitle: 'Weekly Page Project Challenge 🏆',
+    autoTrackChecklists: true,
+    manualGoal: 10,
+    manualValue: 4
+  };
+
+  // Calculate total checklists on page
+  const checklists = elements.filter(item => item.type === 'todo');
+  const totalChecklists = checklists.length;
+  
+  let checkedCount = 0;
+  checklists.forEach(item => {
+    try {
+      const props = JSON.parse(item.properties);
+      if (props.checked) checkedCount++;
+    } catch {}
+  });
+
+  const isAuto = !!state.autoTrackChecklists;
+  const currentProgress = isAuto ? checkedCount : state.manualValue;
+  const maxTarget = isAuto ? Math.max(1, totalChecklists) : state.manualGoal;
+  const percentage = Math.min(100, Math.round((currentProgress / maxTarget) * 100));
+
+  return (
+    <div className="border-2 border-[#1A1A1A] p-4 bg-white rounded-none neo-shadow-sm my-2 w-full font-sans text-[#1A1A1A]">
+      <div className="flex items-center justify-between border-b border-gray-100 pb-2 mb-3">
+        <div className="flex items-center space-x-2">
+          <Target className="w-4 h-4 text-rose-500 animate-pulse" />
+          <span className="text-[11px] font-mono font-bold uppercase tracking-wider text-gray-500">
+            Family Goal Progress Tracker
+          </span>
+        </div>
+        <span className="text-[9px] font-mono border border-indigo-200 px-1.5 py-0.5 bg-indigo-50 text-indigo-600 font-extrabold uppercase rounded-sm">
+          Progress Bar
+        </span>
+      </div>
+
+      <div className="space-y-3">
+        <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-2">
+          <div className="flex-1">
+            <label className="text-[7px] font-mono font-bold text-gray-400 block uppercase">Goal Tracker Title</label>
+            <input
+              type="text"
+              value={state.goalTitle}
+              disabled={isLocked}
+              onChange={(e) => {
+                const updated = { ...state, goalTitle: e.target.value };
+                updateCanvasElement(el.id, { properties: JSON.stringify({ ...propertiesObj, goal: updated }) });
+              }}
+              className="w-full text-xs font-bold border-b-2 border-black outline-none py-0.5 text-[#1A1A1A]"
+            />
+          </div>
+
+          {!isLocked && (
+            <div className="flex items-center space-x-2 self-end">
+              <span className="text-[8px] font-mono font-bold uppercase text-gray-400">Auto Track Checklists</span>
+              <button
+                onClick={() => {
+                  const updated = { ...state, autoTrackChecklists: !isAuto };
+                  updateCanvasElement(el.id, { properties: JSON.stringify({ ...propertiesObj, goal: updated }) });
+                }}
+                className={`px-2 py-0.5 text-[8px] font-mono font-bold uppercase border border-black cursor-pointer ${
+                  isAuto ? 'bg-indigo-600 text-white' : 'bg-slate-100 text-gray-700'
+                }`}
+              >
+                {isAuto ? 'AUTO' : 'MANUAL'}
+              </button>
+            </div>
+          )}
+        </div>
+
+        <div className="space-y-1">
+          <div className="flex justify-between text-xs font-mono font-bold">
+            <span className="truncate">{state.goalTitle}</span>
+            <span>{currentProgress} / {maxTarget} ({percentage}%)</span>
+          </div>
+
+          <div className="w-full h-6 bg-slate-100 border-2 border-black overflow-hidden relative flex items-center">
+            <div 
+              className="h-full bg-[#390099] border-r-2 border-black transition-all duration-500 ease-out"
+              style={{ width: `${percentage}%` }}
+            />
+            <span className="absolute left-1/2 -translate-x-1/2 text-[9px] font-mono font-black text-white mix-blend-difference uppercase">
+              {percentage === 100 ? '🎉 TARGET ACCOMPLISHED!' : 'IN PROGRESS'}
+            </span>
+          </div>
+        </div>
+
+        {!isAuto && !isLocked && (
+          <div className="flex items-center justify-between bg-slate-50 border border-black/10 p-2 text-xs">
+            <span className="text-[9px] font-mono text-gray-400 uppercase font-bold">Configure Manual Values:</span>
+            <div className="flex items-center space-y-0 space-x-2">
+              <button
+                onClick={() => {
+                  const updated = { ...state, manualValue: Math.max(0, state.manualValue - 1) };
+                  updateCanvasElement(el.id, { properties: JSON.stringify({ ...propertiesObj, goal: updated }) });
+                }}
+                className="w-6 h-6 border-2 border-black bg-white font-bold hover:bg-slate-100 cursor-pointer"
+              >
+                -
+              </button>
+              <span className="font-mono font-bold text-sm w-4 text-center">{state.manualValue}</span>
+              <button
+                onClick={() => {
+                  const updated = { ...state, manualValue: Math.min(state.manualGoal, state.manualValue + 1) };
+                  updateCanvasElement(el.id, { properties: JSON.stringify({ ...propertiesObj, goal: updated }) });
+                }}
+                className="w-6 h-6 border-2 border-black bg-white font-bold hover:bg-slate-100 cursor-pointer"
+              >
+                +
+              </button>
+
+              <span className="text-gray-300 font-mono font-bold">|</span>
+
+              <span className="text-[9px] font-mono uppercase font-bold text-gray-400">Target:</span>
+              <input
+                type="number"
+                min={1}
+                value={state.manualGoal}
+                onChange={(e) => {
+                  const updated = { ...state, manualGoal: Math.max(1, parseInt(e.target.value) || 1) };
+                  updateCanvasElement(el.id, { properties: JSON.stringify({ ...propertiesObj, goal: updated }) });
+                }}
+                className="w-12 border-2 border-black text-center font-mono font-bold text-[#1A1A1A]"
+              />
+            </div>
+          </div>
+        )}
+
+        {isAuto && (
+          <div className="text-[8px] font-mono text-gray-400 text-center font-bold">
+            🔗 Connected to {totalChecklists} Checklist elements on this page. Toggle checklists to watch the bar update in real-time!
+          </div>
+        )}
+      </div>
+    </div>
+  );
+}
+
+// 54. FOCUS MUSIC PLAYERS
+function FocusMusicPlayer({ el, propertiesObj, updateCanvasElement, isLocked }: WidgetProps) {
+  const state = propertiesObj.player || {
+    activeTrack: 'none',
+    playing: false,
+    volume: 50
+  };
+
+  const audioContextRef = useRef<AudioContext | null>(null);
+  const sourceNodesRef = useRef<any[]>([]);
+  const gainNodeRef = useRef<GainNode | null>(null);
+
+  const stopAllAudio = () => {
+    sourceNodesRef.current.forEach(node => {
+      try { node.stop(); } catch {}
+    });
+    sourceNodesRef.current = [];
+    if (audioContextRef.current) {
+      try { audioContextRef.current.close(); } catch {}
+      audioContextRef.current = null;
+    }
+  };
+
+  const playSynthTrack = (track: string) => {
+    stopAllAudio();
+    if (typeof window === 'undefined') return;
+    const AudioContextClass = window.AudioContext || (window as any).webkitAudioContext;
+    if (!AudioContextClass) return;
+
+    const ctx = new AudioContextClass();
+    audioContextRef.current = ctx;
+
+    const mainGain = ctx.createGain();
+    mainGain.gain.setValueAtTime(state.volume / 100, ctx.currentTime);
+    mainGain.connect(ctx.destination);
+    gainNodeRef.current = mainGain;
+
+    if (track === 'rain') {
+      const bufferSize = 2 * ctx.sampleRate;
+      const noiseBuffer = ctx.createBuffer(1, bufferSize, ctx.sampleRate);
+      const output = noiseBuffer.getChannelData(0);
+      
+      let b0, b1, b2, b3, b4, b5, b6;
+      b0 = b1 = b2 = b3 = b4 = b5 = b6 = 0.0;
+      
+      for (let i = 0; i < bufferSize; i++) {
+        const white = Math.random() * 2 - 1;
+        b0 = 0.99886 * b0 + white * 0.0555179;
+        b1 = 0.99332 * b1 + white * 0.0750759;
+        b2 = 0.96900 * b2 + white * 0.1538520;
+        b3 = 0.86650 * b3 + white * 0.3104856;
+        b4 = 0.55000 * b4 + white * 0.5329522;
+        b5 = -0.7616 * b5 - white * 0.0168980;
+        output[i] = b0 + b1 + b2 + b3 + b4 + b5 + b6 + white * 0.5362;
+        output[i] *= 0.11;
+        b6 = white * 0.115926;
+      }
+
+      const noiseSource = ctx.createBufferSource();
+      noiseSource.buffer = noiseBuffer;
+      noiseSource.loop = true;
+
+      const filter = ctx.createBiquadFilter();
+      filter.type = 'lowpass';
+      filter.frequency.setValueAtTime(1000, ctx.currentTime);
+
+      noiseSource.connect(filter);
+      filter.connect(mainGain);
+      
+      noiseSource.start();
+      sourceNodesRef.current.push(noiseSource);
+
+      const dropletInterval = setInterval(() => {
+        if (!audioContextRef.current) {
+          clearInterval(dropletInterval);
+          return;
+        }
+        const osc = ctx.createOscillator();
+        const gain = ctx.createGain();
+        osc.type = 'sine';
+        osc.frequency.setValueAtTime(1200 + Math.random() * 800, ctx.currentTime);
+        
+        gain.gain.setValueAtTime(0.0, ctx.currentTime);
+        gain.gain.linearRampToValueAtTime(0.03 + Math.random() * 0.05, ctx.currentTime + 0.005);
+        gain.gain.exponentialRampToValueAtTime(0.0001, ctx.currentTime + 0.08);
+
+        osc.connect(gain);
+        gain.connect(mainGain);
+        osc.start();
+        osc.stop(ctx.currentTime + 0.1);
+      }, 120);
+
+    } else if (track === 'murmur') {
+      const bufferSize = 2 * ctx.sampleRate;
+      const noiseBuffer = ctx.createBuffer(1, bufferSize, ctx.sampleRate);
+      const output = noiseBuffer.getChannelData(0);
+      
+      let lastOut = 0.0;
+      for (let i = 0; i < bufferSize; i++) {
+        const white = Math.random() * 2 - 1;
+        output[i] = (lastOut + (0.02 * white)) / 1.02;
+        lastOut = output[i];
+        output[i] *= 3.5;
+      }
+
+      const noiseSource = ctx.createBufferSource();
+      noiseSource.buffer = noiseBuffer;
+      noiseSource.loop = true;
+
+      const filter = ctx.createBiquadFilter();
+      filter.type = 'lowpass';
+      filter.frequency.setValueAtTime(350, ctx.currentTime);
+
+      noiseSource.connect(filter);
+      filter.connect(mainGain);
+      noiseSource.start();
+      sourceNodesRef.current.push(noiseSource);
+
+      const sweepOsc = ctx.createOscillator();
+      const sweepGain = ctx.createGain();
+      sweepOsc.type = 'sine';
+      sweepOsc.frequency.setValueAtTime(90, ctx.currentTime);
+      sweepGain.gain.setValueAtTime(0.12, ctx.currentTime);
+
+      sweepOsc.connect(sweepGain);
+      sweepGain.connect(mainGain);
+      sweepOsc.start();
+      sourceNodesRef.current.push(sweepOsc);
+    }
+  };
+
+  useEffect(() => {
+    if (state.playing && state.activeTrack !== 'none') {
+      playSynthTrack(state.activeTrack);
+    } else {
+      stopAllAudio();
+    }
+    return () => stopAllAudio();
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [state.playing, state.activeTrack]);
+
+  useEffect(() => {
+    if (gainNodeRef.current && audioContextRef.current) {
+      gainNodeRef.current.gain.setValueAtTime(state.volume / 100, audioContextRef.current.currentTime);
+    }
+  }, [state.volume]);
+
+  return (
+    <div className="border-2 border-[#1A1A1A] p-4 bg-[#FFF9EC] rounded-none neo-shadow-sm my-2 w-full font-sans text-[#1A1A1A]">
+      <div className="flex items-center justify-between border-b border-black/10 pb-2 mb-3">
+        <div className="flex items-center space-x-2">
+          <Music className={`w-4 h-4 text-amber-600 ${state.playing ? 'animate-spin' : ''}`} />
+          <span className="text-[11px] font-mono font-bold uppercase tracking-wider text-gray-500">
+            Focus Music Player Card
+          </span>
+        </div>
+      </div>
+
+      <div className="flex flex-col sm:flex-row items-center gap-4">
+        <div className="border-2 border-black bg-white p-3 flex flex-col justify-between w-full sm:w-48 text-center neo-shadow-xs">
+          <span className="text-[7px] font-mono font-black text-gray-400 uppercase">Playing Track</span>
+          <span className="text-xs font-black uppercase mt-1">
+            {state.activeTrack === 'rain' ? '🌧️ Gentle Rain' : 
+             state.activeTrack === 'murmur' ? '📚 Library Hum' : '🔇 Stopped'}
+          </span>
+
+          <button
+            onClick={() => {
+              const updated = { ...state, playing: !state.playing };
+              updateCanvasElement(el.id, { properties: JSON.stringify({ ...propertiesObj, player: updated }) });
+            }}
+            className={`mt-3 py-1 text-center font-black text-[10px] uppercase border-2 border-black cursor-pointer ${
+              state.playing ? 'bg-rose-500 text-white' : 'bg-[#FFB703] text-black hover:bg-amber-400'
+            }`}
+          >
+            {state.playing ? 'Pause Loop' : 'Play Loop'}
+          </button>
+        </div>
+
+        <div className="flex-1 space-y-3 w-full">
+          <div>
+            <span className="text-[7px] font-mono font-black text-gray-400 block uppercase">Select Ambient Channel</span>
+            <div className="flex space-x-2 mt-1">
+              {[
+                { id: 'rain', label: '🌧️ Gentle Rain' },
+                { id: 'murmur', label: '📚 Library Hum' }
+              ].map(track => (
+                <button
+                  key={track.id}
+                  onClick={() => {
+                    const updated = { ...state, activeTrack: track.id, playing: true };
+                    updateCanvasElement(el.id, { properties: JSON.stringify({ ...propertiesObj, player: updated }) });
+                  }}
+                  className={`flex-1 py-1.5 px-2 text-[9px] border-2 border-black font-extrabold uppercase transition-all cursor-pointer ${
+                    state.activeTrack === track.id
+                      ? 'bg-black text-white'
+                      : 'bg-white hover:bg-slate-100 text-black'
+                  }`}
+                >
+                  {track.label}
+                </button>
+              ))}
+            </div>
+          </div>
+
+          <div className="flex items-center space-x-3">
+            <span className="text-[8px] font-mono font-bold text-gray-400 uppercase">Volume</span>
+            <input
+              type="range"
+              min={0}
+              max={100}
+              value={state.volume}
+              onChange={(e) => {
+                const updated = { ...state, volume: parseInt(e.target.value) };
+                updateCanvasElement(el.id, { properties: JSON.stringify({ ...propertiesObj, player: updated }) });
+              }}
+              className="w-full h-1 bg-black rounded-none appearance-none cursor-pointer outline-none"
+            />
+            <span className="font-mono text-[9px] font-bold w-6 text-right">{state.volume}%</span>
+          </div>
+        </div>
+      </div>
+    </div>
+  );
+}
+
+// 55. STICKY NOTE NOTICE BOXES
+function StickyNoteBox({ el, propertiesObj, updateCanvasElement, isLocked }: WidgetProps) {
+  const state = propertiesObj.sticky || {
+    color: '#FFD166',
+    text: 'Remember to pick up groceries: Milk, Eggs, and Bread. Call Sarah by 6 PM.'
+  };
+
+  const palette = [
+    { name: 'yellow', code: '#FFD166' },
+    { name: 'pink', code: '#FF9F1C' },
+    { name: 'green', code: '#06D6A0' },
+    { name: 'blue', code: '#118AB2' }
+  ];
+
+  return (
+    <div 
+      className="border-2 border-[#1A1A1A] p-4 rounded-none neo-shadow-md my-2 w-full font-sans transition-all relative overflow-hidden text-[#1A1A1A]"
+      style={{ backgroundColor: state.color }}
+    >
+      <div className="absolute top-2 left-1/2 -translate-x-1/2 w-3 h-3 rounded-full bg-rose-600 border border-black/30 neo-shadow-xs" />
+
+      <div className="flex items-center justify-between border-b border-black/10 pb-1.5 mb-2 mt-1">
+        <div className="flex items-center space-x-1">
+          <Pin className="w-3 h-3 text-[#1A1A1A]" />
+          <span className="text-[9px] font-mono font-black uppercase text-[#1A1A1A]/70">
+            Sticky Notice Board
+          </span>
+        </div>
+
+        {!isLocked && (
+          <div className="flex space-x-1">
+            {palette.map(p => (
+              <button
+                key={p.name}
+                onClick={() => {
+                  const updated = { ...state, color: p.code };
+                  updateCanvasElement(el.id, { properties: JSON.stringify({ ...propertiesObj, sticky: updated }) });
+                }}
+                className="w-3.5 h-3.5 border border-black rounded-none transition-transform hover:scale-110 cursor-pointer"
+                style={{ backgroundColor: p.code }}
+              />
+            ))}
+          </div>
+        )}
+      </div>
+
+      <textarea
+        value={state.text}
+        disabled={isLocked}
+        rows={3}
+        onChange={(e) => {
+          const updated = { ...state, text: e.target.value };
+          updateCanvasElement(el.id, { properties: JSON.stringify({ ...propertiesObj, sticky: updated }) });
+        }}
+        placeholder="Paste critical reminders, addresses, or phone numbers here down quickly..."
+        className="w-full bg-transparent border-none outline-none font-extrabold text-xs text-[#1A1A1A] resize-none leading-relaxed placeholder-black/40 focus:ring-0"
+      />
+    </div>
+  );
+}
+
+// 56. SIMPLE CALCULATOR NOTEPAD ELEMENT
+function CalculatorNotepad({ el, propertiesObj, updateCanvasElement, isLocked }: WidgetProps) {
+  const state = propertiesObj.calc || {
+    expression: '25 + 40',
+    result: '65'
+  };
+
+  const evaluateMath = (expr: string): string => {
+    try {
+      const cleanExpr = expr.replace(/[^0-9+\-*/(). ]/g, '');
+      if (!cleanExpr) return '';
+      const res = Function(`"use strict"; return (${cleanExpr})`)();
+      if (typeof res === 'number' && !isNaN(res)) {
+        return String(res);
+      }
+      return '';
+    } catch {
+      return '';
+    }
+  };
+
+  return (
+    <div className="border-2 border-[#1A1A1A] p-4 bg-white rounded-none neo-shadow-sm my-2 w-full font-sans text-[#1A1A1A]">
+      <div className="flex items-center justify-between border-b border-gray-100 pb-2 mb-3">
+        <div className="flex items-center space-x-2">
+          <Calculator className="w-4 h-4 text-amber-500" />
+          <span className="text-[11px] font-mono font-bold uppercase tracking-wider text-gray-500">
+            Calculator Notepad Element
+          </span>
+        </div>
+      </div>
+
+      <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+        <div>
+          <label className="text-[7px] font-mono font-bold text-gray-400 block uppercase mb-1">Enter Mathematical Expression</label>
+          <input
+            type="text"
+            value={state.expression}
+            disabled={isLocked}
+            placeholder="e.g. 12 * (15 - 3) + 25"
+            onChange={(e) => {
+              const val = e.target.value;
+              const calculated = evaluateMath(val);
+              const updated = { ...state, expression: val, result: calculated };
+              updateCanvasElement(el.id, { properties: JSON.stringify({ ...propertiesObj, calc: updated }) });
+            }}
+            className="w-full text-xs font-mono font-bold border-2 border-black p-1.5 outline-none bg-slate-50 focus:bg-white text-[#1A1A1A]"
+          />
+        </div>
+
+        <div className="border-2 border-black bg-slate-900 text-slate-100 p-3 font-mono text-[10px] flex flex-col justify-between">
+          <div>
+            <span className="text-[7px] font-bold text-slate-400 uppercase block mb-1">Inline Parsed Result:</span>
+            <div className="text-sm font-black text-emerald-400">
+              {state.result ? `= ${state.result}` : 'Waiting for equation...'}
+            </div>
+          </div>
+          <span className="text-[6px] text-slate-500 uppercase mt-2">
+            Type numbers and symbols directly to auto-update
+          </span>
+        </div>
+      </div>
+    </div>
+  );
+}
+
+// 57. QUICK MOOD SELECTOR STAMPS
+function MoodSelectorStamps({ el, propertiesObj, updateCanvasElement, isLocked }: WidgetProps) {
+  const state = propertiesObj.mood || {
+    history: []
+  };
+
+  const moods = [
+    { emoji: '😀', color: 'bg-emerald-100 border-emerald-500 text-emerald-700', label: 'Fantastic' },
+    { emoji: '🙂', color: 'bg-teal-100 border-teal-500 text-teal-700', label: 'Good' },
+    { emoji: '😐', color: 'bg-amber-100 border-amber-500 text-amber-700', label: 'Neutral' },
+    { emoji: '🙁', color: 'bg-orange-100 border-orange-500 text-orange-700', label: 'Down' },
+    { emoji: '😭', color: 'bg-rose-100 border-rose-500 text-rose-700', label: 'Anxious' }
+  ];
+
+  const handleSelectMood = (moodEmoji: string, label: string) => {
+    if (isLocked) return;
+    const todayStr = new Date().toISOString().split('T')[0];
+    const filtered = state.history.filter((h: any) => h.date !== todayStr);
+    const updatedHistory = [...filtered, { date: todayStr, mood: moodEmoji, label }];
+    const updated = { ...state, history: updatedHistory };
+    updateCanvasElement(el.id, { properties: JSON.stringify({ ...propertiesObj, mood: updated }) });
+  };
+
+  const todayStr = new Date().toISOString().split('T')[0];
+  const todaysLog = state.history.find((h: any) => h.date === todayStr);
+
+  return (
+    <div className="border-2 border-[#1A1A1A] p-4 bg-white rounded-none neo-shadow-sm my-2 w-full font-sans text-[#1A1A1A]">
+      <div className="flex items-center justify-between border-b border-gray-100 pb-2 mb-3">
+        <div className="flex items-center space-x-2">
+          <Smile className="w-4 h-4 text-emerald-500" />
+          <span className="text-[11px] font-mono font-bold uppercase tracking-wider text-gray-500">
+            Quick Mood Selector Stamp Calendar
+          </span>
+        </div>
+        <span className="text-[9px] font-mono border border-emerald-200 px-1.5 py-0.5 bg-emerald-50 text-emerald-600 font-extrabold uppercase rounded-sm">
+          Daily Check-In
+        </span>
+      </div>
+
+      <div className="space-y-4">
+        <div className="text-center bg-slate-50 border border-black/10 p-3 animate-fade-in">
+          <span className="text-[8px] font-mono font-black text-gray-400 block uppercase mb-2">How are you feeling today?</span>
+          
+          <div className="flex justify-center space-x-2.5">
+            {moods.map(m => (
+              <button
+                key={m.emoji}
+                disabled={isLocked}
+                onClick={() => handleSelectMood(m.emoji, m.label)}
+                className={`w-10 h-10 border-2 rounded-none flex items-center justify-center text-xl transition-all hover:scale-110 hover:-translate-y-0.5 cursor-pointer ${
+                  todaysLog?.mood === m.emoji ? `${m.color} border-black scale-105 neo-shadow-xs` : 'bg-white border-black/20 text-[#1A1A1A]'
+                }`}
+                title={m.label}
+              >
+                {m.emoji}
+              </button>
+            ))}
+          </div>
+
+          {todaysLog && (
+            <p className="text-[9px] font-mono font-black uppercase text-emerald-600 mt-3 animate-pulse">
+              Stamped: Today feeling &ldquo;{todaysLog.label}&rdquo; {todaysLog.mood}
+            </p>
+          )}
+        </div>
+
+        {state.history.length > 0 && (
+          <div className="space-y-1.5">
+            <span className="text-[8px] font-mono font-black text-gray-400 block uppercase">Historical Logs Timeline</span>
+            <div className="flex space-x-2 overflow-x-auto pb-1 max-w-full">
+              {state.history.slice(-5).map((h: any, idx: number) => (
+                <div key={idx} className="flex-shrink-0 border border-black bg-slate-50 p-1.5 flex flex-col items-center justify-between min-w-[70px]">
+                  <span className="text-[7px] font-mono font-bold text-gray-400">{h.date.slice(5)}</span>
+                  <span className="text-base my-0.5">{h.mood}</span>
+                  <span className="text-[6px] font-black uppercase tracking-wide text-gray-500 truncate w-full text-center">{h.label}</span>
+                </div>
+              ))}
+            </div>
+          </div>
+        )}
+      </div>
+    </div>
+  );
+}
+
+// 58. INTERACTIVE SKETCHING DOODLE BOX
+function SketchDoodleBox({ el, propertiesObj, updateCanvasElement, isLocked }: WidgetProps) {
+  const state = propertiesObj.sketch || {
+    strokeColor: '#1A1A1A',
+    lineWidth: 3,
+    lines: []
+  };
+
+  const canvasRef = useRef<HTMLCanvasElement | null>(null);
+  const [isDrawing, setIsDrawing] = useState(false);
+  const lastPos = useRef({ x: 0, y: 0 });
+
+  const getMousePos = (e: any) => {
+    const canvas = canvasRef.current;
+    if (!canvas) return { x: 0, y: 0 };
+    const rect = canvas.getBoundingClientRect();
+    const clientX = e.touches ? e.touches[0].clientX : e.clientX;
+    const clientY = e.touches ? e.touches[0].clientY : e.clientY;
+    return {
+      x: clientX - rect.left,
+      y: clientY - rect.top
+    };
+  };
+
+  const startDrawing = (e: any) => {
+    if (isLocked) return;
+    const pos = getMousePos(e);
+    lastPos.current = pos;
+    setIsDrawing(true);
+  };
+
+  const draw = (e: any) => {
+    if (!isDrawing || isLocked) return;
+    const pos = getMousePos(e);
+
+    const canvas = canvasRef.current;
+    if (!canvas) return;
+    const ctx = canvas.getContext('2d');
+    if (!ctx) return;
+
+    ctx.beginPath();
+    ctx.strokeStyle = state.strokeColor;
+    ctx.lineWidth = state.lineWidth;
+    ctx.lineCap = 'round';
+    ctx.lineJoin = 'round';
+    ctx.moveTo(lastPos.current.x, lastPos.current.y);
+    ctx.lineTo(pos.x, pos.y);
+    ctx.stroke();
+
+    lastPos.current = pos;
+  };
+
+  const stopDrawing = () => {
+    if (!isDrawing || isLocked) return;
+    setIsDrawing(false);
+
+    const canvas = canvasRef.current;
+    if (!canvas) return;
+    const dataUrl = canvas.toDataURL();
+    updateCanvasElement(el.id, { content: dataUrl });
+  };
+
+  const clearCanvas = () => {
+    if (isLocked) return;
+    const canvas = canvasRef.current;
+    if (!canvas) return;
+    const ctx = canvas.getContext('2d');
+    if (!ctx) return;
+    ctx.clearRect(0, 0, canvas.width, canvas.height);
+    updateCanvasElement(el.id, { content: '' });
+  };
+
+  return (
+    <div className="border-2 border-[#1A1A1A] p-4 bg-white rounded-none neo-shadow-sm my-2 w-full font-sans text-[#1A1A1A]">
+      <div className="flex items-center justify-between border-b border-gray-100 pb-2 mb-3">
+        <div className="flex items-center space-x-2">
+          <Paintbrush className="w-4 h-4 text-[#FFB703]" />
+          <span className="text-[11px] font-mono font-bold uppercase tracking-wider text-gray-500">
+            Interactive Sketching Doodle Box
+          </span>
+        </div>
+        <span className="text-[9px] font-mono border border-[#FFB703] px-1.5 py-0.5 bg-amber-50 text-[#1A1A1A] font-extrabold uppercase rounded-sm">
+          Scribble Canvas
+        </span>
+      </div>
+
+      <div className="space-y-3">
+        <div className="flex items-center justify-between">
+          <div className="flex items-center space-x-1">
+            {['#1A1A1A', '#E63946', '#457B9D', '#2A9D8F'].map(color => (
+              <button
+                key={color}
+                disabled={isLocked}
+                onClick={() => {
+                  const updated = { ...state, strokeColor: color };
+                  updateCanvasElement(el.id, { properties: JSON.stringify({ ...propertiesObj, sketch: updated }) });
+                }}
+                className={`w-5 h-5 rounded-none border border-black cursor-pointer ${
+                  state.strokeColor === color ? 'ring-2 ring-indigo-500 scale-105' : ''
+                }`}
+                style={{ backgroundColor: color }}
+              />
+            ))}
+          </div>
+
+          <div className="flex items-center space-x-2 text-xs font-mono">
+            <span className="text-[8px] text-gray-400 uppercase font-bold">Pen Width:</span>
+            <input
+              type="range"
+              min={1}
+              max={10}
+              value={state.lineWidth}
+              disabled={isLocked}
+              onChange={(e) => {
+                const updated = { ...state, lineWidth: parseInt(e.target.value) };
+                updateCanvasElement(el.id, { properties: JSON.stringify({ ...propertiesObj, sketch: updated }) });
+              }}
+              className="w-16 h-1 bg-black appearance-none cursor-pointer outline-none"
+            />
+            
+            <button
+              onClick={clearCanvas}
+              disabled={isLocked}
+              className="px-2 py-0.5 bg-[#FFB703] border border-black font-extrabold text-[8px] uppercase tracking-wide cursor-pointer text-[#1A1A1A] hover:bg-amber-400"
+            >
+              Reset
+            </button>
+          </div>
+        </div>
+
+        <div className="border-2 border-dashed border-black relative overflow-hidden bg-slate-50 cursor-crosshair">
+          <canvas
+            ref={(node) => {
+              if (node) {
+                canvasRef.current = node;
+                if (el.content && el.content.startsWith('data:image')) {
+                  const img = new window.Image();
+                  img.src = el.content;
+                  img.onload = () => {
+                    const ctx = node.getContext('2d');
+                    ctx?.drawImage(img, 0, 0);
+                  };
+                }
+              }
+            }}
+            width={500}
+            height={200}
+            onMouseDown={startDrawing}
+            onMouseMove={draw}
+            onMouseUp={stopDrawing}
+            onMouseLeave={stopDrawing}
+            onTouchStart={startDrawing}
+            onTouchMove={draw}
+            onTouchEnd={stopDrawing}
+            className="w-full h-[200px]"
+          />
+        </div>
+
+        <div className="text-[8px] font-mono text-gray-400 text-center font-bold">
+          ✍️ Doodling is fully saved inside this canvas block. Perfect for kids scribbles or instant design wireframes!
+        </div>
+      </div>
+    </div>
+  );
+}
+
+// 59. RECIPE INGREDIENT SCALER GRID
+function RecipeScalerGrid({ el, propertiesObj, updateCanvasElement, isLocked }: WidgetProps) {
+  const state = propertiesObj.recipe || {
+    servings: 4,
+    baseServings: 4,
+    recipeName: 'Fluffy Family Pancakes 🥞',
+    ingredients: [
+      { name: 'All-Purpose Flour', amount: 2, unit: 'cups' },
+      { name: 'Baking Powder', amount: 2, unit: 'tsp' },
+      { name: 'Sugar', amount: 2, unit: 'tbsp' },
+      { name: 'Milk', amount: 1.5, unit: 'cups' },
+      { name: 'Butter (Melted)', amount: 4, unit: 'tbsp' },
+      { name: 'Large Egg', amount: 1, unit: 'qty' }
+    ]
+  };
+
+  const multiplier = state.servings / state.baseServings;
+
+  const handleUpdateServings = (val: number) => {
+    const updated = { ...state, servings: Math.max(1, val) };
+    updateCanvasElement(el.id, { properties: JSON.stringify({ ...propertiesObj, recipe: updated }) });
+  };
+
+  const handleAddIngredient = () => {
+    const updated = {
+      ...state,
+      ingredients: [...state.ingredients, { name: 'New Ingredient', amount: 1, unit: 'pcs' }]
+    };
+    updateCanvasElement(el.id, { properties: JSON.stringify({ ...propertiesObj, recipe: updated }) });
+  };
+
+  const handleUpdateIngredient = (idx: number, field: string, val: any) => {
+    const newIngredients = [...state.ingredients];
+    newIngredients[idx] = { ...newIngredients[idx], [field]: val };
+    const updated = { ...state, ingredients: newIngredients };
+    updateCanvasElement(el.id, { properties: JSON.stringify({ ...propertiesObj, recipe: updated }) });
+  };
+
+  const handleDeleteIngredient = (idx: number) => {
+    const newIngredients = state.ingredients.filter((_: any, i: number) => i !== idx);
+    const updated = { ...state, ingredients: newIngredients };
+    updateCanvasElement(el.id, { properties: JSON.stringify({ ...propertiesObj, recipe: updated }) });
+  };
+
+  return (
+    <div className="border-2 border-[#1A1A1A] p-4 bg-white rounded-none neo-shadow-sm my-2 w-full font-sans text-[#1A1A1A]">
+      <div className="flex items-center justify-between border-b border-gray-100 pb-2 mb-3">
+        <div className="flex items-center space-x-2">
+          <Utensils className="w-4 h-4 text-orange-500 animate-pulse" />
+          <span className="text-[11px] font-mono font-bold uppercase tracking-wider text-gray-500">
+            Recipe Ingredient Scaler Grid
+          </span>
+        </div>
+      </div>
+
+      <div className="space-y-4">
+        <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3">
+          <div className="flex-1">
+            <label className="text-[7px] font-mono font-bold text-gray-400 block uppercase">Recipe Title</label>
+            <input
+              type="text"
+              value={state.recipeName}
+              disabled={isLocked}
+              onChange={(e) => {
+                const updated = { ...state, recipeName: e.target.value };
+                updateCanvasElement(el.id, { properties: JSON.stringify({ ...propertiesObj, recipe: updated }) });
+              }}
+              className="w-full text-xs font-bold border-b-2 border-black outline-none py-0.5 text-[#1A1A1A]"
+            />
+          </div>
+
+          <div className="flex items-center space-x-2 bg-slate-50 border-2 border-black p-1">
+            <span className="text-[8px] font-mono font-bold uppercase text-gray-400 pl-1">Servings</span>
+            <button
+              onClick={() => handleUpdateServings(state.servings - 1)}
+              disabled={isLocked}
+              className="w-6 h-6 border border-black bg-white font-bold hover:bg-slate-100 cursor-pointer"
+            >
+              -
+            </button>
+            <span className="font-mono font-bold text-xs w-6 text-center">{state.servings}</span>
+            <button
+              onClick={() => handleUpdateServings(state.servings + 1)}
+              disabled={isLocked}
+              className="w-6 h-6 border border-black bg-white font-bold hover:bg-slate-100 cursor-pointer"
+            >
+              +
+            </button>
+
+            <button
+              onClick={() => handleUpdateServings(state.baseServings * 2)}
+              disabled={isLocked}
+              className="px-1.5 py-0.5 bg-black text-white font-mono font-black text-[7px] uppercase cursor-pointer"
+            >
+              2X
+            </button>
+            <button
+              onClick={() => handleUpdateServings(state.baseServings * 3)}
+              disabled={isLocked}
+              className="px-1.5 py-0.5 bg-black text-white font-mono font-black text-[7px] uppercase cursor-pointer"
+            >
+              3X
+            </button>
+          </div>
+        </div>
+
+        <div className="border-2 border-black divide-y-2 divide-black overflow-hidden font-mono text-[9px]">
+          <div className="grid grid-cols-12 gap-1 bg-slate-100 p-2 font-black uppercase text-gray-500 text-[8px]">
+            <div className="col-span-6">Ingredient Name</div>
+            <div className="col-span-2 text-center">Base Qty</div>
+            <div className="col-span-2 text-center">Scaled Qty</div>
+            <div className="col-span-2 text-center">Unit</div>
+          </div>
+
+          {state.ingredients.map((ing: any, idx: number) => {
+            const scaledAmount = Number((ing.amount * multiplier).toFixed(2));
+            return (
+              <div key={idx} className="grid grid-cols-12 gap-1 p-1.5 items-center bg-white hover:bg-slate-50 transition-colors">
+                <div className="col-span-6">
+                  <input
+                    type="text"
+                    value={ing.name}
+                    disabled={isLocked}
+                    onChange={(e) => handleUpdateIngredient(idx, 'name', e.target.value)}
+                    className="w-full border-b border-transparent focus:border-black outline-none font-bold text-[#1A1A1A]"
+                  />
+                </div>
+                <div className="col-span-2 text-center">
+                  <input
+                    type="number"
+                    value={ing.amount}
+                    disabled={isLocked}
+                    onChange={(e) => handleUpdateIngredient(idx, 'amount', parseFloat(e.target.value) || 0)}
+                    className="w-full text-center border-b border-transparent focus:border-black outline-none text-[#1A1A1A]"
+                  />
+                </div>
+                <div className="col-span-2 text-center font-black text-indigo-600 bg-indigo-50 border border-indigo-100 py-0.5">
+                  {scaledAmount}
+                </div>
+                <div className="col-span-2 text-center flex items-center justify-between">
+                  <input
+                    type="text"
+                    value={ing.unit}
+                    disabled={isLocked}
+                    onChange={(e) => handleUpdateIngredient(idx, 'unit', e.target.value)}
+                    className="w-8 text-center border-b border-transparent focus:border-black outline-none text-gray-500"
+                  />
+                  {!isLocked && (
+                    <button
+                      onClick={() => handleDeleteIngredient(idx)}
+                      className="text-rose-500 hover:text-rose-700 font-extrabold text-[10px] cursor-pointer pl-1"
+                    >
+                      ✕
+                    </button>
+                  )}
+                </div>
+              </div>
+            );
+          })}
+        </div>
+
+        {!isLocked && (
+          <button
+            onClick={handleAddIngredient}
+            className="w-full py-1 bg-emerald-500 hover:bg-emerald-600 text-white font-mono font-bold text-[8px] uppercase border-2 border-black cursor-pointer"
+          >
+            + Add New Recipe Ingredient Row
+          </button>
+        )}
+      </div>
+    </div>
+  );
+}
+
+// 60. SIMPLE WEB EMBED BOX
+function WebEmbedBox({ el, propertiesObj, updateCanvasElement, isLocked }: WidgetProps) {
+  const state = propertiesObj.embed || {
+    url: 'https://www.wikipedia.org/',
+    height: 350
+  };
+
+  const getSafeEmbedUrl = (inputUrl: string) => {
+    const url = inputUrl.trim();
+    if (url.includes('youtube.com/watch?v=')) {
+      const id = url.split('watch?v=')[1]?.split('&')[0];
+      if (id) return `https://www.youtube.com/embed/${id}`;
+    } else if (url.includes('youtu.be/')) {
+      const id = url.split('youtu.be/')[1]?.split('?')[0];
+      if (id) return `https://www.youtube.com/embed/${id}`;
+    }
+    return url;
+  };
+
+  const currentUrl = getSafeEmbedUrl(state.url);
+
+  return (
+    <div className="border-2 border-[#1A1A1A] p-4 bg-white rounded-none neo-shadow-sm my-2 w-full font-sans text-[#1A1A1A]">
+      <div className="flex items-center justify-between border-b border-gray-100 pb-2 mb-3">
+        <div className="flex items-center space-x-2">
+          <ExternalLink className="w-4 h-4 text-indigo-500" />
+          <span className="text-[11px] font-mono font-bold uppercase tracking-wider text-gray-500">
+            Simple Web Embed Box
+          </span>
+        </div>
+      </div>
+
+      <div className="space-y-3">
+        {!isLocked && (
+          <div className="grid grid-cols-1 sm:grid-cols-4 gap-2">
+            <div className="col-span-3">
+              <label className="text-[7px] font-mono font-bold text-gray-400 block uppercase mb-1">Target Web URL (YouTube, Maps, Wiki, etc.)</label>
+              <input
+                type="text"
+                value={state.url}
+                onChange={(e) => {
+                  const updated = { ...state, url: e.target.value };
+                  updateCanvasElement(el.id, { properties: JSON.stringify({ ...propertiesObj, embed: updated }) });
+                }}
+                placeholder="Paste website or video address..."
+                className="w-full text-xs font-mono border-2 border-black p-1 bg-slate-50 outline-none text-[#1A1A1A]"
+              />
+            </div>
+            <div>
+              <label className="text-[7px] font-mono font-bold text-gray-400 block uppercase mb-1">Frame Height (px)</label>
+              <input
+                type="number"
+                min={100}
+                max={800}
+                value={state.height}
+                onChange={(e) => {
+                  const updated = { ...state, height: Math.max(100, parseInt(e.target.value) || 300) };
+                  updateCanvasElement(el.id, { properties: JSON.stringify({ ...propertiesObj, embed: updated }) });
+                }}
+                className="w-full text-xs font-mono border-2 border-black p-1 bg-slate-50 outline-none text-center text-[#1A1A1A]"
+              />
+            </div>
+          </div>
+        )}
+
+        <div className="border-2 border-black overflow-hidden bg-slate-100 relative">
+          <iframe
+            src={currentUrl}
+            referrerPolicy="no-referrer"
+            style={{ height: `${state.height}px` }}
+            className="w-full border-none bg-white"
+          />
+        </div>
+
+        <div className="text-[8px] font-mono text-gray-400 text-center font-bold">
+          ⚠️ Note: Some websites block rendering inside embedded frames due to browser security settings. YouTube embed works perfectly!
+        </div>
+      </div>
     </div>
   );
 }
