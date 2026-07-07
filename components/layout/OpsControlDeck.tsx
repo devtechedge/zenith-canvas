@@ -25,7 +25,8 @@ import {
   Download,
   Volume2,
   VolumeX,
-  Mic
+  Mic,
+  Pin
 } from 'lucide-react';
 import { motion, AnimatePresence } from 'motion/react';
 
@@ -131,6 +132,7 @@ interface Checkpoint {
   timestamp: number;
   elementCount: number;
   data: string; // JSON string of elements
+  isPinned?: boolean;
 }
 
 interface OpsControlDeckProps {
@@ -362,9 +364,14 @@ export default function OpsControlDeck({
     const saved = localStorage.getItem(`zenith-snapshots-${canvasId}`);
     if (saved) {
       try {
-        const parsed = JSON.parse(saved);
+        const parsed = JSON.parse(saved) as Checkpoint[];
+        const sorted = [...parsed].sort((a, b) => {
+          if (a.isPinned && !b.isPinned) return -1;
+          if (!a.isPinned && b.isPinned) return 1;
+          return b.timestamp - a.timestamp;
+        });
         const timer = setTimeout(() => {
-          setSnapshots(parsed);
+          setSnapshots(sorted);
         }, 0);
         return () => clearTimeout(timer);
       } catch {}
@@ -389,8 +396,13 @@ export default function OpsControlDeck({
     };
 
     const updated = [newCheckpoint, ...snapshots];
-    setSnapshots(updated);
-    localStorage.setItem(`zenith-snapshots-${canvasId}`, JSON.stringify(updated));
+    const sorted = [...updated].sort((a, b) => {
+      if (a.isPinned && !b.isPinned) return -1;
+      if (!a.isPinned && b.isPinned) return 1;
+      return b.timestamp - a.timestamp;
+    });
+    setSnapshots(sorted);
+    localStorage.setItem(`zenith-snapshots-${canvasId}`, JSON.stringify(sorted));
     addCliLog(`[COMMIT] Snapshot created: "${snapshotName}" with ${elements.length} blocks.`);
   };
 
@@ -420,6 +432,24 @@ export default function OpsControlDeck({
     const updated = snapshots.filter(s => s.id !== snapId);
     setSnapshots(updated);
     localStorage.setItem(`zenith-snapshots-${canvasId}`, JSON.stringify(updated));
+  };
+
+  const handleTogglePinSnapshot = (snapId: string) => {
+    const updated = snapshots.map(s => {
+      if (s.id === snapId) {
+        return { ...s, isPinned: !s.isPinned };
+      }
+      return s;
+    });
+    const sorted = [...updated].sort((a, b) => {
+      if (a.isPinned && !b.isPinned) return -1;
+      if (!a.isPinned && b.isPinned) return 1;
+      return b.timestamp - a.timestamp;
+    });
+    setSnapshots(sorted);
+    localStorage.setItem(`zenith-snapshots-${canvasId}`, JSON.stringify(sorted));
+    const snapName = snapshots.find(s => s.id === snapId)?.name || 'Backup';
+    addCliLog(`[PIN] Snapshot "${snapName}" pinning status updated.`);
   };
 
   // --- Feature 7: Zenith CLI Terminal ---
@@ -851,23 +881,47 @@ export default function OpsControlDeck({
                     {snapshots.map((snap) => (
                       <div 
                         key={snap.id} 
-                        className="bg-white border-2 border-[#1A1A1A] p-3 space-y-2 rounded-none hover:bg-slate-50 transition-colors"
+                        className={`border-2 p-3 space-y-2 rounded-none transition-colors ${
+                          snap.isPinned 
+                            ? 'bg-amber-50/70 border-amber-500 neo-shadow-sm' 
+                            : 'bg-white border-[#1A1A1A] hover:bg-slate-50'
+                        }`}
                       >
                         <div className="flex items-start justify-between">
-                          <div>
-                            <h4 className="text-xs font-extrabold text-[#1A1A1A]">{snap.name}</h4>
+                          <div className="min-w-0 flex-1 pr-2">
+                            <div className="flex flex-wrap items-center gap-1.5">
+                              {snap.isPinned && (
+                                <span className="text-[8px] font-black uppercase bg-amber-500 text-black px-1.5 py-0.5 border border-black flex items-center shrink-0">
+                                  📌 MILESTONE
+                                </span>
+                              )}
+                              <h4 className="text-xs font-extrabold text-[#1A1A1A] truncate">{snap.name}</h4>
+                            </div>
                             <div className="flex items-center space-x-1.5 text-[9px] font-mono text-gray-400 mt-1">
                               <Clock className="w-3 h-3" />
                               <span>{new Date(snap.timestamp).toLocaleString()}</span>
                             </div>
                           </div>
-                          <button
-                            onClick={() => handleDeleteSnapshot(snap.id)}
-                            className="p-1 text-red-500 hover:bg-red-50 rounded"
-                            title="Delete backup"
-                          >
-                            <Trash2 className="w-3.5 h-3.5" />
-                          </button>
+                          <div className="flex items-center space-x-1 shrink-0">
+                            <button
+                              onClick={() => handleTogglePinSnapshot(snap.id)}
+                              className={`p-1 border rounded transition-colors cursor-pointer ${
+                                snap.isPinned 
+                                  ? 'text-amber-600 bg-amber-100 border-amber-300' 
+                                  : 'text-gray-400 hover:text-[#1A1A1A] hover:bg-slate-100 border-transparent'
+                              }`}
+                              title={snap.isPinned ? "Unpin milestone copy" : "Pin as milestone copy"}
+                            >
+                              <Pin className="w-3.5 h-3.5" />
+                            </button>
+                            <button
+                              onClick={() => handleDeleteSnapshot(snap.id)}
+                              className="p-1 text-red-500 hover:bg-red-50 rounded cursor-pointer"
+                              title="Delete backup"
+                            >
+                              <Trash2 className="w-3.5 h-3.5" />
+                            </button>
+                          </div>
                         </div>
 
                         <div className="flex items-center justify-between pt-1 border-t border-gray-100">
