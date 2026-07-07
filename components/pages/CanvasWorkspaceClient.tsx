@@ -229,6 +229,50 @@ export default function CanvasWorkspaceClient() {
     return (localStorage.getItem(`zenith-divider-style-${canvasId}`) as 'straight' | 'dashed' | 'zigzag' | 'thick') || 'straight';
   });
 
+  // Batch 5: Senior & Kid Accessibility & Inclusion Features (Features 41-50)
+  const [ultraContrast, setUltraContrast] = useState<boolean>(() => {
+    if (typeof window === 'undefined') return false;
+    return localStorage.getItem(`zenith-ultra-contrast-${canvasId}`) === 'true';
+  });
+
+  const [giantButtons, setGiantButtons] = useState<boolean>(() => {
+    if (typeof window === 'undefined') return false;
+    return localStorage.getItem(`zenith-giant-buttons-${canvasId}`) === 'true';
+  });
+
+  const [hapticFeedback, setHapticFeedback] = useState<boolean>(() => {
+    if (typeof window === 'undefined') return true;
+    return localStorage.getItem(`zenith-haptic-feedback-${canvasId}`) !== 'false';
+  });
+
+  const [flashingInputIndicator, setFlashingInputIndicator] = useState<boolean>(() => {
+    if (typeof window === 'undefined') return false;
+    return localStorage.getItem(`zenith-flashing-indicator-${canvasId}`) === 'true';
+  });
+
+  const [safeguardWarnings, setSafeguardWarnings] = useState<boolean>(() => {
+    if (typeof window === 'undefined') return true;
+    return localStorage.getItem(`zenith-safeguard-warnings-${canvasId}`) !== 'false';
+  });
+
+  const [autoDimming, setAutoDimming] = useState<boolean>(() => {
+    if (typeof window === 'undefined') return false;
+    return localStorage.getItem(`zenith-auto-dimming-${canvasId}`) === 'true';
+  });
+
+  const [isLateNight, setIsLateNight] = useState<boolean>(false);
+
+  useEffect(() => {
+    if (typeof window === 'undefined') return;
+    const checkTime = () => {
+      const hour = new Date().getHours();
+      setIsLateNight(hour >= 20 || hour < 6);
+    };
+    checkTime();
+    const interval = setInterval(checkTime, 60000);
+    return () => clearInterval(interval);
+  }, []);
+
   const [isMobileSidebarOpen, setIsMobileSidebarOpen] = useState(false);
   const [isLocked, setIsLocked] = useState<boolean>(() => {
     if (typeof window === 'undefined') return false;
@@ -826,6 +870,14 @@ export default function CanvasWorkspaceClient() {
         `density-${spacingDensity}`
       } ${
         headingFont === 'handwritten' ? 'font-handwritten-active' : ''
+      } ${
+        ultraContrast ? 'ultra-contrast-active' : ''
+      } ${
+        giantButtons ? 'giant-buttons-active' : ''
+      } ${
+        (autoDimming && isLateNight) ? 'eye-care-dimmed-active' : ''
+      } ${
+        flashingInputIndicator ? 'flashing-indicator-active' : ''
       }`}
       style={{
         backgroundColor: stationeryTheme === 'dark' ? '#0B0C10' : '#F4F7F6',
@@ -1318,7 +1370,17 @@ export default function CanvasWorkspaceClient() {
           {/* Feature 27: Side-by-Side Dual-Pane Split-Screen Layout Grid */}
           <div className={`flex-1 flex overflow-hidden ${isSplitScreen ? 'divide-x-4 divide-[#1A1A1A]' : ''}`}>
             <div className="flex-1 overflow-y-auto">
-              <CanvasEditor canvasId={canvasId} isLocked={isLocked} isCozyStoryMode={isCozyStoryMode} />
+              <CanvasEditor 
+                canvasId={canvasId} 
+                isLocked={isLocked} 
+                isCozyStoryMode={isCozyStoryMode} 
+                ultraContrast={ultraContrast}
+                giantButtons={giantButtons}
+                hapticFeedback={hapticFeedback}
+                flashingInputIndicator={flashingInputIndicator}
+                safeguardWarnings={safeguardWarnings}
+                autoDimming={autoDimming && isLateNight}
+              />
             </div>
 
             {isSplitScreen && (
@@ -1354,7 +1416,17 @@ export default function CanvasWorkspaceClient() {
                 {/* Secondary Scrollable Editor Canvas Container */}
                 <div className="flex-1 overflow-y-auto relative bg-[#F4F7F6]">
                   {splitCanvasId ? (
-                    <CanvasEditor canvasId={splitCanvasId} isLocked={isLocked} isCozyStoryMode={isCozyStoryMode} />
+                    <CanvasEditor 
+                      canvasId={splitCanvasId} 
+                      isLocked={isLocked} 
+                      isCozyStoryMode={isCozyStoryMode} 
+                      ultraContrast={ultraContrast}
+                      giantButtons={giantButtons}
+                      hapticFeedback={hapticFeedback}
+                      flashingInputIndicator={flashingInputIndicator}
+                      safeguardWarnings={safeguardWarnings}
+                      autoDimming={autoDimming && isLateNight}
+                    />
                   ) : (
                     <div className="h-full flex flex-col items-center justify-center p-8 text-center">
                       <FolderTree className="w-8 h-8 text-gray-300 mb-2 animate-bounce" />
@@ -1550,6 +1622,18 @@ export default function CanvasWorkspaceClient() {
         setHeadingFont={setHeadingFont}
         dividerStyle={dividerStyle}
         setDividerStyle={setDividerStyle}
+        ultraContrast={ultraContrast}
+        setUltraContrast={setUltraContrast}
+        giantButtons={giantButtons}
+        setGiantButtons={setGiantButtons}
+        hapticFeedback={hapticFeedback}
+        setHapticFeedback={setHapticFeedback}
+        flashingInputIndicator={flashingInputIndicator}
+        setFlashingInputIndicator={setFlashingInputIndicator}
+        safeguardWarnings={safeguardWarnings}
+        setSafeguardWarnings={setSafeguardWarnings}
+        autoDimming={autoDimming}
+        setAutoDimming={setAutoDimming}
       />
 
       {/* Page History Timeline Slide Overlay (Feature 30) */}

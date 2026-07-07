@@ -1,7 +1,7 @@
 'use client';
 
 import { useState } from 'react';
-import { GripVertical, Plus, Trash2, ArrowUp, ArrowDown } from 'lucide-react';
+import { GripVertical, Plus, Trash2, ArrowUp, ArrowDown, Volume2, Globe } from 'lucide-react';
 
 interface ElementWrapperProps {
   id: string;
@@ -10,6 +10,8 @@ interface ElementWrapperProps {
   onAddBelow: () => void;
   onMoveUp?: () => void;
   onMoveDown?: () => void;
+  onSpeak?: () => void;
+  onTranslate?: (lang: string) => void;
   children: React.ReactNode;
   isLocked?: boolean;
 }
@@ -21,11 +23,14 @@ export default function ElementWrapper({
   onAddBelow,
   onMoveUp,
   onMoveDown,
+  onSpeak,
+  onTranslate,
   children,
   isLocked = false
 }: ElementWrapperProps) {
   const [isHovered, setIsHovered] = useState(false);
   const [isDraggingOver, setIsDraggingOver] = useState(false);
+  const [isTranslateOpen, setIsTranslateOpen] = useState(false);
 
   // HTML5 Drag and Drop handlers for block-based sorting
   const handleDragStart = (e: React.DragEvent) => {
@@ -87,9 +92,47 @@ export default function ElementWrapper({
       {!isLocked && (
         <div 
           className={`absolute right-2 top-1.5 flex items-center space-x-1 transition-opacity duration-150 bg-[#F4F7F6]/90 px-1.5 py-0.5 border border-[#1A1A1A] neo-shadow-sm rounded ${
-            isHovered ? 'opacity-100' : 'opacity-0'
+            isHovered || isTranslateOpen ? 'opacity-100' : 'opacity-0'
           }`}
         >
+          {onSpeak && (
+            <button 
+              onClick={onSpeak}
+              title="Speak text out loud"
+              className="p-0.5 hover:bg-emerald-500 hover:text-white border border-transparent hover:border-[#1A1A1A] rounded text-emerald-600 transition-all cursor-pointer"
+            >
+              <Volume2 className="w-3.5 h-3.5" />
+            </button>
+          )}
+
+          {onTranslate && (
+            <div className="relative">
+              <button 
+                onClick={() => setIsTranslateOpen(!isTranslateOpen)}
+                title="Translate block"
+                className="p-0.5 hover:bg-blue-500 hover:text-white border border-transparent hover:border-[#1A1A1A] rounded text-blue-600 transition-all cursor-pointer"
+              >
+                <Globe className="w-3.5 h-3.5" />
+              </button>
+              {isTranslateOpen && (
+                <div className="absolute right-0 mt-1 bg-white border-2 border-[#1A1A1A] neo-shadow-sm p-1 z-30 flex flex-col space-y-0.5 min-w-[100px]">
+                  {['Spanish', 'French', 'German', 'Japanese', 'Chinese', 'Portuguese', 'Hindi', 'Arabic', 'Italian'].map(lang => (
+                    <button
+                      key={lang}
+                      onClick={() => {
+                        onTranslate(lang);
+                        setIsTranslateOpen(false);
+                      }}
+                      className="text-[9px] font-mono font-bold uppercase hover:bg-[#FFB703] p-1 text-left w-full text-[#1A1A1A] cursor-pointer"
+                    >
+                      {lang}
+                    </button>
+                  ))}
+                </div>
+              )}
+            </div>
+          )}
+
           {onMoveUp && (
             <button 
               onClick={onMoveUp}

@@ -24,7 +24,8 @@ import {
   Clock,
   Download,
   Volume2,
-  VolumeX
+  VolumeX,
+  Mic
 } from 'lucide-react';
 import { motion, AnimatePresence } from 'motion/react';
 
@@ -158,6 +159,18 @@ interface OpsControlDeckProps {
   setHeadingFont: (val: 'clean' | 'handwritten') => void;
   dividerStyle: 'straight' | 'dashed' | 'zigzag' | 'thick';
   setDividerStyle: (val: 'straight' | 'dashed' | 'zigzag' | 'thick') => void;
+  ultraContrast: boolean;
+  setUltraContrast: (val: boolean) => void;
+  giantButtons: boolean;
+  setGiantButtons: (val: boolean) => void;
+  hapticFeedback: boolean;
+  setHapticFeedback: (val: boolean) => void;
+  flashingInputIndicator: boolean;
+  setFlashingInputIndicator: (val: boolean) => void;
+  safeguardWarnings: boolean;
+  setSafeguardWarnings: (val: boolean) => void;
+  autoDimming: boolean;
+  setAutoDimming: (val: boolean) => void;
 }
 
 export default function OpsControlDeck({ 
@@ -185,10 +198,34 @@ export default function OpsControlDeck({
   headingFont,
   setHeadingFont,
   dividerStyle,
-  setDividerStyle
+  setDividerStyle,
+  ultraContrast,
+  setUltraContrast,
+  giantButtons,
+  setGiantButtons,
+  hapticFeedback,
+  setHapticFeedback,
+  flashingInputIndicator,
+  setFlashingInputIndicator,
+  safeguardWarnings,
+  setSafeguardWarnings,
+  autoDimming,
+  setAutoDimming
 }: OpsControlDeckProps) {
   const [isOpen, setIsOpen] = useState(false);
-  const [activeTab, setActiveTab] = useState<'ledger' | 'scratchpad' | 'ast' | 'snapshots' | 'themes'>('scratchpad');
+  const [activeTab, setActiveTab] = useState<'ledger' | 'scratchpad' | 'ast' | 'snapshots' | 'themes' | 'accessibility'>('scratchpad');
+
+  const [isLateNight, setIsLateNight] = useState(false);
+  useEffect(() => {
+    if (typeof window !== 'undefined') {
+      const hour = new Date().getHours();
+      const late = hour >= 20 || hour < 6;
+      const timer = setTimeout(() => {
+        setIsLateNight(late);
+      }, 0);
+      return () => clearTimeout(timer);
+    }
+  }, []);
 
   const [activeAmbient, setActiveAmbient] = useState<'none' | 'hum' | 'pink_noise'>('none');
   const [typewriterEnabled, setTypewriterEnabled] = useState(() => {
@@ -584,11 +621,20 @@ export default function OpsControlDeck({
               <button
                 onClick={() => setActiveTab('themes')}
                 className={`flex-1 min-w-[70px] py-2 px-1 text-[10px] font-bold uppercase tracking-tight flex flex-col items-center justify-center gap-1 ${
-                  activeTab === 'themes' ? 'bg-[#FFB703] text-black border-b-2 border-[#1A1A1A]' : 'hover:bg-white text-gray-500'
+                  activeTab === 'themes' ? 'bg-[#FFB703] text-black border-r-2 border-b-2 border-[#1A1A1A]' : 'hover:bg-white text-gray-500'
                 }`}
               >
                 <Palette className="w-3.5 h-3.5" />
                 <span>Design</span>
+              </button>
+              <button
+                onClick={() => setActiveTab('accessibility')}
+                className={`flex-1 min-w-[70px] py-2 px-1 text-[10px] font-bold uppercase tracking-tight flex flex-col items-center justify-center gap-1 ${
+                  activeTab === 'accessibility' ? 'bg-[#FFB703] text-black border-b-2 border-[#1A1A1A]' : 'hover:bg-white text-gray-500'
+                }`}
+              >
+                <Activity className="w-3.5 h-3.5 text-rose-500 animate-pulse" />
+                <span>Access</span>
               </button>
             </div>
 
@@ -1336,6 +1382,186 @@ export default function OpsControlDeck({
                         ))}
                       </div>
                     </div>
+                  </div>
+                </div>
+              )}
+
+              {/* TAB 6: ACCESSIBILITY & INCLUSION CONTROL DESK */}
+              {activeTab === 'accessibility' && (
+                <div className="space-y-4">
+                  <div>
+                    <h3 className="text-xs font-black uppercase text-[#1A1A1A]">Inclusion & Accessibility Settings</h3>
+                    <p className="text-[10px] text-gray-500 leading-normal">
+                      Customize Zenith Canvas with assistive options for senior eyes, kid-friendly interactions, and adaptive workflows.
+                    </p>
+                  </div>
+
+                  {/* 42. Ultra-Contrast Layer Toggle */}
+                  <div className="space-y-1.5 pt-2 border-t border-gray-300">
+                    <button
+                      onClick={() => {
+                        const newVal = !ultraContrast;
+                        setUltraContrast(newVal);
+                        localStorage.setItem(`zenith-ultra-contrast-${canvasId}`, newVal ? 'true' : 'false');
+                        addCliLog(`[ACCESS] Ultra-Contrast setting turned ${newVal ? 'ON' : 'OFF'}.`);
+                      }}
+                      className={`w-full border-2 border-[#1A1A1A] p-2 flex items-center justify-between rounded-none text-left cursor-pointer transition-all ${
+                        ultraContrast ? 'bg-black text-white font-black' : 'bg-white hover:bg-gray-50'
+                      }`}
+                    >
+                      <div className="flex flex-col text-[#1A1A1A] ultra-contrast-text">
+                        <span className="text-[10px] font-bold uppercase">Ultra-Contrast Colors</span>
+                        <span className="text-[8px] opacity-75">AAA compliant visual weights for low vision</span>
+                      </div>
+                      <span className="text-[9px] font-mono px-1.5 py-0.5 border border-[#1A1A1A] bg-white text-black">
+                        {ultraContrast ? 'ACTIVE' : 'OFF'}
+                      </span>
+                    </button>
+                  </div>
+
+                  {/* 43. Giant Button Touch Targets Overlay Toggle */}
+                  <div className="space-y-1.5 pt-2 border-t border-gray-300">
+                    <button
+                      onClick={() => {
+                        const newVal = !giantButtons;
+                        setGiantButtons(newVal);
+                        localStorage.setItem(`zenith-giant-buttons-${canvasId}`, newVal ? 'true' : 'false');
+                        addCliLog(`[ACCESS] Giant Touch Targets turned ${newVal ? 'ON' : 'OFF'}.`);
+                      }}
+                      className={`w-full border-2 border-[#1A1A1A] p-2 flex items-center justify-between rounded-none text-left cursor-pointer transition-all ${
+                        giantButtons ? 'bg-[#FFB703]/20 font-bold' : 'bg-white hover:bg-gray-50'
+                      }`}
+                    >
+                      <div className="flex flex-col text-[#1A1A1A]">
+                        <span className="text-[10px] font-bold uppercase">Giant Button Overlay</span>
+                        <span className="text-[8px] text-gray-500">Enlarges buttons and menus for senior hands</span>
+                      </div>
+                      <span className="text-[9px] font-mono px-1.5 py-0.5 border border-[#1A1A1A] bg-white text-black">
+                        {giantButtons ? 'ACTIVE' : 'OFF'}
+                      </span>
+                    </button>
+                  </div>
+
+                  {/* 46. Haptic Click Vibration Responses */}
+                  <div className="space-y-1.5 pt-2 border-t border-gray-300">
+                    <button
+                      onClick={() => {
+                        const newVal = !hapticFeedback;
+                        setHapticFeedback(newVal);
+                        localStorage.setItem(`zenith-haptic-feedback-${canvasId}`, newVal ? 'true' : 'false');
+                        addCliLog(`[ACCESS] Haptic Vibration click responses turned ${newVal ? 'ON' : 'OFF'}.`);
+                        if (newVal && typeof window !== 'undefined' && window.navigator?.vibrate) {
+                          window.navigator.vibrate(35);
+                        }
+                      }}
+                      className={`w-full border-2 border-[#1A1A1A] p-2 flex items-center justify-between rounded-none text-left cursor-pointer transition-all ${
+                        hapticFeedback ? 'bg-[#FFB703]/20 font-bold' : 'bg-white hover:bg-gray-50'
+                      }`}
+                    >
+                      <div className="flex flex-col text-[#1A1A1A]">
+                        <span className="text-[10px] font-bold uppercase">Haptic Click Vibrations</span>
+                        <span className="text-[8px] text-gray-500">Physical vibration triggers upon buttons & lists</span>
+                      </div>
+                      <span className="text-[9px] font-mono px-1.5 py-0.5 border border-[#1A1A1A] bg-white text-black">
+                        {hapticFeedback ? 'ON' : 'OFF'}
+                      </span>
+                    </button>
+                  </div>
+
+                  {/* 47. Flashing Visual Input Indicator */}
+                  <div className="space-y-1.5 pt-2 border-t border-gray-300">
+                    <button
+                      onClick={() => {
+                        const newVal = !flashingInputIndicator;
+                        setFlashingInputIndicator(newVal);
+                        localStorage.setItem(`zenith-flashing-indicator-${canvasId}`, newVal ? 'true' : 'false');
+                        addCliLog(`[ACCESS] Flashing cursor indicators turned ${newVal ? 'ON' : 'OFF'}.`);
+                      }}
+                      className={`w-full border-2 border-[#1A1A1A] p-2 flex items-center justify-between rounded-none text-left cursor-pointer transition-all ${
+                        flashingInputIndicator ? 'bg-[#FFB703]/20 font-bold' : 'bg-white hover:bg-gray-50'
+                      }`}
+                    >
+                      <div className="flex flex-col text-[#1A1A1A]">
+                        <span className="text-[10px] font-bold uppercase">Flashing Focus Glow</span>
+                        <span className="text-[8px] text-gray-500">Pulsing golden ring illuminates active editing field</span>
+                      </div>
+                      <span className="text-[9px] font-mono px-1.5 py-0.5 border border-[#1A1A1A] bg-white text-black">
+                        {flashingInputIndicator ? 'ACTIVE' : 'OFF'}
+                      </span>
+                    </button>
+                  </div>
+
+                  {/* 48. Accidental Click Safeguard Warnings */}
+                  <div className="space-y-1.5 pt-2 border-t border-gray-300">
+                    <button
+                      onClick={() => {
+                        const newVal = !safeguardWarnings;
+                        setSafeguardWarnings(newVal);
+                        localStorage.setItem(`zenith-safeguard-warnings-${canvasId}`, newVal ? 'true' : 'false');
+                        addCliLog(`[ACCESS] Accidental click safeguards turned ${newVal ? 'ON' : 'OFF'}.`);
+                      }}
+                      className={`w-full border-2 border-[#1A1A1A] p-2 flex items-center justify-between rounded-none text-left cursor-pointer transition-all ${
+                        safeguardWarnings ? 'bg-[#FFB703]/20 font-bold' : 'bg-white hover:bg-gray-50'
+                      }`}
+                    >
+                      <div className="flex flex-col text-[#1A1A1A]">
+                        <span className="text-[10px] font-bold uppercase">Safeguard Deletion Warnings</span>
+                        <span className="text-[8px] text-gray-500">Confirms high-stakes actions prior to execution</span>
+                      </div>
+                      <span className="text-[9px] font-mono px-1.5 py-0.5 border border-[#1A1A1A] bg-white text-black">
+                        {safeguardWarnings ? 'ENABLED' : 'OFF'}
+                      </span>
+                    </button>
+                  </div>
+
+                  {/* 50. Auto-Dimming Eye-Care Sensor */}
+                  <div className="space-y-1.5 pt-2 border-t border-gray-300">
+                    <button
+                      onClick={() => {
+                        const newVal = !autoDimming;
+                        setAutoDimming(newVal);
+                        localStorage.setItem(`zenith-auto-dimming-${canvasId}`, newVal ? 'true' : 'false');
+                        addCliLog(`[ACCESS] Auto-Dimming Sensor turned ${newVal ? 'ON' : 'OFF'}.`);
+                      }}
+                      className={`w-full border-2 border-[#1A1A1A] p-2 flex items-center justify-between rounded-none text-left cursor-pointer transition-all ${
+                        autoDimming ? 'bg-[#FFB703]/20 font-bold' : 'bg-white hover:bg-gray-50'
+                      }`}
+                    >
+                      <div className="flex flex-col text-[#1A1A1A]">
+                        <span className="text-[10px] font-bold uppercase">Eye-Care Dimming Sensor</span>
+                        <span className="text-[8px] text-gray-500">Auto-dim & warm after 8 PM ({isLateNight ? 'Night Mode Active 🌙' : 'Day Mode Active ☀️'})</span>
+                      </div>
+                      <span className="text-[9px] font-mono px-1.5 py-0.5 border border-[#1A1A1A] bg-white text-black">
+                        {autoDimming ? 'ACTIVE' : 'OFF'}
+                      </span>
+                    </button>
+                  </div>
+
+                  {/* 41. Voice Dictation Commander Helpers */}
+                  <div className="p-2.5 bg-indigo-50 border-2 border-[#1A1A1A] space-y-1.5 text-[#1A1A1A]">
+                    <div className="flex items-center space-x-1.5">
+                      <Mic className="w-4 h-4 text-indigo-600 animate-pulse" />
+                      <span className="text-[10px] font-black uppercase text-indigo-950">Voice Dictation Commander</span>
+                    </div>
+                    <p className="text-[9px] text-indigo-800 leading-normal font-medium">
+                      Click the 🎙️ **Voice Commander** microphone floating at the bottom right corner of your document. Speak any of these trigger phrases:
+                    </p>
+                    <div className="grid grid-cols-2 gap-1 text-[8px] font-mono uppercase bg-white border border-indigo-200 p-1.5 divide-y divide-x divide-indigo-50 text-indigo-900 font-bold">
+                      <div className="p-0.5">&ldquo;make a list&rdquo;</div>
+                      <div className="p-0.5">&ldquo;add notes&rdquo;</div>
+                      <div className="p-0.5">&ldquo;make heading&rdquo;</div>
+                      <div className="p-0.5">&ldquo;clear page&rdquo;</div>
+                      <div className="p-0.5">&ldquo;lock page&rdquo;</div>
+                      <div className="p-0.5">&ldquo;unlock page&rdquo;</div>
+                    </div>
+                  </div>
+
+                  {/* 49. Screen-Reader Optimization Protocol */}
+                  <div className="p-2.5 bg-emerald-50 border-2 border-[#1A1A1A] space-y-1 text-[#1A1A1A]">
+                    <span className="text-[9px] font-black uppercase text-emerald-950 block">♿ Screen-Reader Protocol Active</span>
+                    <p className="text-[8px] text-emerald-800 leading-normal font-medium">
+                      This workspace automatically compiles semantic HTML elements, structural ARIA landmarks, and voice accessibility announcements, guiding screen readers securely.
+                    </p>
                   </div>
                 </div>
               )}

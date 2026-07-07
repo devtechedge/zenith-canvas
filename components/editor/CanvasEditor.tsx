@@ -111,9 +111,25 @@ interface CanvasEditorProps {
   canvasId: string;
   isLocked?: boolean;
   isCozyStoryMode?: boolean;
+  ultraContrast?: boolean;
+  giantButtons?: boolean;
+  hapticFeedback?: boolean;
+  flashingInputIndicator?: boolean;
+  safeguardWarnings?: boolean;
+  autoDimming?: boolean;
 }
 
-export default function CanvasEditor({ canvasId, isLocked = false, isCozyStoryMode = false }: CanvasEditorProps) {
+export default function CanvasEditor({ 
+  canvasId, 
+  isLocked = false, 
+  isCozyStoryMode = false,
+  ultraContrast = false,
+  giantButtons = false,
+  hapticFeedback = false,
+  flashingInputIndicator = false,
+  safeguardWarnings = false,
+  autoDimming = false
+}: CanvasEditorProps) {
   const { 
     createCanvasElement, 
     updateCanvasElement, 
@@ -123,6 +139,216 @@ export default function CanvasEditor({ canvasId, isLocked = false, isCozyStoryMo
 
   const [focusedId, setFocusedId] = useState<string | null>(null);
   const initializedCanvasIds = useRef<Record<string, boolean>>({});
+
+  // Voice Dictation Commander States (Feature 41)
+  const [voiceCommanderActive, setVoiceCommanderActive] = useState(false);
+  const [voiceTranscript, setVoiceTranscript] = useState('');
+  const voiceRecognitionRef = useRef<any>(null);
+
+  // Text-to-Speech (Feature 44)
+  const speakBlockText = (el: any) => {
+    if (typeof window === 'undefined') return;
+    if (window.speechSynthesis.speaking) {
+      window.speechSynthesis.cancel();
+    }
+    
+    let phrase = el.content;
+    if (el.type === 'todo') {
+      let isDone = false;
+      try {
+        const propsObj = JSON.parse(el.properties);
+        isDone = !!propsObj.checked;
+      } catch {}
+      phrase = `Todo list item: ${el.content}. Status: ${isDone ? 'checked, completed' : 'unchecked, pending'}`;
+    } else if (el.type === 'heading_1') {
+      phrase = `Heading: ${el.content}`;
+    } else if (el.type === 'code') {
+      phrase = `Code snippet: ${el.content}`;
+    } else if (el.type === 'sketch') {
+      phrase = `Drawing sketch element`;
+    }
+
+    if (!phrase) {
+      phrase = "Empty element block";
+    }
+
+    const utter = new SpeechSynthesisUtterance(phrase);
+    const voices = window.speechSynthesis.getVoices();
+    const naturalVoice = voices.find(v => v.lang.startsWith('en') && (v.name.includes('Natural') || v.name.includes('Google') || v.name.includes('Premium')));
+    if (naturalVoice) {
+      utter.voice = naturalVoice;
+    }
+    window.speechSynthesis.speak(utter);
+    
+    // Dispatch vibration on start
+    if (hapticFeedback && window.navigator?.vibrate) {
+      window.navigator.vibrate(25);
+    }
+  };
+
+  // Everyday Multilingual Translator (Feature 45)
+  const translateBlockText = async (elementId: string, text: string, lang: string) => {
+    if (!text) return;
+    try {
+      if (hapticFeedback && typeof window !== 'undefined' && window.navigator?.vibrate) {
+        window.navigator.vibrate(30);
+      }
+      
+      // Update element temporarily to indicate translation in progress
+      await updateCanvasElement(elementId, { content: `Translating block to ${lang}...` });
+      
+      const response = await fetch('/api/gemini/translate', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ text, targetLanguage: lang })
+      });
+      const data = await response.json();
+      if (data.text) {
+        await updateCanvasElement(elementId, { content: data.text });
+        if (hapticFeedback && typeof window !== 'undefined' && window.navigator?.vibrate) {
+          window.navigator.vibrate([40, 20, 40]);
+        }
+      } else {
+        await updateCanvasElement(elementId, { content: text });
+      }
+    } catch (err) {
+      console.error("Translation API call failed:", err);
+      await updateCanvasElement(elementId, { content: text });
+    }
+  };
+
+  // Voice Dictation Commander Engine (Feature 41)
+  const startVoiceCommander = () => {
+    if (typeof window === 'undefined') return;
+    const SpeechClass = (window as any).SpeechRecognition || (window as any).webkitSpeechRecognition;
+    if (!SpeechClass) {
+      alert("Voice Dictation commands require Speech Recognition. This is not supported in your browser.");
+      return;
+    }
+
+    if (hapticFeedback && window.navigator?.vibrate) {
+      window.navigator.vibrate(40);
+    }
+
+    const rec = new SpeechClass();
+    rec.continuous = true;
+    rec.interimResults = true;
+    rec.lang = 'en-US';
+
+    rec.onstart = () => {
+      setVoiceCommanderActive(true);
+      setVoiceTranscript('Listening for commands...');
+    };
+
+    rec.onresult = async (event: any) => {
+      let interim = '';
+      let final = '';
+      for (let i = event.resultIndex; i < event.results.length; ++i) {
+        if (event.results[i].isFinal) {
+          final += event.results[i][0].transcript;
+        } else {
+          interim += event.results[i][0].transcript;
+        }
+      }
+      const text = (final || interim).toLowerCase().trim();
+      setVoiceTranscript(text || 'Listening...');
+
+      // Dispatch vibration on recognized phrase
+      if (text && hapticFeedback && window.navigator?.vibrate) {
+        window.navigator.vibrate(10);
+      }
+
+      // Check command triggers
+      if (text.includes('make a list') || text.includes('add list') || text.includes('checklist')) {
+        const maxSort = elements.reduce((max, el) => Math.max(max, el.sortOrder), 0);
+        await createCanvasElement(canvasId, 'todo', 'New spoken checklist', maxSort + 1);
+        setVoiceTranscript('[CMD] Spawned dynamic Checklist!');
+        triggerCommandHaptic();
+        setTimeout(() => rec.stop(), 1500);
+      } else if (text.includes('add notes') || text.includes('add note') || text.includes('add text') || text.includes('make a note')) {
+        const maxSort = elements.reduce((max, el) => Math.max(max, el.sortOrder), 0);
+        await createCanvasElement(canvasId, 'text', 'New spoken note', maxSort + 1);
+        setVoiceTranscript('[CMD] Spawned text block!');
+        triggerCommandHaptic();
+        setTimeout(() => rec.stop(), 1500);
+      } else if (text.includes('make heading') || text.includes('add heading') || text.includes('make a heading')) {
+        const maxSort = elements.reduce((max, el) => Math.max(max, el.sortOrder), 0);
+        await createCanvasElement(canvasId, 'heading_1', 'New Spoken Heading', maxSort + 1);
+        setVoiceTranscript('[CMD] Spawned display Heading!');
+        triggerCommandHaptic();
+        setTimeout(() => rec.stop(), 1500);
+      } else if (text.includes('clear page') || text.includes('clear canvas') || text.includes('clear text')) {
+        if (!safeguardWarnings || confirm("VOICE ACTION: Are you sure you want to clear the entire canvas page?")) {
+          for (const el of elements) {
+            await deleteCanvasElement(el.id);
+          }
+          setVoiceTranscript('[CMD] Canvas cleared successfully.');
+          triggerCommandHaptic();
+        }
+        setTimeout(() => rec.stop(), 1500);
+      } else if (text.includes('lock page') || text.includes('lock canvas')) {
+        localStorage.setItem(`zenith-canvas-locked-${canvasId}`, 'true');
+        setVoiceTranscript('[CMD] Locking canvas.');
+        triggerCommandHaptic();
+        setTimeout(() => {
+          rec.stop();
+          window.location.reload();
+        }, 1000);
+      } else if (text.includes('unlock page') || text.includes('unlock canvas')) {
+        localStorage.setItem(`zenith-canvas-locked-${canvasId}`, 'false');
+        setVoiceTranscript('[CMD] Unlocking canvas.');
+        triggerCommandHaptic();
+        setTimeout(() => {
+          rec.stop();
+          window.location.reload();
+        }, 1000);
+      }
+    };
+
+    let hasError = false;
+    rec.onerror = (e: any) => {
+      console.error("Speech Recognition error", e);
+      hasError = true;
+      const errType = e.error || 'unknown';
+      let message = 'Speech recognition error.';
+      if (errType === 'not-allowed') {
+        message = 'Mic permission blocked. Try opening in a new tab!';
+      } else if (errType === 'service-not-allowed') {
+        message = 'Service blocked. Try opening in a new tab!';
+      } else if (errType === 'no-speech') {
+        message = 'No speech detected. Please try speaking closer to your mic.';
+      } else {
+        message = `Error (${errType}). Try opening in a new tab!`;
+      }
+      setVoiceTranscript(`⚠️ ${message}`);
+      setVoiceCommanderActive(true);
+      setTimeout(() => {
+        setVoiceCommanderActive(false);
+      }, 7000);
+    };
+
+    rec.onend = () => {
+      if (!hasError) {
+        setVoiceCommanderActive(false);
+      }
+    };
+
+    voiceRecognitionRef.current = rec;
+    rec.start();
+  };
+
+  const stopVoiceCommander = () => {
+    if (voiceRecognitionRef.current) {
+      voiceRecognitionRef.current.stop();
+    }
+    setVoiceCommanderActive(false);
+  };
+
+  const triggerCommandHaptic = () => {
+    if (hapticFeedback && typeof window !== 'undefined' && window.navigator?.vibrate) {
+      window.navigator.vibrate([40, 20, 40]);
+    }
+  };
 
   // Floating look up dictionary state (Feature 6)
   const [definitionPopup, setDefinitionPopup] = useState<{
@@ -988,6 +1214,8 @@ export default function CanvasEditor({ canvasId, isLocked = false, isCozyStoryMo
               onAddBelow={() => handleInsertBelow(el.sortOrder)}
               onMoveUp={idx > 0 ? () => handleMoveUp(idx) : undefined}
               onMoveDown={idx < elements.length - 1 ? () => handleMoveDown(idx) : undefined}
+              onSpeak={() => speakBlockText(el)}
+              onTranslate={(lang) => translateBlockText(el.id, el.content, lang)}
               isLocked={isLocked}
             >
               {/* HEADING 1 ELEMENT */}
@@ -10212,6 +10440,37 @@ export default function CanvasEditor({ canvasId, isLocked = false, isCozyStoryMo
           );
         })}
       </div>
+
+      {/* 41. Voice Dictation Commander Floating Widget */}
+      {!isLocked && (
+        <div className="fixed bottom-6 right-6 z-50 flex flex-col items-end space-y-2">
+          {voiceCommanderActive && (
+            <div className={`border-2 border-[#1A1A1A] p-2.5 neo-shadow-sm max-w-xs text-right animate-pulse ${
+              voiceTranscript.startsWith('⚠️') ? 'bg-rose-50 text-rose-900 border-rose-900' : 'bg-white text-[#1A1A1A]'
+            }`}>
+              <span className={`text-[8px] font-mono font-bold uppercase block ${
+                voiceTranscript.startsWith('⚠️') ? 'text-rose-600' : 'text-indigo-600'
+              }`}>
+                {voiceTranscript.startsWith('⚠️') ? '⚠️ COMMAND SYSTEM' : '🎙️ Commander Active'}
+              </span>
+              <p className="text-[10px] font-extrabold uppercase tracking-wide">
+                &ldquo;{voiceTranscript || 'Speak a command...'}&rdquo;
+              </p>
+            </div>
+          )}
+          <button
+            onClick={voiceCommanderActive ? stopVoiceCommander : startVoiceCommander}
+            title="Launch Voice Dictation Commander"
+            className={`w-12 h-12 rounded-full border-2 border-[#1A1A1A] flex items-center justify-center transition-all cursor-pointer neo-shadow-md ${
+              voiceCommanderActive 
+                ? 'bg-rose-500 text-white animate-bounce' 
+                : 'bg-[#FFB703] text-[#1A1A1A] hover:bg-amber-400'
+            }`}
+          >
+            <Mic className="w-5 h-5" />
+          </button>
+        </div>
+      )}
     </div>
   );
 }

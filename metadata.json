@@ -1,6 +1,6 @@
 {
   "name": "Zenith Canvas",
   "description": "A fast, simple, and beautifully designed offline-first document workspace with easy smart databases and page links.",
-  "requestFramePermissions": [],
+  "requestFramePermissions": ["microphone"],
   "majorCapabilities": ["MAJOR_CAPABILITY_SERVER_SIDE_GEMINI_API"]
 }

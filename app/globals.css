@@ -314,3 +314,100 @@
   border-bottom: calc(var(--border-weight) * 3) solid var(--border-color) !important;
 }
 
+/* --- Batch 5: Senior & Kid Accessibility Styles (Features 41-50) --- */
+
+/* 1. Ultra-Contrast Layer */
+.ultra-contrast-active {
+  --border-weight: 3px !important;
+  --border-color: #000000 !important;
+  --shadow-color: #000000 !important;
+  background-color: #FFFFFF !important;
+  color: #000000 !important;
+}
+
+.ultra-contrast-active.stationery-dark {
+  --border-weight: 3px !important;
+  --border-color: #FFFFFF !important;
+  --shadow-color: #FFFFFF !important;
+  background-color: #000000 !important;
+  color: #FFFFFF !important;
+}
+
+.ultra-contrast-active *,
+.ultra-contrast-active .text-gray-500,
+.ultra-contrast-active .text-slate-500,
+.ultra-contrast-active .text-[#1A1A1A] {
+  color: #000000 !important;
+  border-color: #000000 !important;
+  font-weight: 700 !important; /* Increase weight for readability */
+}
+
+.ultra-contrast-active.stationery-dark *,
+.ultra-contrast-active.stationery-dark .text-gray-500,
+.ultra-contrast-active.stationery-dark .text-[#1A1A1A] {
+  color: #FFFFFF !important;
+  border-color: #FFFFFF !important;
+  font-weight: 700 !important;
+}
+
+.ultra-contrast-active .bg-white,
+.ultra-contrast-active .bg-[#FFF],
+.ultra-contrast-active .bg-gray-50,
+.ultra-contrast-active .bg-slate-50,
+.ultra-contrast-active .bg-[#F4F7F6] {
+  background-color: #FFFFFF !important;
+  color: #000000 !important;
+}
+
+.ultra-contrast-active.stationery-dark .bg-white,
+.ultra-contrast-active.stationery-dark .bg-[#FFF],
+.ultra-contrast-active.stationery-dark .bg-[#15161E],
+.ultra-contrast-active.stationery-dark .bg-slate-900,
+.ultra-contrast-active.stationery-dark .bg-[#0B0C10] {
+  background-color: #000000 !important;
+  color: #FFFFFF !important;
+}
+
+/* 2. Giant Button Touch Targets Overlay */
+.giant-buttons-active button,
+.giant-buttons-active [role="button"],
+.giant-buttons-active input[type="button"],
+.giant-buttons-active input[type="checkbox"],
+.giant-buttons-active select {
+  min-height: 52px !important;
+  min-width: 52px !important;
+  padding-left: 1.25rem !important;
+  padding-right: 1.25rem !important;
+  font-size: 14px !important;
+  font-weight: 800 !important;
+}
+
+.giant-buttons-active .w-4,
+.giant-buttons-active .w-3.5,
+.giant-buttons-active .w-5 {
+  width: 22px !important;
+  height: 22px !important;
+}
+
+/* 3. Auto-Dimming Eye-Care Sensor */
+.eye-care-dimmed-active {
+  filter: sepia(0.3) contrast(0.9) brightness(0.85) !important;
+  transition: filter 0.5s ease-in-out !important;
+}
+
+/* 4. Flashing Visual Input Indicator Pulse */
+@keyframes cursorPulseGlow {
+  0% { box-shadow: 0 0 4px 1px #FFB703; border-color: #FFB703; }
+  50% { box-shadow: 0 0 16px 4px #FFB703; border-color: #FFB703; }
+  100% { box-shadow: 0 0 4px 1px #FFB703; border-color: #FFB703; }
+}
+
+.flashing-indicator-active textarea:focus,
+.flashing-indicator-active input:focus,
+.flashing-indicator-active [contenteditable="true"]:focus,
+.flashing-indicator-active .active-glow-focus {
+  animation: cursorPulseGlow 1.5s infinite ease-in-out !important;
+  background-color: rgba(255, 183, 3, 0.05) !important;
+}
+
+
