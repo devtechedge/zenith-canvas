@@ -30,9 +30,12 @@ import {
   Sliders,
   X,
   FileText,
-  AlertTriangle
+  AlertTriangle,
+  Mail,
+  Calendar,
+  Archive,
+  RefreshCw
 } from 'lucide-react';
-import { motion, AnimatePresence } from 'framer-motion';
 
 // --- TYPES & INTERFACES ---
 interface CanvasElement {
@@ -51,6 +54,9 @@ interface CanvasElement {
   mediaUrl?: string; // Image link
   soundType?: 'rain' | 'campfire' | 'ocean' | 'forest';
   soundVolume?: number;
+  createdAt?: number; // added for archival/aging
+  deadline?: string; // added for task deadline reminders
+  livePreviewActive?: boolean; // added for dynamic live variable rendering
 }
 
 interface FamilyCanvas {
@@ -100,7 +106,7 @@ export default function ZenithWorkspace() {
   const [shadowDepth, setShadowDepth] = useState<string>('neo-shadow'); // none, neo-shadow-sm, neo-shadow, neo-shadow-lg
   
   // Ops Control Panel states
-  const [activeTab, setActiveTab] = useState<'appearance' | 'safety' | 'sharing' | 'audio'>('appearance');
+  const [activeTab, setActiveTab] = useState<'appearance' | 'safety' | 'sharing' | 'audio' | 'automations'>('appearance');
   const [isControlDeckOpen, setIsControlDeckOpen] = useState<boolean>(false);
   
   // Sharing & Safety states
@@ -121,6 +127,21 @@ export default function ZenithWorkspace() {
   const [guestPasses, setGuestPasses] = useState<GuestPass[]>([]);
   const [activityLogs, setActivityLogs] = useState<ActivityLog[]>([]);
   const [simulatedCursors, setSimulatedCursors] = useState<Array<{ name: string; avatar: string; x: number; y: number; color: string }>>([]);
+
+  // Batch 9: Ready-Made Setup Templates & Automated Flows states
+  const [archivedElements, setArchivedElements] = useState<CanvasElement[]>([]);
+  const [autoArchiveEnabled, setAutoArchiveEnabled] = useState<boolean>(true);
+  const [weeklySpawnerEnabled, setWeeklySpawnerEnabled] = useState<boolean>(true);
+  const [isDraggingFile, setIsDraggingFile] = useState<boolean>(false);
+  const [showBlueprintModal, setShowBlueprintModal] = useState<boolean>(false);
+  const [isDailyBannerDismissed, setIsDailyBannerDismissed] = useState<boolean>(false);
+  const [highlightIncomplete, setHighlightIncomplete] = useState<boolean>(false);
+  const [incomingEmail, setIncomingEmail] = useState({
+    from: 'mom-inbox@zenith-mail.com',
+    subject: 'Vet Appointment update 🐶',
+    body: 'Please check the vet schedule! Teddy needs his shot on Thursday morning. Make sure to feed him on time.'
+  });
+  const [activeNotifications, setActiveNotifications] = useState<string[]>([]);
 
   // Audio Context Nodes state
   const [ambientAudioActive, setAmbientAudioActive] = useState<boolean>(false);
@@ -193,7 +214,9 @@ export default function ZenithWorkspace() {
           w: 320,
           h: 200,
           color: '#FEF08A',
-          content: 'Welcome to your Zenith Workspace! This is a real-time responsive family workspace.\n\n👉 Switch canvases in the left panel.\n👉 Add checklist items, sketch drawings, launch timers, or adjust focus noise!\n👉 Check out the right Ops Control Panel for advanced layout themes and safety PIN gates.'
+          content: 'Welcome to your Zenith Workspace! This is a real-time responsive family workspace.\n\n👉 Switch canvases in the left panel.\n👉 Add checklist items, sketch drawings, launch timers, or adjust focus noise!\n👉 Check out the right Ops Control Panel for advanced layout themes and safety PIN gates.\n\n💡 Enter {{current_date}} or {{user_email}} anywhere in this text area and click "👁️ Live Preview" to see active variable evaluation!',
+          createdAt: Date.now() - 5 * 24 * 60 * 60 * 1000,
+          livePreviewActive: false
         },
         {
           id: 'elem-2',
@@ -209,7 +232,9 @@ export default function ZenithWorkspace() {
             { id: 'todo-2', text: 'Lactose-Free Milk', done: false },
             { id: 'todo-3', text: 'Whole Wheat Bread', done: false },
             { id: 'todo-4', text: 'Greek Yogurt (Honey flavor)', done: false }
-          ]
+          ],
+          createdAt: Date.now() - 2 * 24 * 60 * 60 * 1000,
+          deadline: '2026-07-08' // Due today! Triggers smart notifications instantly
         },
         {
           id: 'elem-3',
@@ -220,7 +245,8 @@ export default function ZenithWorkspace() {
           w: 320,
           h: 300,
           color: '#E0F2FE',
-          sketchData: ''
+          sketchData: '',
+          createdAt: Date.now() - 1 * 24 * 60 * 60 * 1000
         },
         {
           id: 'elem-4',
@@ -231,7 +257,8 @@ export default function ZenithWorkspace() {
           w: 300,
           h: 210,
           color: '#FDE047',
-          countdownTarget: new Date(Date.now() + 10 * 24 * 60 * 60 * 1000).toISOString().split('T')[0]
+          countdownTarget: new Date(Date.now() + 10 * 24 * 60 * 60 * 1000).toISOString().split('T')[0],
+          createdAt: Date.now() - 12 * 60 * 60 * 1000
         },
         {
           id: 'elem-5',
@@ -243,7 +270,8 @@ export default function ZenithWorkspace() {
           h: 250,
           color: '#FBCFE8',
           soundType: 'rain',
-          soundVolume: 0.5
+          soundVolume: 0.5,
+          createdAt: Date.now() - 2 * 60 * 60 * 1000
         }
       ];
       setElements(defaultElements);
@@ -280,6 +308,22 @@ export default function ZenithWorkspace() {
       setActivityLogs(defaultLogs);
       localStorage.setItem('zenith-family-activities', JSON.stringify(defaultLogs));
     }
+
+    // Load Archived Elements and Preferences
+    const savedArchived = localStorage.getItem('zenith-archived-elements');
+    if (savedArchived) {
+      try {
+        setArchivedElements(JSON.parse(savedArchived));
+      } catch (e) {}
+    }
+    const savedAutoArchive = localStorage.getItem('zenith-auto-archive-preference');
+    if (savedAutoArchive !== null) {
+      setAutoArchiveEnabled(savedAutoArchive === 'true');
+    }
+    const savedWeeklySpawner = localStorage.getItem('zenith-weekly-spawner-preference');
+    if (savedWeeklySpawner !== null) {
+      setWeeklySpawnerEnabled(savedWeeklySpawner === 'true');
+    }
   }, []);
 
   // Sync canvases and elements state back to local storage
@@ -296,6 +340,18 @@ export default function ZenithWorkspace() {
   }, [elements]);
 
   useEffect(() => {
+    localStorage.setItem('zenith-archived-elements', JSON.stringify(archivedElements));
+  }, [archivedElements]);
+
+  useEffect(() => {
+    localStorage.setItem('zenith-auto-archive-preference', String(autoArchiveEnabled));
+  }, [autoArchiveEnabled]);
+
+  useEffect(() => {
+    localStorage.setItem('zenith-weekly-spawner-preference', String(weeklySpawnerEnabled));
+  }, [weeklySpawnerEnabled]);
+
+  useEffect(() => {
     if (activeCanvasId) {
       localStorage.setItem('zenith-active-canvas-id', activeCanvasId);
       // Automatically lock again if active canvas changes and PIN is set
@@ -305,6 +361,28 @@ export default function ZenithWorkspace() {
       }
     }
   }, [activeCanvasId, vaultPIN]);
+
+  // 83. Task-Driven Smart Date Notifications: Auto-scan elements for deadlines matching today's date
+  useEffect(() => {
+    const checkDeadlines = () => {
+      // e.g. "2026-07-08"
+      const todayStr = new Date().toISOString().split('T')[0];
+      const matches: string[] = [];
+      elements.forEach(e => {
+        if (e.deadline === todayStr) {
+          matches.push(`☑️ Checklist: "${e.title}" is due TODAY!`);
+        }
+        if (e.countdownTarget === todayStr) {
+          matches.push(`⏳ Countdown: "${e.title}" target is TODAY!`);
+        }
+      });
+      setActiveNotifications(matches);
+    };
+
+    checkDeadlines();
+    const interval = setInterval(checkDeadlines, 20000);
+    return () => clearInterval(interval);
+  }, [elements]);
 
   // --- CONTENT COPY INTERCEPT GUARD ---
   useEffect(() => {
@@ -557,7 +635,10 @@ export default function ZenithWorkspace() {
       content: type === 'text' ? 'Write thoughts, suggestions, or notes here...' : '',
       checklistItems: type === 'checklist' ? [{ id: `todo-${Date.now()}`, text: 'First list item', done: false }] : [],
       countdownTarget: type === 'countdown' ? new Date(Date.now() + 5 * 24 * 60 * 60 * 1000).toISOString().split('T')[0] : '',
-      mediaUrl: type === 'media' ? 'https://images.unsplash.com/photo-1506744038136-46273834b3fb?w=400&auto=format&fit=crop&q=80' : ''
+      mediaUrl: type === 'media' ? 'https://images.unsplash.com/photo-1506744038136-46273834b3fb?w=400&auto=format&fit=crop&q=80' : '',
+      createdAt: Date.now(),
+      deadline: '',
+      livePreviewActive: false
     };
 
     setElements(prev => [...prev, newElement]);
@@ -576,6 +657,441 @@ export default function ZenithWorkspace() {
     }
     setElements(prev => prev.filter(e => e.id !== id));
     addActivityLog('System', `🗑️ Purged "${type}" component sandbox from canvas`);
+  };
+
+  // --- BATCH 9 AUTOMATED WORKFLOW HELPER FUNCTIONS ---
+
+  // 82. Dynamic Live Variable Inserter: replaces friendly placeholders with active date strings
+  const parseDynamicVariables = (text: string): string => {
+    if (!text) return '';
+    const now = new Date();
+    const dateStr = now.toLocaleDateString('en-US', { weekday: 'long', year: 'numeric', month: 'long', day: 'numeric' });
+    const timeStr = now.toLocaleTimeString('en-US', { hour: '2-digit', minute: '2-digit' });
+    const dayStr = now.toLocaleDateString('en-US', { weekday: 'long' });
+    const emailStr = 'devtechedge@gmail.com';
+    return text
+      .replace(/\{\{current_date\}\}/g, dateStr)
+      .replace(/\{\{current_time\}\}/g, timeStr)
+      .replace(/\{\{current_day\}\}/g, dayStr)
+      .replace(/\{\{user_email\}\}/g, emailStr);
+  };
+
+  // 85. Smart Auto-Labeling Engine: auto-computes tags based on row words
+  const getAutoLabels = (element: CanvasElement): string[] => {
+    const labels: string[] = [];
+    const textToScan = [
+      element.title || '',
+      element.content || '',
+      ...(element.checklistItems || []).map(item => item.text)
+    ].join(' ').toLowerCase();
+
+    if (/school|class|exam|assignment|teacher|math|study|homework|college/i.test(textToScan)) {
+      labels.push('School 📚');
+    }
+    if (/dog|cat|vet|pet|feed|kitten|puppy|animal|veterinary/i.test(textToScan)) {
+      labels.push('Pet Care 🐾');
+    }
+    if (/milk|egg|store|grocery|buy|shop|supermarket|target|walmart/i.test(textToScan)) {
+      labels.push('Shopping 🛒');
+    }
+    if (/gym|workout|run|swim|fitness|health|exercise|cardio|stretching/i.test(textToScan)) {
+      labels.push('Health 🏃‍♂️');
+    }
+    if (/rent|bill|pay|invoice|price|cost|budget|finance|money|dollar|euro|invoice/i.test(textToScan)) {
+      labels.push('Finance 💰');
+    }
+    if (/work|meeting|office|project|boss|client|schedule|corporate/i.test(textToScan)) {
+      labels.push('Work 💼');
+    }
+    return labels;
+  };
+
+  // 84. Automated Weekly Layout Spawner: automatically creates empty layouts every Sunday
+  const triggerWeeklySpawner = (force: boolean = false) => {
+    if (isReadOnlyMode) {
+      alert('Safety Guard: Read-Only mode is active.');
+      return;
+    }
+    
+    const spawnerTime = Date.now();
+    const newItems: CanvasElement[] = [
+      {
+        id: `elem-weekly-1-${spawnerTime}`,
+        type: 'checklist',
+        title: '📅 Weekly Agenda (Mon-Wed)',
+        x: 80,
+        y: 120,
+        w: 280,
+        h: 260,
+        color: '#E0F2FE',
+        checklistItems: [
+          { id: `sp-item-1-${spawnerTime}`, text: 'Organize high school binders', done: false },
+          { id: `sp-item-2-${spawnerTime}`, text: 'Review Math syllabus chapters', done: false },
+          { id: `sp-item-3-${spawnerTime}`, text: 'Finish weekly spelling assignments', done: false }
+        ],
+        createdAt: spawnerTime
+      },
+      {
+        id: `elem-weekly-2-${spawnerTime}`,
+        type: 'checklist',
+        title: '📅 Weekly Agenda (Thu-Fri)',
+        x: 390,
+        y: 120,
+        w: 280,
+        h: 260,
+        color: '#A7F3D0',
+        checklistItems: [
+          { id: `sp-item-4-${spawnerTime}`, text: 'Prepare presentation notes', done: false },
+          { id: `sp-item-5-${spawnerTime}`, text: 'Submit science fair outline draft', done: false },
+          { id: `sp-item-6-${spawnerTime}`, text: 'Verify weekend event tickets', done: false }
+        ],
+        createdAt: spawnerTime
+      },
+      {
+        id: `elem-weekly-3-${spawnerTime}`,
+        type: 'checklist',
+        title: '🎉 Weekend Family Fun',
+        x: 700,
+        y: 120,
+        w: 280,
+        h: 220,
+        color: '#FDE047',
+        checklistItems: [
+          { id: `sp-item-7-${spawnerTime}`, text: 'Plan Sunday hiking trip route', done: false },
+          { id: `sp-item-8-${spawnerTime}`, text: 'Saturday night popcorn movie session', done: false }
+        ],
+        createdAt: spawnerTime
+      },
+      {
+        id: `elem-weekly-4-${spawnerTime}`,
+        type: 'text',
+        title: '📝 Weekly Reflection Log',
+        x: 80,
+        y: 400,
+        w: 420,
+        h: 200,
+        color: '#FBCFE8',
+        content: 'Reflections for the week of {{current_date}}:\n\nReflections:\n- \n\n🎯 What we can improve next week:\n- \n\n💭 Cozy thoughts:',
+        createdAt: spawnerTime,
+        livePreviewActive: false
+      }
+    ];
+
+    setElements(prev => [...prev, ...newItems]);
+    addActivityLog('System', '🤖 Executed Automated Weekly Layout Spawner');
+    if (force) {
+      alert('⚡ Weekly Checklist Layout successfully spawned on the canvas board!');
+    }
+  };
+
+  // 89. Archival Expiration Schedule Rule: moves stale, month-old items into archive folder
+  const archiveStaleElements = () => {
+    const thirtyDaysMs = 30 * 24 * 60 * 60 * 1000;
+    const now = Date.now();
+    
+    // Find elements that are older than 30 days
+    const stale = elements.filter(e => {
+      const created = e.createdAt || now;
+      return (now - created) > thirtyDaysMs;
+    });
+    
+    if (stale.length === 0) {
+      alert('🧹 Archival Scan complete: No stale (30+ days old) items were found on the board!');
+      return;
+    }
+    
+    setElements(prev => prev.filter(e => {
+      const created = e.createdAt || now;
+      return (now - created) <= thirtyDaysMs;
+    }));
+    
+    setArchivedElements(prev => [...prev, ...stale]);
+    addActivityLog('System', `🧹 Moved ${stale.length} month-old items into the folder archives`);
+    alert(`🧹 Success! Scanned board and moved ${stale.length} stale cards (older than 30 days) into the archives.`);
+  };
+
+  // 81. One-Click Page Template Blueprints: sets up ready-made structures instantly
+  const loadBlueprintTemplate = (blueprintType: 'school' | 'pet' | 'wellness', append: boolean) => {
+    if (isReadOnlyMode) {
+      alert('Read-Only mode blocks adding blueprints.');
+      return;
+    }
+
+    const t = Date.now();
+    let blueprintElements: CanvasElement[] = [];
+
+    if (blueprintType === 'school') {
+      blueprintElements = [
+        {
+          id: `school-elem-1-${t}`,
+          type: 'text',
+          title: '📚 Academic Planner Instructions',
+          x: 40,
+          y: 60,
+          w: 300,
+          h: 220,
+          color: '#FEF08A',
+          content: 'Hello Student! Here is your school planner template.\n\nToday is {{current_date}} ({{current_day}}).\n\nKeep track of courses, assignments, and study materials here!',
+          createdAt: t,
+          livePreviewActive: true
+        },
+        {
+          id: `school-elem-2-${t}`,
+          type: 'checklist',
+          title: '✏️ Homework & Assignments List',
+          x: 360,
+          y: 60,
+          w: 280,
+          h: 260,
+          color: '#A7F3D0',
+          checklistItems: [
+            { id: `todo-school-1-${t}`, text: 'Complete algebra page 45 exercises', done: false },
+            { id: `todo-school-2-${t}`, text: 'Write draft for biology report', done: false },
+            { id: `todo-school-3-${t}`, text: 'Revise chemistry periodic table notes', done: false }
+          ],
+          createdAt: t
+        },
+        {
+          id: `school-elem-3-${t}`,
+          type: 'countdown',
+          title: '⏳ Math Midterm Exam Alarm',
+          x: 660,
+          y: 60,
+          w: 300,
+          h: 210,
+          color: '#FDE047',
+          countdownTarget: new Date(Date.now() + 5 * 24 * 60 * 60 * 1000).toISOString().split('T')[0],
+          createdAt: t
+        },
+        {
+          id: `school-elem-4-${t}`,
+          type: 'sound',
+          title: '🎧 Lofi Studying Station',
+          x: 40,
+          y: 300,
+          w: 280,
+          h: 250,
+          color: '#FBCFE8',
+          soundType: 'rain',
+          soundVolume: 0.4,
+          createdAt: t
+        }
+      ];
+    } else if (blueprintType === 'pet') {
+      blueprintElements = [
+        {
+          id: `pet-elem-1-${t}`,
+          type: 'text',
+          title: '🐾 Veterinary Info & Contacts',
+          x: 40,
+          y: 60,
+          w: 300,
+          h: 220,
+          color: '#FBCFE8',
+          content: '🐶 PET CARE LOG\n\nVeterinary Clinic: Oakwood Animal Hospital\nPhone: (555) 234-5678\nTeddy\'s Grooming details: Last visited 2 weeks ago.\n\nEmergency services: (555) 911-PETS',
+          createdAt: t,
+          livePreviewActive: false
+        },
+        {
+          id: `pet-elem-2-${t}`,
+          type: 'checklist',
+          title: '🐕 Daily Teddy Walks & Feeding',
+          x: 360,
+          y: 60,
+          w: 280,
+          h: 260,
+          color: '#FEF08A',
+          checklistItems: [
+            { id: `todo-pet-1-${t}`, text: 'Morning walk & park fetch play (30m)', done: false },
+            { id: `todo-pet-2-${t}`, text: 'Serve breakfast dry kibble with salmon oil', done: false },
+            { id: `todo-pet-3-${t}`, text: 'Check water bowl level and clean it', done: false },
+            { id: `todo-pet-4-${t}`, text: 'Evening stroll & grooming brushing', done: false }
+          ],
+          createdAt: t
+        },
+        {
+          id: `pet-elem-3-${t}`,
+          type: 'media',
+          title: '🐕 Teddy\'s Photo Desk',
+          x: 660,
+          y: 60,
+          w: 300,
+          h: 280,
+          color: '#E0F2FE',
+          mediaUrl: 'https://images.unsplash.com/photo-1543466835-00a7907e9de1?w=400&auto=format&fit=crop&q=80',
+          createdAt: t
+        }
+      ];
+    } else if (blueprintType === 'wellness') {
+      blueprintElements = [
+        {
+          id: `well-elem-1-${t}`,
+          type: 'text',
+          title: '🧘 Daily Wellness Guide',
+          x: 40,
+          y: 60,
+          w: 320,
+          h: 220,
+          color: '#E0F2FE',
+          content: 'Hello, take a deep breath in...\n\nToday is {{current_day}}, {{current_date}}.\n\nUse this cozy layout to track your physical workouts, drinking patterns, and sound focus to align your mental energy.',
+          createdAt: t,
+          livePreviewActive: true
+        },
+        {
+          id: `well-elem-2-${t}`,
+          type: 'checklist',
+          title: '🏃‍♂️ Vital Fitness Routines',
+          x: 380,
+          y: 60,
+          w: 280,
+          h: 260,
+          color: '#A7F3D0',
+          checklistItems: [
+            { id: `todo-well-1-${t}`, text: 'Drink 3 liters of spring water', done: false },
+            { id: `todo-well-2-${t}`, text: 'Perform 30 minutes cardio session', done: false },
+            { id: `todo-well-3-${t}`, text: 'Read 10 pages of book', done: false },
+            { id: `todo-well-4-${t}`, text: 'Evening meditation breathing exercises', done: false }
+          ],
+          createdAt: t
+        },
+        {
+          id: `well-elem-3-${t}`,
+          type: 'sound',
+          title: '🧘 Forest Yoga Zen',
+          x: 680,
+          y: 60,
+          w: 280,
+          h: 250,
+          color: '#FDE047',
+          soundType: 'forest',
+          soundVolume: 0.6,
+          createdAt: t
+        }
+      ];
+    }
+
+    if (append) {
+      setElements(prev => [...prev, ...blueprintElements]);
+      addActivityLog('System', `📑 Appended Ready-Made "${blueprintType.toUpperCase()}" template blueprint`);
+    } else {
+      setElements(blueprintElements);
+      addActivityLog('System', `📑 Loaded & Reset board to "${blueprintType.toUpperCase()}" template blueprint`);
+    }
+
+    setShowBlueprintModal(false);
+  };
+
+  // 90. One-Touch Layout Reset Blueprint: unchecks all completed items
+  const triggerGlobalLayoutReset = () => {
+    if (isReadOnlyMode) {
+      alert('Safety Guard: Read-only mode is active.');
+      return;
+    }
+    setElements(prev => prev.map(e => {
+      if (e.type === 'checklist' && e.checklistItems) {
+        return {
+          ...e,
+          checklistItems: e.checklistItems.map(item => ({ ...item, done: false }))
+        };
+      }
+      return e;
+    }));
+    addActivityLog('System', '🧹 Triggered global layout checklist reset');
+    alert('🧹 One-Touch Reset: All checked items on your checklists have been reset to unchecked!');
+  };
+
+  const triggerIndividualChecklistReset = (id: string) => {
+    if (isReadOnlyMode) return;
+    setElements(prev => prev.map(e => {
+      if (e.id === id && e.checklistItems) {
+        return {
+          ...e,
+          checklistItems: e.checklistItems.map(item => ({ ...item, done: false }))
+        };
+      }
+      return e;
+    }));
+    addActivityLog('System', '🧹 Reset checklist card tasks to unchecked');
+  };
+
+  // 87. Email-to-Page Inbox Hook simulation
+  const handleSimulatedEmailSend = (e: React.FormEvent) => {
+    e.preventDefault();
+    if (isReadOnlyMode) {
+      alert('Safety Guard: Read-Only mode is active.');
+      return;
+    }
+    const t = Date.now();
+    const newMailElement: CanvasElement = {
+      id: `elem-email-${t}`,
+      type: 'text',
+      title: `📬 Email: ${incomingEmail.subject}`,
+      x: 120,
+      y: 120,
+      w: 320,
+      h: 240,
+      color: '#FBCFE8',
+      content: `From: ${incomingEmail.from}\nSubject: ${incomingEmail.subject}\nReceived: {{current_time}}\n\n${incomingEmail.body}`,
+      createdAt: t,
+      livePreviewActive: false
+    };
+
+    setElements(prev => [newMailElement, ...prev]);
+    addActivityLog('System', `📨 Simulated Email-to-Page Inbox hook received from ${incomingEmail.from}`);
+    alert(`📨 Email hooked successfully! Check the new card "📬 Email: ${incomingEmail.subject}" on your board!`);
+  };
+
+  // 86. Click-to-import upload handler (for manual imports when drop is not used)
+  const handleManualImportUpload = (e: React.ChangeEvent<HTMLInputElement>) => {
+    const file = e.target.files?.[0];
+    if (!file) return;
+
+    const reader = new FileReader();
+    reader.onload = (event) => {
+      const text = event.target?.result as string;
+      const t = Date.now();
+      if (file.name.endsWith('.csv') || text.includes(',')) {
+        const lines = text.split('\n').map(l => l.trim()).filter(l => l.length > 0);
+        const checklistItems = lines.map((l, idx) => ({
+          id: `csv-todo-${idx}-${t}`,
+          text: l.startsWith('- ') ? l.substring(2) : l,
+          done: false
+        }));
+        const newElement: CanvasElement = {
+          id: `elem-csv-${t}`,
+          type: 'checklist',
+          title: `📊 Imported List: ${file.name.replace(/\.[^/.]+$/, "")}`,
+          x: 100,
+          y: 100,
+          w: 300,
+          h: 260,
+          color: '#E0F2FE',
+          checklistItems: checklistItems,
+          createdAt: t
+        };
+        setElements(prev => [...prev, newElement]);
+        addActivityLog('System', `📥 Manually imported CSV spreadsheet: "${file.name}"`);
+        alert('📊 CSV file parsed and successfully imported as a Checklist!');
+      } else {
+        const newElement: CanvasElement = {
+          id: `elem-txt-${t}`,
+          type: 'text',
+          title: `📄 Imported Note: ${file.name.replace(/\.[^/.]+$/, "")}`,
+          x: 100,
+          y: 100,
+          w: 320,
+          h: 240,
+          color: '#FEF08A',
+          content: text,
+          createdAt: t,
+          livePreviewActive: false
+        };
+        setElements(prev => [...prev, newElement]);
+        addActivityLog('System', `📥 Manually imported Text document: "${file.name}"`);
+        alert('📄 Text file parsed and successfully imported as a Sticky Note!');
+      }
+    };
+    reader.readAsText(file);
   };
 
   // --- EXPORT / IMPORT FULL LOCAL DATABASE ---
@@ -631,6 +1147,69 @@ export default function ZenithWorkspace() {
       }
     };
     fileReader.readAsText(targetFile);
+  };
+
+  // 86. External File Drop Importer
+  const handleFileDrop = (e: React.DragEvent<HTMLElement>) => {
+    e.preventDefault();
+    setIsDraggingFile(false);
+    
+    if (isReadOnlyMode) {
+      alert('Safety Guard: Read-Only mode is active.');
+      return;
+    }
+
+    const file = e.dataTransfer.files?.[0];
+    if (!file) return;
+
+    const reader = new FileReader();
+    reader.onload = (event) => {
+      const text = event.target?.result as string;
+      const t = Date.now();
+      
+      if (file.name.endsWith('.csv') || text.includes(',')) {
+        const lines = text.split('\n').map(l => l.trim()).filter(l => l.length > 0);
+        const checklistItems = lines.map((l, idx) => ({
+          id: `csv-todo-${idx}-${t}`,
+          text: l.startsWith('- ') ? l.substring(2) : l,
+          done: false
+        }));
+        
+        const newElement: CanvasElement = {
+          id: `elem-csv-${t}`,
+          type: 'checklist',
+          title: `📊 Dropped List: ${file.name.replace(/\.[^/.]+$/, "")}`,
+          x: 100,
+          y: 120,
+          w: 300,
+          h: 260,
+          color: '#E0F2FE',
+          checklistItems: checklistItems,
+          createdAt: t
+        };
+        setElements(prev => [...prev, newElement]);
+        addActivityLog('System', `📥 Dropped CSV spreadsheet: "${file.name}" unpacked as Checklist`);
+        alert('📊 Excel/CSV File parsed and unpacked into a Checklist widget!');
+      } else {
+        const newElement: CanvasElement = {
+          id: `elem-txt-${t}`,
+          type: 'text',
+          title: `📄 Dropped Note: ${file.name.replace(/\.[^/.]+$/, "")}`,
+          x: 120,
+          y: 120,
+          w: 320,
+          h: 240,
+          color: '#FEF08A',
+          content: text,
+          createdAt: t,
+          livePreviewActive: false
+        };
+        setElements(prev => [...prev, newElement]);
+        addActivityLog('System', `📥 Dropped TXT note: "${file.name}" unpacked as Sticky Note`);
+        alert('📄 Text Document parsed and unpacked into a Sticky Note widget!');
+      }
+    };
+    reader.readAsText(file);
   };
 
   // --- PIN LOCK FLOW ---
@@ -1011,8 +1590,107 @@ export default function ZenithWorkspace() {
         ref={boardRef}
         onMouseMove={handleDragMove}
         onMouseUp={handleDragEnd}
+        onDragOver={(e) => { e.preventDefault(); setIsDraggingFile(true); }}
+        onDragEnter={(e) => { e.preventDefault(); setIsDraggingFile(true); }}
+        onDragLeave={() => setIsDraggingFile(false)}
+        onDrop={(e) => handleFileDrop(e)}
         className={`flex-1 relative overflow-auto p-6 ${getStationeryClass()} min-h-[600px] transition-colors`}
       >
+        {isDraggingFile && (
+          <div className="absolute inset-0 bg-[#FFD8A8]/90 z-50 flex flex-col items-center justify-center border-8 border-dashed border-black p-8 text-center backdrop-blur-sm animate-in fade-in duration-200">
+            <div className="bg-white border-4 border-black p-6 neo-shadow max-w-sm rounded-none text-black">
+              <Upload className="w-12 h-12 mx-auto mb-4 animate-bounce" />
+              <h3 className="text-sm font-black uppercase tracking-wider mb-2">Unpack Document Widget</h3>
+              <p className="text-[11px] text-stone-600 font-black leading-normal">
+                Release your `.txt` or `.csv` spreadsheet files right here to instantly unpack them into interactive board widget components!
+              </p>
+            </div>
+          </div>
+        )}
+        {/* Smart Deadline Alerts */}
+        {activeNotifications.length > 0 && (
+          <div className="mb-4 space-y-2">
+            {activeNotifications.map((alertMessage, i) => (
+              <div
+                key={i}
+                className="bg-amber-300 text-black border-4 border-black p-3.5 neo-shadow rounded-none flex items-center justify-between font-black text-xs uppercase animate-bounce"
+              >
+                <div className="flex items-center space-x-2">
+                  <AlertTriangle className="w-4 h-4 text-red-600 shrink-0" />
+                  <span>{alertMessage}</span>
+                </div>
+                <span className="bg-black text-[#FFB703] px-2 py-0.5 text-[8px] font-black tracking-wider border border-black">
+                  DUE TODAY
+                </span>
+              </div>
+            ))}
+          </div>
+        )}
+
+        {/* 88. Daily Reminder Notification Banner */}
+        {!isDailyBannerDismissed && (
+          <div className="bg-[#A7F3D0] text-black border-4 border-black p-4 md:p-5 neo-shadow rounded-none mb-6 relative transition-all animate-in fade-in slide-in-from-top duration-300">
+            <button
+              onClick={() => setIsDailyBannerDismissed(true)}
+              className="absolute top-3 right-3 p-1 hover:bg-black hover:text-[#A7F3D0] border-2 border-black bg-white rounded-none cursor-pointer"
+              title="Dismiss Briefing"
+            >
+              <X className="w-3.5 h-3.5" />
+            </button>
+
+            <div className="flex flex-col md:flex-row md:items-center justify-between gap-4">
+              <div className="space-y-1">
+                <span className="text-[9px] font-black uppercase tracking-widest bg-black text-[#A7F3D0] px-2 py-0.5 rounded-none border border-black inline-block">
+                  Cozy Family Companion
+                </span>
+                <h3 className="text-sm font-black uppercase tracking-tight text-black flex items-center gap-1.5 mt-1">
+                  <span>🏡 Good Morning, Family Briefing</span>
+                  <span className="text-xs font-normal font-sans text-stone-700 capitalize">
+                    • {new Date().toLocaleDateString('en-US', { weekday: 'long', month: 'long', day: 'numeric' })}
+                  </span>
+                </h3>
+                <p className="text-[11px] text-stone-700 font-bold max-w-2xl leading-relaxed">
+                  Welcome to Zenith! You have{' '}
+                  <span className="font-extrabold text-black underline decoration-2 decoration-red-500">
+                    {elements.filter(e => e.type === 'checklist' && e.checklistItems?.some(i => !i.done)).length} checklist boards
+                  </span>{' '}
+                  containing pending action items. Manage them below or toggle highlighting to identify gaps.
+                </p>
+              </div>
+
+              <div className="flex flex-wrap items-center gap-2 shrink-0">
+                <button
+                  onClick={() => setHighlightIncomplete(prev => !prev)}
+                  className={`border-2 border-black px-2.5 py-1 text-[10px] font-black uppercase rounded-none neo-shadow-sm cursor-pointer transition-all active:translate-y-0.5 ${
+                    highlightIncomplete ? 'bg-red-500 text-white border-black' : 'bg-white text-black hover:bg-stone-50'
+                  }`}
+                >
+                  {highlightIncomplete ? '● Highlighting Active' : '🔍 Highlight Pending'}
+                </button>
+                <button
+                  onClick={triggerGlobalLayoutReset}
+                  className="bg-[#FEF08A] text-black hover:bg-[#FDE047] border-2 border-black px-2.5 py-1 text-[10px] font-black uppercase rounded-none neo-shadow-sm cursor-pointer transition-all active:translate-y-0.5 flex items-center gap-1"
+                >
+                  <RefreshCw className="w-3 h-3" />
+                  <span>One-Touch Reset</span>
+                </button>
+                <button
+                  onClick={() => triggerWeeklySpawner(true)}
+                  className="bg-[#E0F2FE] text-black hover:bg-sky-200 border-2 border-black px-2.5 py-1 text-[10px] font-black uppercase rounded-none neo-shadow-sm cursor-pointer transition-all active:translate-y-0.5"
+                >
+                  Spawn Weekly
+                </button>
+                <button
+                  onClick={() => setShowBlueprintModal(true)}
+                  className="bg-[#FBCFE8] text-black hover:bg-pink-200 border-2 border-black px-2.5 py-1 text-[10px] font-black uppercase rounded-none neo-shadow-sm cursor-pointer transition-all active:translate-y-0.5"
+                >
+                  📑 Templates
+                </button>
+              </div>
+            </div>
+          </div>
+        )}
+
         {/* Dynamic header row inside canvas space */}
         <div className="flex flex-col md:flex-row md:items-center justify-between gap-4 pb-4 border-b-2 border-black/10 mb-8">
           <div>
@@ -1097,6 +1775,9 @@ export default function ZenithWorkspace() {
         <div className="relative min-h-[500px]">
           {elements.map(element => {
             const sizeClass = textSize === 'sm' ? 'text-xs' : textSize === 'lg' ? 'text-base' : 'text-sm';
+            const hasIncompleteChecklist = element.type === 'checklist' && element.checklistItems && element.checklistItems.some(i => !i.done);
+            const isHighlighted = highlightIncomplete && hasIncompleteChecklist;
+
             return (
               <div
                 key={element.id}
@@ -1109,7 +1790,7 @@ export default function ZenithWorkspace() {
                   backgroundColor: element.color,
                   zIndex: draggedElementId === element.id ? 40 : 10,
                 }}
-                className={`border-${borderWeight} border-black p-3 flex flex-col rounded-none cursor-default select-none ${shadowDepth} transition-shadow relative`}
+                className={`border-${borderWeight} border-black p-3 flex flex-col rounded-none cursor-default select-none ${shadowDepth} transition-all relative ${isHighlighted ? 'ring-4 ring-rose-500 animate-pulse' : ''}`}
                 id={`card-${element.id}`}
               >
                 {/* Drag handle header bar */}
@@ -1126,6 +1807,15 @@ export default function ZenithWorkspace() {
                     {element.title}
                   </span>
                   <div className="flex items-center space-x-1 shrink-0">
+                    {element.type === 'checklist' && (
+                      <button
+                        onClick={() => triggerIndividualChecklistReset(element.id)}
+                        title="Reset Checklist Checklist Items"
+                        className="p-0.5 bg-white/45 hover:bg-amber-400 text-black border border-black rounded-none cursor-pointer"
+                      >
+                        <RotateCcw className="w-2.5 h-2.5" />
+                      </button>
+                    )}
                     <button
                       onClick={() => handleDeleteElement(element.id, element.type)}
                       className="p-0.5 bg-white/40 hover:bg-red-500 hover:text-white border border-black rounded-none cursor-pointer"
@@ -1139,13 +1829,36 @@ export default function ZenithWorkspace() {
                 <div className={`flex-1 overflow-y-auto pt-2 text-[#1A1A1A] ${sizeClass}`}>
                   {/* TEXT TYPE */}
                   {element.type === 'text' && (
-                    <textarea
-                      value={element.content || ''}
-                      disabled={isReadOnlyMode}
-                      onChange={(e) => handleUpdateElement(element.id, { content: e.target.value })}
-                      placeholder="Type note details..."
-                      className="w-full h-full bg-transparent border-0 focus:ring-0 p-0 text-xs font-semibold leading-relaxed focus:outline-none resize-none"
-                    />
+                    <div className="flex flex-col h-full">
+                      <div className="flex justify-between items-center mb-1 pb-1 border-b border-black/5 shrink-0">
+                        <span className="text-[9px] text-gray-500 font-bold uppercase">Dynamic Note</span>
+                        <button
+                          onClick={() => handleUpdateElement(element.id, { livePreviewActive: !element.livePreviewActive })}
+                          className={`px-1.5 py-0.5 border text-[8px] font-black uppercase tracking-wider rounded-none cursor-pointer transition-all ${
+                            element.livePreviewActive 
+                              ? 'bg-amber-400 text-black border-black neo-shadow-sm' 
+                              : 'bg-stone-100 text-gray-600 border-stone-300'
+                          }`}
+                        >
+                          {element.livePreviewActive ? '👁️ Live Render' : '✏️ Code Raw'}
+                        </button>
+                      </div>
+                      <div className="flex-1 min-h-[80px]">
+                        {element.livePreviewActive ? (
+                          <div className="w-full h-full bg-white/40 p-1.5 border border-black/10 font-bold text-xs leading-relaxed overflow-y-auto select-text whitespace-pre-wrap rounded-none">
+                            {parseDynamicVariables(element.content || '')}
+                          </div>
+                        ) : (
+                          <textarea
+                            value={element.content || ''}
+                            disabled={isReadOnlyMode}
+                            onChange={(e) => handleUpdateElement(element.id, { content: e.target.value })}
+                            placeholder="Type note details... use placeholders like {{current_date}}, {{current_time}}, {{current_day}}, or {{user_email}}!"
+                            className="w-full h-full bg-transparent border-0 focus:ring-0 p-0 text-xs font-semibold leading-relaxed focus:outline-none resize-none"
+                          />
+                        )}
+                      </div>
+                    </div>
                   )}
 
                   {/* CHECKLIST TYPE */}
@@ -1164,7 +1877,7 @@ export default function ZenithWorkspace() {
                                 );
                                 handleUpdateElement(element.id, { checklistItems: updatedItems });
                               }}
-                              className="mt-0.5 rounded-none border-2 border-black text-black focus:ring-0 cursor-pointer"
+                              className="mt-0.5 rounded-none border-2 border-black text-black focus:ring-0 cursor-pointer animate-none"
                             />
                             <span className={`text-[11px] font-bold ${item.done ? 'line-through text-black/50' : ''}`}>
                               {item.text}
@@ -1190,7 +1903,7 @@ export default function ZenithWorkspace() {
                             handleUpdateElement(element.id, { checklistItems: items });
                             input.value = '';
                           }}
-                          className="flex gap-1 mt-2 pt-2 border-t border-black/10"
+                          className="flex gap-1 mt-2 pt-2 border-t border-black/10 shrink-0"
                         >
                           <input
                             type="text"
@@ -1206,6 +1919,21 @@ export default function ZenithWorkspace() {
                           </button>
                         </form>
                       )}
+
+                      {/* 83. Deadline Date Input for smart alerts */}
+                      <div className="flex items-center justify-between text-[10px] mt-2 pt-1.5 border-t border-black/10 shrink-0">
+                        <span className="font-bold text-black/70 flex items-center gap-1">
+                          <Calendar className="w-3 h-3 text-stone-600" />
+                          <span>Deadline:</span>
+                        </span>
+                        <input
+                          type="date"
+                          value={element.deadline || ''}
+                          disabled={isReadOnlyMode}
+                          onChange={(e) => handleUpdateElement(element.id, { deadline: e.target.value })}
+                          className="text-[9px] border-2 border-black bg-white px-1 py-0.5 rounded-none font-bold"
+                        />
+                      </div>
                     </div>
                   )}
 
@@ -1306,6 +2034,26 @@ export default function ZenithWorkspace() {
                   )}
                 </div>
 
+                {/* 85. Smart Auto-Labeling tags list displayed dynamically */}
+                {(() => {
+                  const computedLabels = getAutoLabels(element);
+                  if (computedLabels.length > 0) {
+                    return (
+                      <div className="mt-1.5 pt-1.5 border-t-2 border-black/10 flex flex-wrap gap-1 shrink-0">
+                        {computedLabels.map(lbl => (
+                          <span
+                            key={lbl}
+                            className="text-[8px] font-black uppercase tracking-wider bg-white border border-black px-1.5 py-0.5 rounded-none text-black neo-shadow-sm shrink-0"
+                          >
+                            {lbl}
+                          </span>
+                        ))}
+                      </div>
+                    );
+                  }
+                  return null;
+                })()}
+
                 {/* Resize trigger anchor */}
                 {!isReadOnlyMode && (
                   <div
@@ -1321,15 +2069,10 @@ export default function ZenithWorkspace() {
       </main>
 
       {/* --- RIGHT OPS CONTROL DECK DRAWER --- */}
-      <AnimatePresence>
-        {isControlDeckOpen && (
-          <motion.div
-            initial={{ x: '100%' }}
-            animate={{ x: 0 }}
-            exit={{ x: '100%' }}
-            transition={{ type: 'spring', damping: 25, stiffness: 200 }}
-            className="fixed top-0 right-0 h-full w-full max-w-sm bg-white border-l-4 border-black p-5 flex flex-col z-50 neo-shadow"
-          >
+      {isControlDeckOpen && (
+        <div
+          className="fixed top-0 right-0 h-full w-full max-w-sm bg-white border-l-4 border-black p-5 flex flex-col z-50 neo-shadow animate-in slide-in-from-right duration-300"
+        >
             {/* Control Panel Header Row */}
             <div className="flex items-center justify-between pb-3 border-b-2 border-black mb-4">
               <div className="flex items-center space-x-1.5 text-black">
@@ -1345,8 +2088,8 @@ export default function ZenithWorkspace() {
             </div>
 
             {/* Sub-navigation categories */}
-            <div className="flex border-b-2 border-black mb-4 gap-1">
-              {(['appearance', 'safety', 'sharing', 'audio'] as const).map(tab => (
+            <div className="flex border-b-2 border-black mb-4 gap-1 overflow-x-auto">
+              {(['appearance', 'safety', 'sharing', 'audio', 'automations'] as const).map(tab => (
                 <button
                   key={tab}
                   onClick={() => setActiveTab(tab)}
@@ -1707,15 +2450,161 @@ export default function ZenithWorkspace() {
                   </div>
                 </div>
               )}
+
+              {/* TAB 5: AUTOMATIONS & ARCHIVE (Batch 9) */}
+              {activeTab === 'automations' && (
+                <div className="space-y-4">
+                  {/* Automated Spawners */}
+                  <div className="space-y-2 border-b border-black/10 pb-3">
+                    <span className="text-[10px] font-black uppercase text-stone-400 block">🗓️ Sunday Layout Spawner</span>
+                    <div className="flex items-center justify-between">
+                      <span className="text-[11px] font-bold text-stone-700">Auto-spawn layouts</span>
+                      <button
+                        onClick={() => {
+                          setWeeklySpawnerEnabled(prev => !prev);
+                          addActivityLog('System', `Weekly layout spawner toggle changed to: ${!weeklySpawnerEnabled ? 'ENABLED' : 'DISABLED'}`);
+                        }}
+                        className={`text-[9px] font-black px-2 py-1 border-2 border-black rounded-none cursor-pointer ${weeklySpawnerEnabled ? 'bg-emerald-400 text-black border-black neo-shadow-sm font-black' : 'bg-stone-100 text-stone-500 border-stone-300'}`}
+                      >
+                        {weeklySpawnerEnabled ? 'ACTIVE ON SUNDAYS' : 'DISABLED'}
+                      </button>
+                    </div>
+                    <button
+                      onClick={() => triggerWeeklySpawner(true)}
+                      className="w-full bg-white hover:bg-stone-50 border-2 border-black py-1.5 text-[9px] font-black uppercase rounded-none text-center cursor-pointer transition-all active:translate-y-0.5"
+                    >
+                      Spawn Empty Weekly Checklist Now
+                    </button>
+                  </div>
+
+                  {/* Smart Email Inbox Sim */}
+                  <div className="space-y-2 border-b border-black/10 pb-3">
+                    <span className="text-[10px] font-black uppercase text-stone-400 block">📬 Simulate Email Inbox Hook</span>
+                    <p className="text-[9px] text-stone-500 font-bold leading-normal">
+                      Send notes to your system board address <span className="bg-stone-100 px-1 font-mono text-black">board-inbox@zenith.com</span> to automatically append elements:
+                    </p>
+                    <div className="space-y-1">
+                      <input
+                        type="text"
+                        placeholder="Email Subject Header..."
+                        value={simulatedEmailSubject}
+                        onChange={(e) => setSimulatedEmailSubject(e.target.value)}
+                        className="w-full text-[10px] border-2 border-black p-1 bg-white font-semibold rounded-none focus:outline-none"
+                      />
+                      <textarea
+                        placeholder="Type body details to send..."
+                        value={simulatedEmailBody}
+                        onChange={(e) => setSimulatedEmailBody(e.target.value)}
+                        rows={2}
+                        className="w-full text-[10px] border-2 border-black p-1 bg-white font-semibold rounded-none focus:outline-none resize-none"
+                      />
+                      <button
+                        onClick={handleSimulatedEmailSend}
+                        className="w-full bg-black text-[#FFB703] hover:bg-stone-900 border-2 border-black py-1 text-[9px] font-black uppercase rounded-none cursor-pointer transition-all active:translate-y-0.5"
+                      >
+                        Simulate Email Arrival
+                      </button>
+                    </div>
+                  </div>
+
+                  {/* Auto Archive Rules */}
+                  <div className="space-y-2 border-b border-black/10 pb-3">
+                    <span className="text-[10px] font-black uppercase text-stone-400 block">🗃️ Auto-Archive Rule Schedule</span>
+                    <div className="flex items-center justify-between">
+                      <span className="text-[11px] font-bold text-stone-700">Archive 30-day old cards</span>
+                      <button
+                        onClick={() => {
+                          setAutoArchiveEnabled(prev => !prev);
+                          addActivityLog('System', `Auto-archive rule schedule toggle changed to: ${!autoArchiveEnabled ? 'ENABLED' : 'DISABLED'}`);
+                        }}
+                        className={`text-[9px] font-black px-2 py-1 border-2 border-black rounded-none cursor-pointer ${autoArchiveEnabled ? 'bg-emerald-400 text-black border-black neo-shadow-sm font-black' : 'bg-stone-100 text-stone-500 border-stone-300'}`}
+                      >
+                        {autoArchiveEnabled ? 'SCHEDULED ACTIVE' : 'MUTED'}
+                      </button>
+                    </div>
+                    <button
+                      onClick={() => archiveStaleElements(true)}
+                      className="w-full bg-stone-100 hover:bg-stone-200 border-2 border-black py-1.5 text-[9px] font-black uppercase rounded-none text-center cursor-pointer transition-all active:translate-y-0.5"
+                    >
+                      Run 30-Day Archival Scan Now
+                    </button>
+                  </div>
+
+                  {/* Archives List Drawer Section */}
+                  <div className="space-y-2">
+                    <div className="flex items-center justify-between">
+                      <span className="text-[10px] font-black uppercase text-stone-400">📁 Archived Elements ({archivedElements.length})</span>
+                      {archivedElements.length > 0 && (
+                        <button
+                          onClick={() => {
+                            if (confirm('Permanently purge ALL archived elements forever?')) {
+                              setArchivedElements([]);
+                              addActivityLog('System', '🧹 Permanently purged the entire archived cards folder');
+                            }
+                          }}
+                          className="text-[8px] bg-red-100 text-red-600 border border-red-400 px-1 hover:bg-red-200 uppercase font-black rounded-none cursor-pointer"
+                        >
+                          Purge All
+                        </button>
+                      )}
+                    </div>
+                    
+                    <div className="border-2 border-black bg-stone-50 text-[9px] max-h-44 overflow-y-auto divide-y divide-black/10 font-sans p-1">
+                      {archivedElements.length === 0 ? (
+                        <div className="p-4 text-center text-stone-400 font-bold uppercase">Archive folder is empty.</div>
+                      ) : (
+                        archivedElements.map(item => (
+                          <div key={item.id} className="p-1.5 flex flex-col gap-1 bg-white border border-stone-200 my-0.5 rounded-none text-black">
+                            <div className="flex justify-between items-center">
+                              <span className="font-extrabold text-black uppercase truncate max-w-[150px]">
+                                {item.title || 'Untitled Card'}
+                              </span>
+                              <div className="flex gap-1 shrink-0">
+                                <button
+                                  onClick={() => {
+                                    setElements(prev => [...prev, item]);
+                                    setArchivedElements(prev => prev.filter(e => e.id !== item.id));
+                                    addActivityLog('System', `Restored archived card: "${item.title}" back to active canvas`);
+                                  }}
+                                  className="bg-black text-white hover:bg-stone-800 text-[8px] font-black px-1.5 py-0.5 uppercase rounded-none cursor-pointer"
+                                >
+                                  Restore
+                                </button>
+                                <button
+                                  onClick={() => {
+                                    setArchivedElements(prev => prev.filter(e => e.id !== item.id));
+                                    addActivityLog('System', `Permanently deleted archived card: "${item.title}"`);
+                                  }}
+                                  className="text-red-600 hover:bg-red-50 text-[8px] font-black px-1 py-0.5 uppercase border border-stone-300 rounded-none cursor-pointer"
+                                >
+                                  Delete
+                                </button>
+                              </div>
+                            </div>
+                            {item.content && (
+                              <p className="text-[9px] text-stone-500 font-semibold line-clamp-2 truncate">
+                                {item.content}
+                              </p>
+                            )}
+                            {item.checklistItems && (
+                              <span className="text-[8px] text-stone-400 font-black uppercase">
+                                Checklist • {item.checklistItems.length} items
+                              </span>
+                            )}
+                          </div>
+                        ))
+                      )}
+                    </div>
+                  </div>
+                </div>
+              )}
             </div>
-          </motion.div>
+          </div>
         )}
-      </AnimatePresence>
 
       {/* --- PUBLIC SHARE LINK MODAL POPUP --- */}
-      <AnimatePresence>
-        {showShareModal && (
-          <div className="fixed inset-0 z-[100000] flex items-center justify-center p-4 bg-black/60 backdrop-blur-sm">
+      {showShareModal && (
+        <div className="fixed inset-0 z-[100000] flex items-center justify-center p-4 bg-black/60 backdrop-blur-sm animate-in fade-in duration-200">
             <div className="bg-white border-4 border-black p-5 w-full max-w-md neo-shadow relative rounded-none text-[#1A1A1A]">
               <button
                 onClick={() => {
@@ -1756,7 +2645,131 @@ export default function ZenithWorkspace() {
             </div>
           </div>
         )}
-      </AnimatePresence>
+
+      {/* --- PAGE TEMPLATE BLUEPRINTS SELECTOR MODAL --- */}
+      {showBlueprintModal && (
+        <div className="fixed inset-0 z-[100000] flex items-center justify-center p-4 bg-black/75 backdrop-blur-sm animate-in fade-in duration-200 text-black">
+          <div className="bg-white border-4 border-black p-6 w-full max-w-2xl neo-shadow relative rounded-none flex flex-col max-h-[90vh]">
+            <button
+              onClick={() => setShowBlueprintModal(false)}
+              className="absolute top-4 right-4 text-xs font-black border-2 border-black bg-rose-500 text-white w-7 h-7 flex items-center justify-center rounded-none cursor-pointer hover:bg-rose-600"
+            >
+              <X className="w-4 h-4" />
+            </button>
+
+            <div className="mb-4">
+              <span className="text-[9px] font-black uppercase tracking-widest bg-black text-[#FEF08A] px-2 py-0.5 border border-black inline-block">
+                Feature 81: One-Click Setup Blueprints
+              </span>
+              <h3 className="text-sm font-black uppercase tracking-tight mt-1">
+                📑 Page Template Blueprints Selector
+              </h3>
+              <p className="text-[11px] text-gray-500 font-bold leading-tight mt-0.5">
+                Choose a ready-made workspace template to instantly setup widgets, layouts, and ambient sounds.
+              </p>
+            </div>
+
+            <div className="grid grid-cols-1 md:grid-cols-3 gap-3.5 overflow-y-auto pr-1 flex-1 py-1">
+              {/* Option 1: School Student Planner */}
+              <div className="border-4 border-black p-4 bg-[#FEF08A] neo-shadow-sm flex flex-col justify-between">
+                <div>
+                  <div className="text-2xl mb-1">📚</div>
+                  <h4 className="text-xs font-black uppercase tracking-wider text-black">Academic Planner</h4>
+                  <p className="text-[10px] text-stone-700 font-semibold leading-relaxed mt-1">
+                    Preloaded with student helpers: Sticky notes, Homework Checklists, Midterm Exam Countdowns, and Rain ambient Study focus loop.
+                  </p>
+                </div>
+                <div className="mt-4 space-y-1.5 pt-3 border-t border-black/10">
+                  <button
+                    onClick={() => {
+                      loadBlueprintTemplate('school', false);
+                      setShowBlueprintModal(false);
+                    }}
+                    className="w-full bg-black text-[#FEF08A] border-2 border-black text-[9px] font-black uppercase py-1.5 text-center cursor-pointer hover:bg-stone-900 transition-all active:translate-y-0.5 rounded-none"
+                  >
+                    ⚡ Overwrite Board
+                  </button>
+                  <button
+                    onClick={() => {
+                      loadBlueprintTemplate('school', true);
+                      setShowBlueprintModal(false);
+                    }}
+                    className="w-full bg-white text-black border-2 border-black text-[9px] font-black uppercase py-1 text-center cursor-pointer hover:bg-stone-50 transition-all active:translate-y-0.5 rounded-none"
+                  >
+                    ➕ Append Widgets
+                  </button>
+                </div>
+              </div>
+
+              {/* Option 2: Pet Care Log */}
+              <div className="border-4 border-black p-4 bg-[#FBCFE8] neo-shadow-sm flex flex-col justify-between">
+                <div>
+                  <div className="text-2xl mb-1">🐾</div>
+                  <h4 className="text-xs font-black uppercase tracking-wider text-black">Pet Care Log</h4>
+                  <p className="text-[10px] text-stone-700 font-semibold leading-relaxed mt-1">
+                    Keep your pets happy! Loaded with Veterinary clinic contact sticky card, Daily walking checklist, and a cute doggy photo desk frame.
+                  </p>
+                </div>
+                <div className="mt-4 space-y-1.5 pt-3 border-t border-black/10">
+                  <button
+                    onClick={() => {
+                      loadBlueprintTemplate('pet', false);
+                      setShowBlueprintModal(false);
+                    }}
+                    className="w-full bg-black text-[#FBCFE8] border-2 border-black text-[9px] font-black uppercase py-1.5 text-center cursor-pointer hover:bg-stone-900 transition-all active:translate-y-0.5 rounded-none"
+                  >
+                    ⚡ Overwrite Board
+                  </button>
+                  <button
+                    onClick={() => {
+                      loadBlueprintTemplate('pet', true);
+                      setShowBlueprintModal(false);
+                    }}
+                    className="w-full bg-white text-black border-2 border-black text-[9px] font-black uppercase py-1 text-center cursor-pointer hover:bg-stone-50 transition-all active:translate-y-0.5 rounded-none"
+                  >
+                    ➕ Append Widgets
+                  </button>
+                </div>
+              </div>
+
+              {/* Option 3: Holistic Family Wellness Guide */}
+              <div className="border-4 border-black p-4 bg-[#A7F3D0] neo-shadow-sm flex flex-col justify-between">
+                <div>
+                  <div className="text-2xl mb-1">🧘</div>
+                  <h4 className="text-xs font-black uppercase tracking-wider text-black">Wellness Guide</h4>
+                  <p className="text-[10px] text-stone-700 font-semibold leading-relaxed mt-1">
+                    Focus on body and soul. Spawns daily guide text widget, a 4-item healthy routine checklist, and active Serene Forest noise mixers.
+                  </p>
+                </div>
+                <div className="mt-4 space-y-1.5 pt-3 border-t border-black/10">
+                  <button
+                    onClick={() => {
+                      loadBlueprintTemplate('wellness', false);
+                      setShowBlueprintModal(false);
+                    }}
+                    className="w-full bg-black text-[#A7F3D0] border-2 border-black text-[9px] font-black uppercase py-1.5 text-center cursor-pointer hover:bg-stone-900 transition-all active:translate-y-0.5 rounded-none"
+                  >
+                    ⚡ Overwrite Board
+                  </button>
+                  <button
+                    onClick={() => {
+                      loadBlueprintTemplate('wellness', true);
+                      setShowBlueprintModal(false);
+                    }}
+                    className="w-full bg-white text-black border-2 border-black text-[9px] font-black uppercase py-1 text-center cursor-pointer hover:bg-stone-50 transition-all active:translate-y-0.5 rounded-none"
+                  >
+                    ➕ Append Widgets
+                  </button>
+                </div>
+              </div>
+            </div>
+
+            <div className="text-[9px] text-stone-500 font-bold font-mono uppercase text-center mt-4">
+              💡 Pro Tip: Appending retains your active canvas widgets. Overwriting wipes them!
+            </div>
+          </div>
+        </div>
+      )}
 
     </div>
   );
