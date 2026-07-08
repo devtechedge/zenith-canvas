@@ -57,6 +57,7 @@ interface CanvasElement {
   createdAt?: number; // added for archival/aging
   deadline?: string; // added for task deadline reminders
   livePreviewActive?: boolean; // added for dynamic live variable rendering
+  stickers?: string[]; // added for Custom Canvas Layout Sticker Book
 }
 
 interface FamilyCanvas {
@@ -151,6 +152,16 @@ export default function ZenithWorkspace() {
     ocean: 0,
     forest: 0
   });
+
+  // Batch 10: Engagement Delighters & Playful Milestones
+  const [confettiPool, setConfettiPool] = useState<Array<{ id: number; left: number; top: number; color: string; size: number; duration: number; rotate: number }>>([]);
+  const [streakCount, setStreakCount] = useState<number>(3); // defaulted to 3 days
+  const [completedTasksCount, setCompletedTasksCount] = useState<number>(5); // defaulted to 5
+  const [mascotTipIndex, setMascotTipIndex] = useState<number>(0);
+  const [isMascotBubbleOpen, setIsMascotBubbleOpen] = useState<boolean>(true);
+  const [canvasBackgroundTheme, setCanvasBackgroundTheme] = useState<'default' | 'hearth' | 'moonlight' | 'ivory' | 'sunset' | 'slate'>('default');
+  const [showArchitectureModal, setShowArchitectureModal] = useState<boolean>(false);
+  const [activeStickerPickerId, setActiveStickerPickerId] = useState<string | null>(null);
 
   // Dragging and resizing states (Client Only)
   const [draggedElementId, setDraggedElementId] = useState<string | null>(null);
@@ -324,6 +335,15 @@ export default function ZenithWorkspace() {
     if (savedWeeklySpawner !== null) {
       setWeeklySpawnerEnabled(savedWeeklySpawner === 'true');
     }
+
+    const savedStreak = localStorage.getItem('zenith-streak-count');
+    if (savedStreak !== null) setStreakCount(parseInt(savedStreak, 10));
+
+    const savedTasksCount = localStorage.getItem('zenith-completed-tasks');
+    if (savedTasksCount !== null) setCompletedTasksCount(parseInt(savedTasksCount, 10));
+
+    const savedBgTheme = localStorage.getItem('zenith-viewport-theme') as any;
+    if (savedBgTheme) setCanvasBackgroundTheme(savedBgTheme);
   }, []);
 
   // Sync canvases and elements state back to local storage
@@ -350,6 +370,18 @@ export default function ZenithWorkspace() {
   useEffect(() => {
     localStorage.setItem('zenith-weekly-spawner-preference', String(weeklySpawnerEnabled));
   }, [weeklySpawnerEnabled]);
+
+  useEffect(() => {
+    localStorage.setItem('zenith-streak-count', String(streakCount));
+  }, [streakCount]);
+
+  useEffect(() => {
+    localStorage.setItem('zenith-completed-tasks', String(completedTasksCount));
+  }, [completedTasksCount]);
+
+  useEffect(() => {
+    localStorage.setItem('zenith-viewport-theme', canvasBackgroundTheme);
+  }, [canvasBackgroundTheme]);
 
   useEffect(() => {
     if (activeCanvasId) {
@@ -478,6 +510,54 @@ export default function ZenithWorkspace() {
       osc.start();
       osc.stop(ctx.currentTime + 0.45);
     } catch (e) {}
+  };
+
+  const playMilestoneChime = () => {
+    try {
+      const AudioCtx = window.AudioContext || (window as any).webkitAudioContext;
+      if (!AudioCtx) return;
+      const ctx = new AudioCtx();
+      const osc1 = ctx.createOscillator();
+      const osc2 = ctx.createOscillator();
+      const gainNode = ctx.createGain();
+
+      osc1.type = 'sine';
+      osc1.frequency.setValueAtTime(523.25, ctx.currentTime); // C5
+      osc1.frequency.exponentialRampToValueAtTime(1046.50, ctx.currentTime + 0.25); // C6
+
+      osc2.type = 'triangle';
+      osc2.frequency.setValueAtTime(659.25, ctx.currentTime); // E5
+      osc2.frequency.exponentialRampToValueAtTime(1318.51, ctx.currentTime + 0.25); // E6
+
+      gainNode.gain.setValueAtTime(0.18, ctx.currentTime);
+      gainNode.gain.exponentialRampToValueAtTime(0.001, ctx.currentTime + 0.6);
+
+      osc1.connect(gainNode);
+      osc2.connect(gainNode);
+      gainNode.connect(ctx.destination);
+
+      osc1.start();
+      osc2.start();
+      osc1.stop(ctx.currentTime + 0.65);
+      osc2.stop(ctx.currentTime + 0.65);
+    } catch (e) {}
+  };
+
+  const triggerConfettiCelebrate = () => {
+    const colors = ['#FFD8A8', '#FFB703', '#FF6B6B', '#4DABF7', '#51CF66', '#FCC419', '#E599F7'];
+    const newConfetti = Array.from({ length: 45 }).map((_, idx) => ({
+      id: Date.now() + idx,
+      left: Math.random() * 100, // percentage left of viewport
+      top: Math.random() * 40 + 40, // starting height
+      color: colors[Math.floor(Math.random() * colors.length)],
+      size: Math.random() * 12 + 6,
+      duration: Math.random() * 2 + 2.5, // 2.5s to 4.5s duration
+      rotate: Math.random() * 360
+    }));
+    setConfettiPool(newConfetti);
+    setTimeout(() => {
+      setConfettiPool([]);
+    }, 4500);
   };
 
   const toggleAmbientAudio = () => {
@@ -1323,7 +1403,35 @@ export default function ZenithWorkspace() {
   const currentCanvas = canvases.find(c => c.id === activeCanvasId) || canvases[0];
   const activeStationery = currentCanvas?.stationery || 'ivory';
 
+  const getProductivityStars = () => {
+    const allChecklistItems = elements.flatMap(e => e.checklistItems || []);
+    if (allChecklistItems.length === 0) return 3; // default
+    const completed = allChecklistItems.filter(i => i.done).length;
+    const ratio = completed / allChecklistItems.length;
+    if (ratio <= 0.2) return 1;
+    if (ratio <= 0.4) return 2;
+    if (ratio <= 0.6) return 3;
+    if (ratio <= 0.8) return 4;
+    return 5;
+  };
+
   const getStationeryClass = () => {
+    // Custom cozy background themes override
+    if (canvasBackgroundTheme && canvasBackgroundTheme !== 'default') {
+      switch (canvasBackgroundTheme) {
+        case 'hearth':
+          return 'bg-gradient-to-tr from-amber-950 via-[#3a1d0f] to-[#78350F] text-amber-100 bg-[radial-gradient(#f97316_1px,transparent_1px)] [background-size:24px_24px]';
+        case 'moonlight':
+          return 'bg-gradient-to-b from-[#020617] via-[#091e14] to-[#022c22] text-emerald-100 bg-[radial-gradient(#10b981_1px,transparent_1px)] [background-size:22px_22px]';
+        case 'ivory':
+          return 'bg-[#FDFBF7] text-amber-950 bg-[radial-gradient(#b45309_0.5px,transparent_0.5px)] [background-size:20px_20px]';
+        case 'sunset':
+          return 'bg-gradient-to-br from-[#2e1065] via-[#4c0519] to-[#3b0764] text-[#fdf2f8] bg-[radial-gradient(#f43f5e_1px,transparent_1px)] [background-size:18px_18px]';
+        case 'slate':
+          return 'bg-gradient-to-r from-stone-900 via-stone-800 to-neutral-900 text-stone-100 bg-[radial-gradient(#78716c_1px,transparent_1px)] [background-size:20px_20px]';
+      }
+    }
+
     switch (activeStationery) {
       case 'blueprint':
         return 'bg-sky-950 text-sky-100 bg-[radial-gradient(#0ea5e9_1px,transparent_1px)] [background-size:16px_16px]';
@@ -1446,6 +1554,39 @@ export default function ZenithWorkspace() {
 
   return (
     <div className={`min-h-screen flex flex-col md:flex-row relative overflow-hidden select-none`}>
+      {/* Dynamic Keyframes for Confetti Float animations (Batch 10 Feature 91) */}
+      <style>{`
+        @keyframes confettiFloatUp {
+          0% {
+            transform: translateY(20vh) rotate(0deg) scale(1);
+            opacity: 1;
+          }
+          100% {
+            transform: translateY(-110vh) rotate(720deg) scale(0.5);
+            opacity: 0;
+          }
+        }
+      `}</style>
+
+      {/* Floating Confetti Celebrations */}
+      <div className="fixed inset-0 pointer-events-none z-[999999] overflow-hidden">
+        {confettiPool.map(particle => (
+          <div
+            key={particle.id}
+            style={{
+              position: 'absolute',
+              left: `${particle.left}%`,
+              bottom: '0px',
+              width: `${particle.size}px`,
+              height: `${particle.size}px`,
+              backgroundColor: particle.color,
+              transform: `rotate(${particle.rotate}deg)`,
+              animation: `confettiFloatUp ${particle.duration}s cubic-bezier(0.1, 0.8, 0.3, 1) forwards`,
+            }}
+            className="rounded-sm opacity-90 animate-pulse"
+          />
+        ))}
+      </div>
       
       {/* --- PIN GATE OVERLAY PANEL --- */}
       {vaultPIN && !isVaultUnlocked && (
@@ -1559,6 +1700,85 @@ export default function ZenithWorkspace() {
           </div>
         </div>
 
+        {/* Achievements & Milestones Widget Block (Batch 10 Feature 92, 94, 97) */}
+        <div className="border-2 border-black p-3 bg-gradient-to-br from-[#FFFBEB] to-[#FEF3C7] space-y-3 text-xs rounded-none mb-4 neo-shadow-sm text-black">
+          <div className="flex items-center justify-between border-b border-black/10 pb-1.5">
+            <span className="font-black text-[10px] uppercase tracking-wider text-amber-900 flex items-center gap-1">
+              🏆 Milestones & Stamps
+            </span>
+            <div className="flex text-amber-500 text-xs">
+              {Array.from({ length: getProductivityStars() }).map((_, i) => (
+                <span key={i}>★</span>
+              ))}
+              {Array.from({ length: 5 - getProductivityStars() }).map((_, i) => (
+                <span key={i} className="text-stone-300">★</span>
+              ))}
+            </div>
+          </div>
+
+          {/* Consistency Streak */}
+          <div className="flex items-center justify-between bg-white border border-black/15 p-2 rounded-none">
+            <div className="flex items-center space-x-1.5">
+              <span className="text-sm animate-bounce">🔥</span>
+              <div>
+                <div className="font-extrabold text-[10px] text-stone-900 leading-none">Daily Consistency</div>
+                <div className="text-[8px] text-stone-500 font-bold uppercase mt-0.5">{streakCount} Days Active</div>
+              </div>
+            </div>
+            <button
+              onClick={() => {
+                setStreakCount(prev => prev + 1);
+                playMilestoneChime();
+                triggerConfettiCelebrate();
+                addActivityLog('System', '🔥 Logged daily consistency check-in streak point!');
+              }}
+              title="Click to check in today!"
+              className="bg-orange-500 hover:bg-orange-600 text-white text-[8px] font-black px-1.5 py-1 uppercase border border-black rounded-none cursor-pointer active:translate-y-0.5 shrink-0"
+            >
+              Check-in
+            </button>
+          </div>
+
+          {/* Level-Up Stamp Badges */}
+          <div className="space-y-1.5">
+            <span className="text-[9px] font-black text-amber-950 uppercase block">Digital Stamp Book</span>
+            <div className="grid grid-cols-4 gap-1">
+              {/* Stamp 1 */}
+              <div 
+                title="Pioneer: Add an element card to canvas"
+                className={`p-1 border border-black text-center relative flex flex-col items-center justify-center rounded-none ${elements.length > 0 ? 'bg-amber-400 font-bold' : 'bg-stone-100 opacity-40'}`}
+              >
+                <span className="text-sm">⭐️</span>
+                <span className="text-[7px] font-black uppercase leading-none block mt-1">Pioneer</span>
+              </div>
+              {/* Stamp 2 */}
+              <div 
+                title="Consistency: 3+ days streak active"
+                className={`p-1 border border-black text-center relative flex flex-col items-center justify-center rounded-none ${streakCount >= 3 ? 'bg-red-400 font-bold' : 'bg-stone-100 opacity-40'}`}
+              >
+                <span className="text-sm">🔥</span>
+                <span className="text-[7px] font-black uppercase leading-none block mt-1">Streak</span>
+              </div>
+              {/* Stamp 3 */}
+              <div 
+                title="Achiever: Complete checklist tasks"
+                className={`p-1 border border-black text-center relative flex flex-col items-center justify-center rounded-none ${completedTasksCount >= 5 ? 'bg-blue-400 font-bold' : 'bg-stone-100 opacity-40'}`}
+              >
+                <span className="text-sm">🚀</span>
+                <span className="text-[7px] font-black uppercase leading-none block mt-1">Achiever</span>
+              </div>
+              {/* Stamp 4 */}
+              <div 
+                title="Master: Multiple canvases active"
+                className={`p-1 border border-black text-center relative flex flex-col items-center justify-center rounded-none ${canvases.length >= 4 ? 'bg-purple-400 font-bold' : 'bg-stone-100 opacity-40'}`}
+              >
+                <span className="text-sm">👑</span>
+                <span className="text-[7px] font-black uppercase leading-none block mt-1">Master</span>
+              </div>
+            </div>
+          </div>
+        </div>
+
         {/* Footer info box */}
         <div className="border-2 border-black p-2.5 bg-neutral-50 space-y-2 text-[10px]">
           <div className="flex items-center justify-between text-gray-500">
@@ -1581,6 +1801,12 @@ export default function ZenithWorkspace() {
           >
             <Sliders className="w-3.5 h-3.5" />
             <span>Control Deck</span>
+          </button>
+          <button
+            onClick={() => setShowArchitectureModal(true)}
+            className="w-full bg-[#1e293b] hover:bg-slate-700 text-sky-300 p-1.5 font-bold uppercase tracking-wider text-center border-2 border-black transition-colors rounded-none cursor-pointer flex items-center justify-center gap-1"
+          >
+            <span>⚙️ Blueprint Stack</span>
           </button>
         </div>
       </aside>
@@ -1793,6 +2019,21 @@ export default function ZenithWorkspace() {
                 className={`border-${borderWeight} border-black p-3 flex flex-col rounded-none cursor-default select-none ${shadowDepth} transition-all relative ${isHighlighted ? 'ring-4 ring-rose-500 animate-pulse' : ''}`}
                 id={`card-${element.id}`}
               >
+                {/* Visual Sticker Stamps overlay (Batch 10 Feature 98) */}
+                {element.stickers && element.stickers.length > 0 && (
+                  <div className="absolute -bottom-2 -right-2 flex gap-1 pointer-events-none z-30 select-none">
+                    {element.stickers.map((stk, idx) => (
+                      <span
+                        key={idx}
+                        className="text-lg bg-white border-2 border-black px-1.5 py-0.5 rounded-none neo-shadow-sm font-black transform rotate-12 scale-110 select-none block animate-bounce"
+                        style={{ animationDelay: `${idx * 0.15}s` }}
+                      >
+                        {stk}
+                      </span>
+                    ))}
+                  </div>
+                )}
+
                 {/* Drag handle header bar */}
                 <div
                   onMouseDown={(e) => handleDragStart(e, element.id, element)}
@@ -1807,6 +2048,26 @@ export default function ZenithWorkspace() {
                     {element.title}
                   </span>
                   <div className="flex items-center space-x-1 shrink-0">
+                    {/* Sticker stamp book trigger (Batch 10 Feature 98) */}
+                    <button
+                      onClick={(e) => {
+                        e.stopPropagation();
+                        const stickersList = ['🦉', '🚀', '☕', '🔥', '🎉', '💡', '🏆', '🍕'];
+                        const currentStickers = element.stickers || [];
+                        const randomSticker = stickersList[Math.floor(Math.random() * stickersList.length)];
+                        const nextStickers = currentStickers.includes(randomSticker) 
+                          ? currentStickers.filter(s => s !== randomSticker)
+                          : [...currentStickers, randomSticker];
+                        handleUpdateElement(element.id, { stickers: nextStickers });
+                        playMilestoneChime();
+                        triggerConfettiCelebrate();
+                        addActivityLog('System', `✨ Applied a lovely ${randomSticker} sticker onto "${element.title}"`);
+                      }}
+                      title="Sticker Stamp Book: Toggle visual sticker stamps!"
+                      className="p-0.5 bg-white/40 hover:bg-[#FFB703] text-black border border-black rounded-none cursor-pointer flex items-center justify-center"
+                    >
+                      <span className="text-[10px] leading-none">✨</span>
+                    </button>
                     {element.type === 'checklist' && (
                       <button
                         onClick={() => triggerIndividualChecklistReset(element.id)}
@@ -1872,10 +2133,17 @@ export default function ZenithWorkspace() {
                               checked={item.done}
                               disabled={isReadOnlyMode}
                               onChange={() => {
+                                const nextDoneValue = !item.done;
                                 const updatedItems = element.checklistItems?.map(i =>
-                                  i.id === item.id ? { ...i, done: !i.done } : i
+                                  i.id === item.id ? { ...i, done: nextDoneValue } : i
                                 );
                                 handleUpdateElement(element.id, { checklistItems: updatedItems });
+                                if (nextDoneValue) {
+                                  playMilestoneChime();
+                                  triggerConfettiCelebrate();
+                                  setCompletedTasksCount(prev => prev + 1);
+                                  addActivityLog('System', `🎉 Completed task: "${item.text}"`);
+                                }
                               }}
                               className="mt-0.5 rounded-none border-2 border-black text-black focus:ring-0 cursor-pointer animate-none"
                             />
@@ -2126,6 +2394,36 @@ export default function ZenithWorkspace() {
                           }`}
                         >
                           {theme} Stationery
+                        </button>
+                      ))}
+                    </div>
+                  </div>
+
+                  {/* 96. Cozy Background Theme Selector (Batch 10) */}
+                  <div>
+                    <h3 className="text-[10px] font-black uppercase text-stone-400 mb-1">Cozy Ambient Background Mood</h3>
+                    <div className="grid grid-cols-2 gap-1.5">
+                      {[
+                        { id: 'default', label: 'Default Stationery' },
+                        { id: 'hearth', label: '🔥 Fireside Hearth' },
+                        { id: 'moonlight', label: '🌙 Midnight Forest' },
+                        { id: 'ivory', label: '📜 Antique Ivory' },
+                        { id: 'sunset', label: '🌅 Crimson Sunset' },
+                        { id: 'slate', label: 'Obsidian Slate 🖤' },
+                      ].map(bgTheme => (
+                        <button
+                          key={bgTheme.id}
+                          onClick={() => {
+                            setCanvasBackgroundTheme(bgTheme.id);
+                            playMilestoneChime();
+                            triggerConfettiCelebrate();
+                            addActivityLog('System', `🎭 Changed ambient background mood to: ${bgTheme.label}`);
+                          }}
+                          className={`p-2 border-2 border-black rounded-none text-left font-bold cursor-pointer text-[10px] text-black ${
+                            canvasBackgroundTheme === bgTheme.id ? 'bg-[#FFB703]' : 'bg-stone-50 hover:bg-stone-100'
+                          }`}
+                        >
+                          {bgTheme.label}
                         </button>
                       ))}
                     </div>
@@ -2596,6 +2894,68 @@ export default function ZenithWorkspace() {
                       )}
                     </div>
                   </div>
+
+                  {/* 100. One-Click Fresh Start Initialization (Batch 10) */}
+                  <div className="space-y-2 pt-3 border-t-2 border-dashed border-red-500/30">
+                    <span className="text-[10px] font-black uppercase text-red-600 block">⚠️ Recruiter One-Click Fresh Start Reset</span>
+                    <p className="text-[9px] text-stone-500 font-bold leading-normal text-black">
+                      Instantly purges all active cards, sketchpads, and guest passes, triggers a celebratory sound synth and confetti, and spawns a pristine pre-loaded layout for immediate testing!
+                    </p>
+                    <button
+                      onClick={() => {
+                        if (confirm('Are you ready to trigger a Fresh Start? This will reset and pre-populate your board with a clean, beautifully styled setup!')) {
+                          setElements([]);
+                          setGuestPasses([]);
+                          setArchivedElements([]);
+                          setStreakCount(1);
+                          setCompletedTasksCount(0);
+                          setCanvasBackgroundTheme('default');
+                          
+                          const t = Date.now();
+                          const defaultStarterElements: CanvasElement[] = [
+                            {
+                              id: `starter-well-1-${t}`,
+                              type: 'text',
+                              title: '📝 Welcome to Zenith Canvas!',
+                              x: 40,
+                              y: 60,
+                              w: 300,
+                              h: 230,
+                              color: '#FEF08A',
+                              content: `Hey! Press the "✨" button in any widget header to apply sticker stamps. Or drag a CSV file onto the board!\n\nToday is: {{current_date}}\nTime: {{current_time}}`,
+                              createdAt: t,
+                              livePreviewActive: true
+                            },
+                            {
+                              id: `starter-well-2-${t}`,
+                              type: 'checklist',
+                              title: '📋 Recruiter Wow Factor Goals',
+                              x: 360,
+                              y: 60,
+                              w: 290,
+                              h: 230,
+                              color: '#A7F3D0',
+                              checklistItems: [
+                                { id: `starter-check-1-${t}`, text: 'Click "✨" sticker button on card', done: false },
+                                { id: `starter-check-2-${t}`, text: 'Check off a task to play chime sound', done: false },
+                                { id: `starter-check-3-${t}`, text: 'Check-in on "Daily Consistency" streak', done: false },
+                                { id: `starter-check-4-${t}`, text: 'Click "⚙️ Blueprint Stack" in left sidebar', done: false }
+                              ],
+                              createdAt: t
+                            }
+                          ];
+                          setElements(defaultStarterElements);
+                          playMilestoneChime();
+                          triggerConfettiCelebrate();
+                          addActivityLog('System', '🔄 Performed 100% One-Click Fresh Start Initialization!');
+                          alert('🔄 Zenith board successfully restored to a fresh, clean, pre-loaded starter setup!');
+                        }
+                      }}
+                      className="w-full bg-red-600 hover:bg-red-700 text-white border-2 border-black py-2 text-[10px] font-black uppercase rounded-none cursor-pointer transition-all active:translate-y-0.5 text-center flex items-center justify-center gap-1.5"
+                    >
+                      <span>🔄 Trigger Fresh Start Reset</span>
+                    </button>
+                  </div>
                 </div>
               )}
             </div>
@@ -2766,6 +3126,173 @@ export default function ZenithWorkspace() {
 
             <div className="text-[9px] text-stone-500 font-bold font-mono uppercase text-center mt-4">
               💡 Pro Tip: Appending retains your active canvas widgets. Overwriting wipes them!
+            </div>
+          </div>
+        </div>
+      )}
+
+      {/* 95. Interactive Help Guide Mascot (Zenny the Owl 🦉) (Batch 10) */}
+      <div className="fixed bottom-4 right-4 z-[99999] flex flex-col items-end select-none">
+        {/* Help Speech Bubble */}
+        {isMascotBubbleOpen && (() => {
+          const mascotTips = [
+            'Try checking off a checklist item to trigger retro chime sound waves and confetti showers!',
+            'You can drag-and-drop text or CSV files directly onto the canvas to instantly unpack widgets.',
+            'Protect your workspace by setting a secure 4-digit PIN lock inside the Control Deck!',
+            'Press "⚙️ Blueprint Stack" in the left sidebar to inspect the full technology and data flows!',
+            'Stuck on style? Apply gorgeous fireside or midnight mood backdrops in the Control Deck!',
+            'Tired of a blank sheet? Trigger "Fresh Start Reset" inside the Control Deck Automations tab!'
+          ];
+          return (
+            <div className="bg-white text-black border-4 border-black p-3.5 max-w-[240px] neo-shadow rounded-none mb-2 text-xs relative animate-in fade-in slide-in-from-bottom-2 duration-300">
+              {/* Close button */}
+              <button
+                onClick={() => setIsMascotBubbleOpen(false)}
+                className="absolute -top-2 -right-2 w-5 h-5 bg-rose-500 text-white font-black border-2 border-black rounded-none flex items-center justify-center text-[8px] cursor-pointer"
+              >
+                ×
+              </button>
+              <div className="font-black text-amber-600 text-[10px] uppercase tracking-wider mb-1 flex items-center gap-1">
+                🦉 Zenny Says:
+              </div>
+              <p className="font-extrabold text-stone-800 text-[10px] leading-normal">
+                {mascotTips[mascotTipIndex % mascotTips.length]}
+              </p>
+              <div className="mt-2 pt-1.5 border-t border-black/10 flex justify-between gap-1">
+                <button
+                  onClick={() => {
+                    setMascotTipIndex(prev => (prev + 1) % mascotTips.length);
+                    playMilestoneChime();
+                  }}
+                  className="text-[8px] font-black uppercase text-amber-700 hover:underline cursor-pointer bg-amber-50 px-1 py-0.5 border border-black/20"
+                >
+                  Next Tip
+                </button>
+                <button
+                  onClick={() => {
+                    setShowArchitectureModal(true);
+                    setIsMascotBubbleOpen(false);
+                  }}
+                  className="text-[8px] font-black uppercase text-blue-700 hover:underline cursor-pointer bg-blue-50 px-1 py-0.5 border border-black/20"
+                >
+                  Architecture
+                </button>
+              </div>
+            </div>
+          );
+        })()}
+        
+        {/* Floating Zenny Trigger Icon */}
+        <button
+          onClick={() => {
+            setIsMascotBubbleOpen(prev => !prev);
+            playMilestoneChime();
+            triggerConfettiCelebrate();
+          }}
+          className="w-12 h-12 rounded-none bg-[#FFB703] border-4 border-black neo-shadow flex items-center justify-center text-2xl hover:scale-105 active:scale-95 cursor-pointer select-none transition-all animate-bounce"
+          title="Click to talk to Zenny!"
+        >
+          🦉
+        </button>
+      </div>
+
+      {/* 99. Interactive System Architecture Blueprint Page Modal (Batch 10) */}
+      {showArchitectureModal && (
+        <div className="fixed inset-0 z-[100001] flex items-center justify-center p-4 bg-black/80 backdrop-blur-sm animate-in fade-in duration-200 text-black select-text">
+          <div className="bg-[#0f172a] text-slate-100 border-4 border-black p-6 w-full max-w-3xl neo-shadow relative rounded-none flex flex-col max-h-[90vh]">
+            {/* Close button */}
+            <button
+              onClick={() => setShowArchitectureModal(false)}
+              className="absolute top-4 right-4 text-xs font-black border-2 border-black bg-rose-500 text-white w-7 h-7 flex items-center justify-center rounded-none cursor-pointer hover:bg-rose-600"
+            >
+              <X className="w-4 h-4" />
+            </button>
+
+            {/* Header */}
+            <div className="mb-4 border-b-2 border-slate-700 pb-3 select-none">
+              <span className="text-[9px] font-black uppercase tracking-widest bg-sky-500 text-black px-2 py-0.5 border border-black inline-block">
+                Feature 99: Recruiter Wow Factor
+              </span>
+              <h3 className="text-base font-black uppercase tracking-tight mt-1 text-sky-400">
+                ⚙️ Interactive System Architecture Blueprint
+              </h3>
+              <p className="text-[11px] text-slate-400 font-medium leading-tight mt-0.5">
+                Technical layout details & active data processing pipelines for zenith-workspace engine.
+              </p>
+            </div>
+
+            {/* Interactive Blueprint diagram and explanation */}
+            <div className="space-y-4 overflow-y-auto pr-1 flex-1 py-1 text-xs">
+              
+              {/* Core pipeline diagram */}
+              <div className="border-2 border-slate-700 bg-slate-900/60 p-4 font-mono text-[9px] text-sky-300 rounded-none leading-normal overflow-x-auto select-none">
+                <div className="text-center font-bold text-slate-400 mb-2">▲ ZENITH COOPERATIVE RUNTIME PIPELINE ▲</div>
+                {` [Browser Sandbox / Client-Side Viewport]
+     │
+     ├──► [Drag-and-Drop Handler] ──► Reads File Streams (.txt/.csv)
+     │                                    │
+     │                                    ▼
+     │                             [File Parser] ──► Creates Checklists/Sticky Widgets
+     │
+     ├──► [Interactive Canvas] ──► Dynamic State (elements & coordinates)
+     │                                    │
+     │                                    ▼
+     │                             [LocalStorage Sync Engine] ──► 100% Client Offline Lock
+     │
+     └──► [Web Audio API Synth] ──► Playback (Oscillators, Chime frequencies, Gain Mixer)`}
+              </div>
+
+              {/* Sub-modules information */}
+              <div className="grid grid-cols-1 md:grid-cols-2 gap-3 pt-1">
+                {/* Module 1: Layout Engine */}
+                <div className="border border-slate-700 p-3 bg-slate-900/30">
+                  <h4 className="font-extrabold text-[11px] text-sky-400 uppercase tracking-wider">📐 Absolute Canvas Coordinates</h4>
+                  <p className="text-[10px] text-slate-300 leading-normal mt-1">
+                    Widget cards are positioned absolutely on a dynamic virtual board grid. Coordinates, dimensions, color settings, checklist item states, and stickers are computed using precise reactive React hooks.
+                  </p>
+                </div>
+
+                {/* Module 2: Audio Synthesis */}
+                <div className="border border-slate-700 p-3 bg-slate-900/30">
+                  <h4 className="font-extrabold text-[11px] text-emerald-400 uppercase tracking-wider">🎵 Custom Sound Synthesizers</h4>
+                  <p className="text-[10px] text-slate-300 leading-normal mt-1">
+                    Instead of using bulky external mp3 media, Zenith synthesizes rich digital tone chimes in real-time using native browser <span className="text-emerald-400">Web Audio API Oscillators</span>, complete with decay gain curves.
+                  </p>
+                </div>
+
+                {/* Module 3: Security & Vault */}
+                <div className="border border-slate-700 p-3 bg-slate-900/30">
+                  <h4 className="font-extrabold text-[11px] text-amber-400 uppercase tracking-wider">🔒 Client Safe Shield Vault</h4>
+                  <p className="text-[10px] text-slate-300 leading-normal mt-1">
+                    A secure 4-digit numeric dialpad intercepts workspace viewing and restricts access, supported by clipboard copy block mechanics to guarantee safety.
+                  </p>
+                </div>
+
+                {/* Module 4: Engagement & Fun */}
+                <div className="border border-slate-700 p-3 bg-slate-900/30">
+                  <h4 className="font-extrabold text-[11px] text-pink-400 uppercase tracking-wider">🎉 Engagement Delighters</h4>
+                  <p className="text-[10px] text-slate-300 leading-normal mt-1">
+                    The streak checking system, productivity star algorithms, and interactive confetti celebration streams keep users motivated and offer recruiters a polished experience.
+                  </p>
+                </div>
+              </div>
+
+              {/* Technologies list */}
+              <div className="pt-2 border-t border-slate-800 select-none">
+                <span className="font-black text-[9px] uppercase text-slate-400 block mb-1">Project Stack Specifications</span>
+                <div className="flex flex-wrap gap-1.5 font-mono text-[9px]">
+                  {['React 19', 'Next.js 15 (App Router)', 'Tailwind CSS v4', 'Web Audio Synth Engine', 'Interactive LocalStorage Sync'].map(tech => (
+                    <span key={tech} className="bg-slate-800 border border-slate-700 px-2 py-0.5 text-slate-300">
+                      {tech}
+                    </span>
+                  ))}
+                </div>
+              </div>
+
+            </div>
+
+            <div className="text-[10px] text-slate-400 font-bold uppercase text-center mt-4 pt-3 border-t border-slate-800 select-none">
+              ⚡ Proudly built for recruiters with clean design and attention to detail.
             </div>
           </div>
         </div>
