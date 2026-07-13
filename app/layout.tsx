@@ -2,8 +2,8 @@ import type { Metadata } from "next";
 import "./globals.css";
 
 export const metadata: Metadata = {
-  title: "Zenith Family Canvas Workspace",
-  description: "An interactive, shared neo-brutalist workspace for families.",
+  title: "Zenith Canvas",
+  description: "A shared neo-brutalist workspace with canvases, checklists, and production-ready architecture.",
 };
 
 export default function RootLayout({
