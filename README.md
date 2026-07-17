@@ -41,13 +41,23 @@ Zenith Workspace is packed with custom-engineered components that demonstrate ad
 ### 8. 🔄 Recruiter One-Click Fresh Start
 * Testing should be effortless. The "Fresh Start Reset" button in the Control Deck instantly purges existing states, triggers chime sounds, and spawns a pre-loaded, styled workspace so recruiters can start testing immediately.
 
+### 9. ⚡ Direct-DOM Drag Engine (60 FPS Performance Bypass)
+* **Zero-Re-render Drag & Resize**: By directly manipulating CSS styles of cards and sketches on mouse movement, the workspace achieves silky-smooth 60fps interaction.
+* **Batch Commits**: Coordinates are stored in active refs during movement and committed to the React state once the mouse is released, eliminating redundant component lifecycles.
+
+### 10. 🛡️ Hardened CSV Sandbox (OWASP Formula Injection Guard)
+* **Formula Sanitization**: Any imported or drag-dropped CSV spreadsheet cell starting with formula triggers (`=`, `+`, `-`, `@`) is automatically prefixed with a single quote (`'`), protecting recruiters and team members against CSV Injection attacks.
+
+### 11. 💬 Non-Blocking Custom Dialogue Layer
+* **Native Sandbox Compatibility**: Replaced all native browser-blocking `alert()` and `confirm()` dialogue prompts with custom Neo-Brutalist toast alerts and asynchronous overlay confirm modals. This guarantees uninterrupted flow inside standard iframe environments.
+
 ---
 
 ## 🛠️ Technology Stack
 
-* **Frontend Framework**: Next.js 15 (App Router) & React 19
+* **Frontend Framework**: Next.js 15 (App Router) & React 19 (100% linter and strict hydration compliant)
 * **Styling & Theme**: Tailwind CSS v4 (Custom Neo-brutalist design schema)
-* **Audio Layer**: Native Web Audio API Synthesizers
+* **Audio Layer**: Native Web Audio API (Unified, cached single-instance `AudioContext` to eliminate memory leaks and browser mute blocks)
 * **Storage & Persistence**: Fast Client-Side Synchronized LocalStorage Engine
 * **Asset Library**: Lucide React Icons
 
@@ -87,4 +97,4 @@ npm run start
 ---
 
 ## 🔒 Security Gate
-Zenith Workspace features an integrated **Safe Shield Vault** that secures canvas cards behind a 4-digit numeric PIN. Enter your set code in the Control Deck to restrict canvas access instantly.
+Zenith Workspace features an integrated **Safe Shield Vault** that secures canvas cards behind a 4-digit numeric PIN. Enter your set code in the Control Deck to restrict canvas access instantly. Additionally, all copy operations are intercepted with safety banners to prevent clipboard leakage.

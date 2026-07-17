@@ -1,6 +1,6 @@
 {
   "name": "Zenith Workspace",
-  "description": "A local-first interactive canvas workspace with bento elements, simulated cursor trails, and activity logging.",
+  "description": "An interactive shared canvas workspace with bento elements, simulated cursor trails, activity logging, and safety pin protection.",
   "requestFramePermissions": [],
-  "majorCapabilities": []
+  "majorCapabilities": ["MAJOR_CAPABILITY_SERVER_SIDE_GEMINI_API"]
 }

@@ -4,6 +4,22 @@ All notable changes to **Zenith Workspace** will be documented in this file.
 
 ---
 
+## [1.11.0] - 2026-07-17
+### Added
+* **Custom Dialogue System (Toast notifications & Confirmation overlays)**: Introduced a custom, non-blocking Neo-Brutalist toast manager and overlay modals, completely replacing blocking browser `alert()` and `confirm()` prompts for sandbox safety.
+* **Direct DOM style manipulation hooks**: Added `dragCoordsRef` and `resizeCoordsRef` to support optimized coordinate capture during movement.
+
+### Enhanced
+* **Direct-DOM Drag & Resize Engine (60 FPS Performance optimization)**: Re-engineered card drags and resizing to mutate DOM styles directly in real time instead of triggering heavy React state updates on every pixel shifted. Coordinate states are batched and committed only upon cursor release.
+* **Unified Web Audio Synth**: Replaced redundant multiple `AudioContext` creations with a cached, lazily initialized single-instance getter `getSafeAudioContext()` to avoid memory leaks and browser-specific audio blocks.
+* **OWASP Security CSV Sanitization (Formula Injection Protection)**: Added regex-driven cell verification to automatically escape Excel formula characters (`=`, `+`, `-`, `@`) with protective quotes on text/CSV imports.
+
+### Fixed
+* **SSR Hydration Mismatch**: Resolved a hydration discrepancy on date strings during initial client-side paint.
+* **Control Deck State Reference Leak**: Patched a missing state reference bug in the Email Simulation pipeline.
+
+---
+
 ## [1.10.0] - 2026-07-08
 ### Added
 * **Interactive Help Guide Mascot (Zenny the Owl 🦉)**: A floating interactive mascot placed in the bottom corner that provides tips, architectural guides, and sound chimes on request.
