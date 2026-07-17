@@ -50,7 +50,6 @@ type AppState = {
   isDailyBannerDismissed: boolean;
   highlightIncomplete: boolean;
   incomingEmail: { from: string; subject: string; body: string };
-  activeNotifications: string[];
   ambientAudioActive: boolean;
   audioVolumes: { rain: number; campfire: number; ocean: number; forest: number };
   confettiPool: Array<{ id: number; left: number; top: number; color: string; size: number; duration: number; rotate: number }>;
@@ -97,7 +96,6 @@ type AppState = {
   setIsDailyBannerDismissed: (value: boolean) => void;
   setHighlightIncomplete: (value: boolean) => void;
   setIncomingEmail: (value: { from: string; subject: string; body: string }) => void;
-  setActiveNotifications: (value: string[]) => void;
   setAmbientAudioActive: (value: boolean) => void;
   setAudioVolumes: (value: { rain: number; campfire: number; ocean: number; forest: number }) => void;
   setConfettiPool: (value: AppState["confettiPool"]) => void;
@@ -161,7 +159,6 @@ type AppDataState = Omit<
   | "setIsDailyBannerDismissed"
   | "setHighlightIncomplete"
   | "setIncomingEmail"
-  | "setActiveNotifications"
   | "setAmbientAudioActive"
   | "setAudioVolumes"
   | "setConfettiPool"
@@ -230,7 +227,6 @@ const createInitialState = (): AppDataState => {
       subject: "Vet Appointment update 🐶",
       body: "Please check the vet schedule! Teddy needs his shot on Thursday morning. Make sure to feed him on time.",
     },
-    activeNotifications: [],
     ambientAudioActive: false,
     audioVolumes: { rain: 0.3, campfire: 0, ocean: 0, forest: 0 },
     confettiPool: [],
@@ -238,11 +234,11 @@ const createInitialState = (): AppDataState => {
     completedTasksCount: 5,
     mascotTipIndex: 0,
     isMascotBubbleOpen: true,
-    canvasBackgroundTheme: "default",
-    showArchitectureModal: false,
-    activeStickerPickerId: null,
-    draggedElementId: null,
-    dragOffset: { x: 0, y: 0 },
+  canvasBackgroundTheme: "default",
+  showArchitectureModal: false,
+  activeStickerPickerId: null,
+  draggedElementId: null,
+  dragOffset: { x: 0, y: 0 },
     isResizing: false,
     resizeStartSize: { w: 0, h: 0 },
     resizeStartPos: { x: 0, y: 0 },
@@ -284,7 +280,6 @@ export const useZenithStore = create<AppState>()(
       setIsDailyBannerDismissed: (value) => set({ isDailyBannerDismissed: value }),
       setHighlightIncomplete: (value) => set({ highlightIncomplete: value }),
       setIncomingEmail: (value) => set({ incomingEmail: value }),
-      setActiveNotifications: (value) => set({ activeNotifications: value }),
       setAmbientAudioActive: (value) => set({ ambientAudioActive: value }),
       setAudioVolumes: (value) => set({ audioVolumes: value }),
       setConfettiPool: (value) => set({ confettiPool: value }),
