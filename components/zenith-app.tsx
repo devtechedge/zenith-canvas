@@ -1,6 +1,6 @@
 "use client";
 
-import { useEffect, useState } from "react";
+import { useEffect, useMemo, useState } from "react";
 import { Archive, Check, Compass, FileText, Lock, Plus, Share2, Shield, Sliders, Trash2, X } from "lucide-react";
 import { useZenithStore } from "@/store/zenith-store";
 import type { CanvasElement } from "@/lib/types";
@@ -119,37 +119,52 @@ function Sidebar() {
 }
 
 function ControlDeck() {
-  const state = useZenithStore();
+  const isControlDeckOpen = useZenithStore((state) => state.isControlDeckOpen);
+  const setIsControlDeckOpen = useZenithStore((state) => state.setIsControlDeckOpen);
+  const isReadOnlyMode = useZenithStore((state) => state.isReadOnlyMode);
+  const setIsReadOnlyMode = useZenithStore((state) => state.setIsReadOnlyMode);
+  const isCopyInterceptEnabled = useZenithStore((state) => state.isCopyInterceptEnabled);
+  const setIsCopyInterceptEnabled = useZenithStore((state) => state.setIsCopyInterceptEnabled);
+  const isCursorTrailsEnabled = useZenithStore((state) => state.isCursorTrailsEnabled);
+  const setIsCursorTrailsEnabled = useZenithStore((state) => state.setIsCursorTrailsEnabled);
+  const setAccentTheme = useZenithStore((state) => state.setAccentTheme);
+  const createConfettiBurst = useZenithStore((state) => state.createConfettiBurst);
+
   return (
     <aside className="neo-shadow flex h-full flex-col gap-4 border-4 border-black bg-white p-4">
       <div className="flex items-center justify-between">
         <div className="text-xs font-black uppercase tracking-widest">
           <Sliders className="mr-2 inline h-4 w-4" /> Control Deck
         </div>
-        <button onClick={() => state.setIsControlDeckOpen(!state.isControlDeckOpen)} className="border-2 border-black px-2 py-1 text-[10px] font-black uppercase">
-          {state.isControlDeckOpen ? "Close" : "Open"}
+        <button onClick={() => setIsControlDeckOpen(!isControlDeckOpen)} className="border-2 border-black px-2 py-1 text-[10px] font-black uppercase">
+          {isControlDeckOpen ? "Close" : "Open"}
         </button>
       </div>
-      {state.isControlDeckOpen ? (
+      {isControlDeckOpen ? (
         <div className="space-y-4 text-sm">
           <label className="flex items-center justify-between gap-3 border-2 border-black bg-[#fafafa] p-2">
             <span className="font-semibold">Read-only mode</span>
-            <input type="checkbox" checked={state.isReadOnlyMode} onChange={(event) => state.setIsReadOnlyMode(event.target.checked)} />
+            <input type="checkbox" checked={isReadOnlyMode} onChange={(event) => setIsReadOnlyMode(event.target.checked)} />
           </label>
           <label className="flex items-center justify-between gap-3 border-2 border-black bg-[#fafafa] p-2">
             <span className="font-semibold">Copy intercept</span>
-            <input type="checkbox" checked={state.isCopyInterceptEnabled} onChange={(event) => state.setIsCopyInterceptEnabled(event.target.checked)} />
+            <input type="checkbox" checked={isCopyInterceptEnabled} onChange={(event) => setIsCopyInterceptEnabled(event.target.checked)} />
           </label>
           <label className="flex items-center justify-between gap-3 border-2 border-black bg-[#fafafa] p-2">
             <span className="font-semibold">Cursor trails</span>
-            <input type="checkbox" checked={state.isCursorTrailsEnabled} onChange={(event) => state.setIsCursorTrailsEnabled(event.target.checked)} />
+            <input type="checkbox" checked={isCursorTrailsEnabled} onChange={(event) => setIsCursorTrailsEnabled(event.target.checked)} />
           </label>
           <div className="grid grid-cols-2 gap-2">
             {palette.map((color) => (
-              <button key={color} onClick={() => state.setAccentTheme(color === "#FEF08A" ? "yellow" : color === "#A7F3D0" ? "green" : color === "#E0F2FE" ? "blue" : "pink")} className="h-10 border-2 border-black" style={{ backgroundColor: color }} />
+              <button
+                key={color}
+                onClick={() => setAccentTheme(color === "#FEF08A" ? "yellow" : color === "#A7F3D0" ? "green" : color === "#E0F2FE" ? "blue" : "pink")}
+                className="h-10 border-2 border-black"
+                style={{ backgroundColor: color }}
+              />
             ))}
           </div>
-          <button onClick={() => state.createConfettiBurst()} className="w-full border-2 border-black bg-black px-3 py-2 text-xs font-black uppercase text-white">Trigger confetti</button>
+          <button onClick={() => createConfettiBurst()} className="w-full border-2 border-black bg-black px-3 py-2 text-xs font-black uppercase text-white">Trigger confetti</button>
         </div>
       ) : (
         <p className="text-sm text-stone-500">Open the deck to tune appearance, sharing, audio and automation behavior.</p>
@@ -158,8 +173,7 @@ function ControlDeck() {
   );
 }
 
-function Notifications() {
-  const notifications = useZenithStore((state) => state.activeNotifications);
+function Notifications({ notifications }: { notifications: string[] }) {
   if (!notifications.length) return null;
   return (
     <div className="space-y-2">
@@ -173,28 +187,33 @@ function Notifications() {
 }
 
 export default function ZenithApp() {
-  const state = useZenithStore();
   const elements = useZenithStore((store) => store.elements);
   const isCursorTrailsEnabled = useZenithStore((store) => store.isCursorTrailsEnabled);
-  const setActiveNotifications = useZenithStore((store) => store.setActiveNotifications);
   const setSimulatedCursors = useZenithStore((store) => store.setSimulatedCursors);
   const canvasBackgroundTheme = useZenithStore((store) => store.canvasBackgroundTheme);
+  const activeCanvas = useZenithStore((store) => store.canvases.find((canvas) => canvas.id === store.activeCanvasId));
+  const isVaultUnlocked = useZenithStore((store) => store.isVaultUnlocked);
+  const loadDefaults = useZenithStore((store) => store.loadDefaults);
+  const setIsVaultUnlocked = useZenithStore((store) => store.setIsVaultUnlocked);
+  const setShowShareModal = useZenithStore((store) => store.setShowShareModal);
+  const setShowBlueprintModal = useZenithStore((store) => store.setShowBlueprintModal);
+  const showShareModal = useZenithStore((store) => store.showShareModal);
+  const showBlueprintModal = useZenithStore((store) => store.showBlueprintModal);
   const [hydrated, setHydrated] = useState(false);
 
-  useEffect(() => {
-    setHydrated(true);
-  }, []);
-
-  useEffect(() => {
-    const notifications = elements.flatMap((element) => {
-      const today = new Date().toISOString().split("T")[0];
+  const notifications = useMemo(() => {
+    const today = new Date().toISOString().split("T")[0];
+    return elements.flatMap((element) => {
       const items: string[] = [];
       if (element.deadline === today) items.push(`Checklist "${element.title}" is due today`);
       if (element.countdownTarget === today) items.push(`Countdown "${element.title}" reaches today`);
       return items;
     });
-    setActiveNotifications(notifications);
-  }, [elements, setActiveNotifications]);
+  }, [elements]);
+
+  useEffect(() => {
+    setHydrated(true);
+  }, []);
 
   useEffect(() => {
     if (!isCursorTrailsEnabled) {
@@ -223,28 +242,28 @@ export default function ZenithApp() {
             <h1 className="text-xl font-black uppercase tracking-tight">Production-ready workspace</h1>
           </div>
           <div className="flex items-center gap-2 text-xs font-black uppercase">
-            <button onClick={() => state.setShowShareModal(true)} className="border-2 border-black bg-black px-3 py-2 text-white"><Share2 className="mr-1 inline h-4 w-4" /> Share</button>
-            <button onClick={() => state.setShowBlueprintModal(true)} className="border-2 border-black bg-[#FFB703] px-3 py-2"><FileText className="mr-1 inline h-4 w-4" /> Templates</button>
+            <button onClick={() => setShowShareModal(true)} className="border-2 border-black bg-black px-3 py-2 text-white"><Share2 className="mr-1 inline h-4 w-4" /> Share</button>
+            <button onClick={() => setShowBlueprintModal(true)} className="border-2 border-black bg-[#FFB703] px-3 py-2"><FileText className="mr-1 inline h-4 w-4" /> Templates</button>
           </div>
         </div>
       </header>
       <main className="mx-auto grid max-w-7xl gap-4 p-4 lg:grid-cols-[280px_minmax(0,1fr)_300px]">
         <Sidebar />
         <section className="space-y-4">
-          <Notifications />
+          <Notifications notifications={notifications} />
           <div className="neo-shadow border-4 border-black bg-white p-4">
             <div className="mb-3 flex flex-wrap items-center justify-between gap-2">
               <div>
                 <div className="text-xs font-black uppercase tracking-widest text-stone-500">Active canvas</div>
-                <div className="text-lg font-black">{state.canvases.find((canvas) => canvas.id === state.activeCanvasId)?.name ?? "No canvas selected"}</div>
+                <div className="text-lg font-black">{activeCanvas?.name ?? "No canvas selected"}</div>
               </div>
               <div className="flex items-center gap-2 text-xs font-black uppercase">
-                <button onClick={() => state.setIsVaultUnlocked(!state.isVaultUnlocked)} className="border-2 border-black px-3 py-2">{state.isVaultUnlocked ? <><UnlockIcon /> Unlocked</> : <><LockIcon /> Locked</>}</button>
-                <button onClick={() => state.loadDefaults()} className="border-2 border-black px-3 py-2">Reset</button>
+                <button onClick={() => setIsVaultUnlocked(!isVaultUnlocked)} className="border-2 border-black px-3 py-2">{isVaultUnlocked ? <><UnlockIcon /> Unlocked</> : <><LockIcon /> Locked</>}</button>
+                <button onClick={() => loadDefaults()} className="border-2 border-black px-3 py-2">Reset</button>
               </div>
             </div>
             <div className="grid gap-4 md:grid-cols-2 xl:grid-cols-3">
-              {state.elements.map((element) => (
+              {elements.map((element) => (
                 <ElementCard key={element.id} element={element} />
               ))}
             </div>
@@ -252,8 +271,8 @@ export default function ZenithApp() {
         </section>
         <ControlDeck />
       </main>
-      {state.showShareModal && <ShareModal />}
-      {state.showBlueprintModal && <BlueprintModal />}
+      {showShareModal && <ShareModal />}
+      {showBlueprintModal && <BlueprintModal />}
     </div>
   );
 }
@@ -267,14 +286,15 @@ function LockIcon() {
 }
 
 function ShareModal() {
-  const state = useZenithStore();
-  const url = typeof window !== "undefined" ? `${window.location.origin}/canvas/${state.activeCanvasId}` : "";
+  const activeCanvasId = useZenithStore((state) => state.activeCanvasId);
+  const setShowShareModal = useZenithStore((state) => state.setShowShareModal);
+  const url = typeof window !== "undefined" ? `${window.location.origin}/canvas/${activeCanvasId}` : "";
   return (
     <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/60 p-4">
       <div className="w-full max-w-md border-4 border-black bg-white p-4 neo-shadow">
         <div className="mb-3 flex items-center justify-between">
           <h2 className="text-sm font-black uppercase">Share link</h2>
-          <button onClick={() => state.setShowShareModal(false)}><X /></button>
+          <button onClick={() => setShowShareModal(false)}><X /></button>
         </div>
         <p className="break-all border-2 border-black bg-stone-50 p-2 text-xs">{url}</p>
       </div>
@@ -283,13 +303,13 @@ function ShareModal() {
 }
 
 function BlueprintModal() {
-  const state = useZenithStore();
+  const setShowBlueprintModal = useZenithStore((state) => state.setShowBlueprintModal);
   return (
     <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/70 p-4">
       <div className="w-full max-w-3xl border-4 border-black bg-white p-5 neo-shadow">
         <div className="mb-4 flex items-center justify-between">
           <h2 className="text-sm font-black uppercase">Blueprint templates</h2>
-          <button onClick={() => state.setShowBlueprintModal(false)}><X /></button>
+          <button onClick={() => setShowBlueprintModal(false)}><X /></button>
         </div>
         <div className="grid gap-3 md:grid-cols-3">
           {[
