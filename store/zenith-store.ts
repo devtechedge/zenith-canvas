@@ -352,6 +352,11 @@ export const useZenithStore = create<AppState>()(
       loadDefaults: () => set(createInitialState()),
     }),
     {
+      version: 1,
+      migrate: (persistedState) => {
+        const { vaultPIN: _vaultPIN, ...rest } = persistedState as AppState;
+        return rest;
+      },
       name: "zenith-store",
       storage: createJSONStorage(() => localStorage),
       partialize: (state) => ({
@@ -368,7 +373,6 @@ export const useZenithStore = create<AppState>()(
         isReadOnlyMode: state.isReadOnlyMode,
         isCopyInterceptEnabled: state.isCopyInterceptEnabled,
         isCursorTrailsEnabled: state.isCursorTrailsEnabled,
-        vaultPIN: state.vaultPIN,
         guestPasses: state.guestPasses,
         activityLogs: state.activityLogs,
         archivedElements: state.archivedElements,
