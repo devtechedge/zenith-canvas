@@ -4,6 +4,24 @@ All notable changes to **Zenith Workspace** will be documented in this file.
 
 ---
 
+## [1.12.0] - 2026-08-21
+### Added
+* Root `SECURITY.md` threat model (client-side PIN, CSV sanitizer, no backend).
+* Unit tests for CSV formula injection, vault PIN, productivity stars, and guest-pass expiry.
+* Playwright Chromium smokes (workspace shell, Control Deck, streak check-in, blueprint, Fresh Start).
+* GitHub Actions CI (unit → typecheck → e2e) on Node 22, plus Dependabot (patch/minor only).
+* MIT `LICENSE`, branded `public/favicon.svg`, and an honest hiring-manager README.
+
+### Changed
+* `ignoreBuildErrors` is **false**; `tsc --noEmit` is a first-class script.
+* Production security headers (CSP, nosniff, Permissions-Policy) restored.
+* Package name is `zenith-canvas`; unused `framer-motion` / `recharts` / `clsx` / `tailwind-merge` removed.
+
+### Removed
+* AI Studio leftover `metadata.json` and empty `GEMINI_API_KEY` example.
+
+---
+
 ## [1.11.0] - 2026-07-17
 ### Added
 * **Custom Dialogue System (Toast notifications & Confirmation overlays)**: Introduced a custom, non-blocking Neo-Brutalist toast manager and overlay modals, completely replacing blocking browser `alert()` and `confirm()` prompts for sandbox safety.
