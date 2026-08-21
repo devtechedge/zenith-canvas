@@ -2,8 +2,12 @@ import type { Metadata } from "next";
 import "./globals.css";
 
 export const metadata: Metadata = {
-  title: "Zenith Family Canvas Workspace",
-  description: "An interactive, shared neo-brutalist workspace for families.",
+  title: "Zenith Workspace",
+  description:
+    "A neo-brutalist family canvas workspace with drag-and-drop cards, client-side persistence, and a 4-digit PIN vault.",
+  icons: {
+    icon: "/favicon.svg",
+  },
 };
 
 export default function RootLayout({

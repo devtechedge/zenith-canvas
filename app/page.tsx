@@ -36,6 +36,11 @@ import {
   Archive,
   RefreshCw
 } from 'lucide-react';
+import { parseCsvChecklist } from '@/lib/csv';
+import { createGuestPassCode, guestPassExpiryMs } from '@/lib/guest-pass';
+import { isValidVaultPin } from '@/lib/pin';
+import { productivityStars } from '@/lib/productivity';
+
 
 // --- TYPES & INTERFACES ---
 interface CanvasElement {
@@ -1196,19 +1201,11 @@ export default function ZenithWorkspace() {
       const text = event.target?.result as string;
       const t = Date.now();
       if (file.name.endsWith('.csv') || text.includes(',')) {
-        const lines = text.split('\n').map(l => l.trim()).filter(l => l.length > 0);
-        const checklistItems = lines.map((l, idx) => {
-          let itemText = l.startsWith('- ') ? l.substring(2) : l;
-          // Protect against CSV Formula Injection (OWASP Security Audit)
-          if (['=', '+', '-', '@'].some(char => itemText.startsWith(char))) {
-            itemText = `'${itemText}`;
-          }
-          return {
-            id: `csv-todo-${idx}-${t}`,
-            text: itemText,
-            done: false
-          };
-        });
+        const checklistItems = parseCsvChecklist(text).map((itemText, idx) => ({
+          id: `csv-todo-${idx}-${t}`,
+          text: itemText,
+          done: false
+        }));
         const newElement: CanvasElement = {
           id: `elem-csv-${t}`,
           type: 'checklist',
@@ -1321,19 +1318,11 @@ export default function ZenithWorkspace() {
       const t = Date.now();
       
       if (file.name.endsWith('.csv') || text.includes(',')) {
-        const lines = text.split('\n').map(l => l.trim()).filter(l => l.length > 0);
-        const checklistItems = lines.map((l, idx) => {
-          let itemText = l.startsWith('- ') ? l.substring(2) : l;
-          // Protect against CSV Formula Injection (OWASP Security Audit)
-          if (['=', '+', '-', '@'].some(char => itemText.startsWith(char))) {
-            itemText = `'${itemText}`;
-          }
-          return {
-            id: `csv-todo-${idx}-${t}`,
-            text: itemText,
-            done: false
-          };
-        });
+        const checklistItems = parseCsvChecklist(text).map((itemText, idx) => ({
+          id: `csv-todo-${idx}-${t}`,
+          text: itemText,
+          done: false
+        }));
         
         const newElement: CanvasElement = {
           id: `elem-csv-${t}`,
@@ -1375,7 +1364,7 @@ export default function ZenithWorkspace() {
   // --- PIN LOCK FLOW ---
   const handleSetPIN = (e: React.FormEvent) => {
     e.preventDefault();
-    if (pinSetupVal.length !== 4 || isNaN(Number(pinSetupVal))) {
+    if (!isValidVaultPin(pinSetupVal)) {
       triggerToast('PIN must be exactly 4 numeric digits.', 'error');
       return;
     }
@@ -1410,12 +1399,12 @@ export default function ZenithWorkspace() {
 
   // --- EXPIRING GUEST ACCESS PASSES ---
   const handleGenerateGuestPass = (days: number) => {
-    const code = 'ZEN-' + Math.floor(100000 + getSafeRandom() * 900000);
+    const code = createGuestPassCode(getSafeRandom());
     const newPass: GuestPass = {
       id: `pass-${Date.now()}-${getSafeRandom()}`,
       code,
       label: `${days}-Day Access Pass`,
-      expiry: Date.now() + days * 24 * 60 * 60 * 1000
+      expiry: guestPassExpiryMs(days, Date.now())
     };
     const nextPasses = [...guestPasses, newPass];
     setGuestPasses(nextPasses);
@@ -1512,14 +1501,7 @@ export default function ZenithWorkspace() {
 
   const getProductivityStars = () => {
     const allChecklistItems = elements.flatMap(e => e.checklistItems || []);
-    if (allChecklistItems.length === 0) return 3; // default
-    const completed = allChecklistItems.filter(i => i.done).length;
-    const ratio = completed / allChecklistItems.length;
-    if (ratio <= 0.2) return 1;
-    if (ratio <= 0.4) return 2;
-    if (ratio <= 0.6) return 3;
-    if (ratio <= 0.8) return 4;
-    return 5;
+    return productivityStars(allChecklistItems);
   };
 
   const getStationeryClass = () => {
@@ -1660,7 +1642,7 @@ export default function ZenithWorkspace() {
   };
 
   return (
-    <div className={`min-h-screen flex flex-col md:flex-row relative overflow-hidden select-none`}>
+    <div data-testid="workspace-shell" className={`min-h-screen flex flex-col md:flex-row relative overflow-hidden select-none`}>
       {/* Dynamic Keyframes for Confetti Float animations (Batch 10 Feature 91) */}
       <style>{`
         @keyframes confettiFloatUp {
@@ -1760,7 +1742,7 @@ export default function ZenithWorkspace() {
             <Compass className="w-6 h-6 text-black animate-spin-slow" />
           </div>
           <div>
-            <h1 className="text-xs font-black uppercase tracking-wider text-[#1A1A1A]">Zenith Workspace</h1>
+            <h1 data-testid="workspace-title" className="text-xs font-black uppercase tracking-wider text-[#1A1A1A]">Zenith Workspace</h1>
             <p className="text-[9px] text-gray-500 font-bold uppercase leading-none">Cooperative Family Canvas</p>
           </div>
         </div>
@@ -1808,7 +1790,7 @@ export default function ZenithWorkspace() {
         </div>
 
         {/* Achievements & Milestones Widget Block (Batch 10 Feature 92, 94, 97) */}
-        <div className="border-2 border-black p-3 bg-gradient-to-br from-[#FFFBEB] to-[#FEF3C7] space-y-3 text-xs rounded-none mb-4 neo-shadow-sm text-black">
+        <div data-testid="milestones" className="border-2 border-black p-3 bg-gradient-to-br from-[#FFFBEB] to-[#FEF3C7] space-y-3 text-xs rounded-none mb-4 neo-shadow-sm text-black">
           <div className="flex items-center justify-between border-b border-black/10 pb-1.5">
             <span className="font-black text-[10px] uppercase tracking-wider text-amber-900 flex items-center gap-1">
               🏆 Milestones & Stamps
@@ -1829,7 +1811,7 @@ export default function ZenithWorkspace() {
               <span className="text-sm animate-bounce">🔥</span>
               <div>
                 <div className="font-extrabold text-[10px] text-stone-900 leading-none">Daily Consistency</div>
-                <div className="text-[8px] text-stone-500 font-bold uppercase mt-0.5">{streakCount} Days Active</div>
+                <div data-testid="streak-count" className="text-[8px] text-stone-500 font-bold uppercase mt-0.5">{streakCount} Days Active</div>
               </div>
             </div>
             <button
@@ -1840,6 +1822,7 @@ export default function ZenithWorkspace() {
                 addActivityLog('System', '🔥 Logged daily consistency check-in streak point!');
               }}
               title="Click to check in today!"
+              data-testid="streak-check-in"
               className="bg-orange-500 hover:bg-orange-600 text-white text-[8px] font-black px-1.5 py-1 uppercase border border-black rounded-none cursor-pointer active:translate-y-0.5 shrink-0"
             >
               Check-in
@@ -1904,6 +1887,7 @@ export default function ZenithWorkspace() {
           </div>
           <button
             onClick={() => setIsControlDeckOpen(true)}
+            data-testid="control-deck-open"
             className="w-full bg-[#1A1A1A] hover:bg-[#FFB703] hover:text-black text-white p-1.5 font-bold uppercase tracking-wider text-center border-2 border-black transition-colors rounded-none cursor-pointer flex items-center justify-center gap-1"
           >
             <Sliders className="w-3.5 h-3.5" />
@@ -1911,6 +1895,7 @@ export default function ZenithWorkspace() {
           </button>
           <button
             onClick={() => setShowArchitectureModal(true)}
+            data-testid="blueprint-open"
             className="w-full bg-[#1e293b] hover:bg-slate-700 text-sky-300 p-1.5 font-bold uppercase tracking-wider text-center border-2 border-black transition-colors rounded-none cursor-pointer flex items-center justify-center gap-1"
           >
             <span>⚙️ Blueprint Stack</span>
@@ -1920,6 +1905,7 @@ export default function ZenithWorkspace() {
 
       {/* --- MAIN CANVAS CONTENT SECTION --- */}
       <main
+        data-testid="canvas-board"
         ref={boardRef}
         onMouseMove={handleDragMove}
         onMouseUp={handleDragEnd}
@@ -2448,6 +2434,7 @@ export default function ZenithWorkspace() {
       {/* --- RIGHT OPS CONTROL DECK DRAWER --- */}
       {isControlDeckOpen && (
         <div
+          data-testid="control-deck"
           className="fixed top-0 right-0 h-full w-full max-w-sm bg-white border-l-4 border-black p-5 flex flex-col z-50 neo-shadow animate-in slide-in-from-right duration-300"
         >
             {/* Control Panel Header Row */}
@@ -2469,6 +2456,7 @@ export default function ZenithWorkspace() {
               {(['appearance', 'safety', 'sharing', 'audio', 'automations'] as const).map(tab => (
                 <button
                   key={tab}
+                  data-testid={`control-tab-${tab}`}
                   onClick={() => setActiveTab(tab)}
                   className={`flex-1 text-[9px] font-black uppercase p-1.5 border-t-2 border-x-2 border-transparent text-center transition-all cursor-pointer ${
                     activeTab === tab
@@ -2512,14 +2500,14 @@ export default function ZenithWorkspace() {
                   <div>
                     <h3 className="text-[10px] font-black uppercase text-stone-400 mb-1">Cozy Ambient Background Mood</h3>
                     <div className="grid grid-cols-2 gap-1.5">
-                      {[
+                      {([
                         { id: 'default', label: 'Default Stationery' },
                         { id: 'hearth', label: '🔥 Fireside Hearth' },
                         { id: 'moonlight', label: '🌙 Midnight Forest' },
                         { id: 'ivory', label: '📜 Antique Ivory' },
                         { id: 'sunset', label: '🌅 Crimson Sunset' },
                         { id: 'slate', label: 'Obsidian Slate 🖤' },
-                      ].map(bgTheme => (
+                      ] as const).map(bgTheme => (
                         <button
                           key={bgTheme.id}
                           onClick={() => {
@@ -2930,7 +2918,7 @@ export default function ZenithWorkspace() {
                       </button>
                     </div>
                     <button
-                      onClick={() => archiveStaleElements(true)}
+                      onClick={() => archiveStaleElements()}
                       className="w-full bg-stone-100 hover:bg-stone-200 border-2 border-black py-1.5 text-[9px] font-black uppercase rounded-none text-center cursor-pointer transition-all active:translate-y-0.5"
                     >
                       Run 30-Day Archival Scan Now
@@ -3011,6 +2999,7 @@ export default function ZenithWorkspace() {
                       Instantly purges all active cards, sketchpads, and guest passes, triggers a celebratory sound synth and confetti, and spawns a pristine pre-loaded layout for immediate testing!
                     </p>
                     <button
+                      data-testid="fresh-start"
                       onClick={() => {
                         requestConfirm(
                           'Trigger Fresh Start Reset',
@@ -3245,7 +3234,8 @@ export default function ZenithWorkspace() {
       )}
 
       {/* 95. Interactive Help Guide Mascot (Zenny the Owl 🦉) (Batch 10) */}
-      <div className="fixed bottom-4 right-4 z-[99999] flex flex-col items-end select-none">
+      {!isControlDeckOpen && (
+      <div data-testid="zenny-mascot" className="fixed bottom-4 right-4 z-[99999] flex flex-col items-end select-none">
         {/* Help Speech Bubble */}
         {isMascotBubbleOpen && (() => {
           const mascotTips = [
@@ -3308,11 +3298,12 @@ export default function ZenithWorkspace() {
           🦉
         </button>
       </div>
+      )}
 
       {/* 99. Interactive System Architecture Blueprint Page Modal (Batch 10) */}
       {showArchitectureModal && (
         <div className="fixed inset-0 z-[100001] flex items-center justify-center p-4 bg-black/80 backdrop-blur-sm animate-in fade-in duration-200 text-black select-text">
-          <div className="bg-[#0f172a] text-slate-100 border-4 border-black p-6 w-full max-w-3xl neo-shadow relative rounded-none flex flex-col max-h-[90vh]">
+          <div data-testid="architecture-blueprint" className="bg-[#0f172a] text-slate-100 border-4 border-black p-6 w-full max-w-3xl neo-shadow relative rounded-none flex flex-col max-h-[90vh]">
             {/* Close button */}
             <button
               onClick={() => setShowArchitectureModal(false)}
@@ -3445,7 +3436,7 @@ export default function ZenithWorkspace() {
       {/* --- PREMIUM NEO-BRUTALIST CUSTOM CONFIRM MODAL --- */}
       {confirmConfig.isOpen && (
         <div className="fixed inset-0 z-[199999] bg-black/70 backdrop-blur-sm flex items-center justify-center p-4 animate-in fade-in duration-200">
-          <div className="bg-white border-4 border-black p-5 max-w-sm w-full neo-shadow rounded-none text-black">
+          <div data-testid="confirm-dialog" className="bg-white border-4 border-black p-5 max-w-sm w-full neo-shadow rounded-none text-black">
             <h4 className="text-xs font-black uppercase tracking-wider mb-2 flex items-center gap-1.5 text-black">
               ⚠️ {confirmConfig.title}
             </h4>
@@ -3460,6 +3451,7 @@ export default function ZenithWorkspace() {
                 No, Cancel
               </button>
               <button
+                data-testid="confirm-yes"
                 onClick={() => {
                   setConfirmConfig(prev => ({ ...prev, isOpen: false }));
                   confirmConfig.onConfirm();
