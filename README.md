@@ -22,6 +22,10 @@ Import this GitHub repo on Vercel (framework Next.js, build `next build`, no env
 
 ## Screenshots
 
+<p align="center">
+  <img src="docs/social-preview.png" alt="Zenith Canvas" width="800">
+</p>
+
 | Workspace | Control Deck |
 |-----------|----------------|
 | ![Workspace](docs/screenshots/01-workspace.png) | ![Control Deck](docs/screenshots/02-control-deck.png) |
