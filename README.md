@@ -2,6 +2,7 @@
 
 Neo-brutalist family canvas workspace — drag-and-drop bento cards, client-side persistence, Web Audio chimes, and a 4-digit PIN vault.
 
+[![Live Demo](https://img.shields.io/badge/Live%20Demo-Vercel-black?logo=vercel)](https://zenith-workspace-ten.vercel.app)
 [![CI](https://github.com/devtechedge/zenith-canvas/actions/workflows/ci.yml/badge.svg)](https://github.com/devtechedge/zenith-canvas/actions/workflows/ci.yml)
 [![Next.js](https://img.shields.io/badge/Next.js-14-black?logo=next.js)](https://nextjs.org/)
 [![TypeScript](https://img.shields.io/badge/TypeScript-5-blue?logo=typescript)](https://www.typescriptlang.org/)
@@ -12,11 +13,13 @@ Neo-brutalist family canvas workspace — drag-and-drop bento cards, client-side
 
 ## Live Demo
 
-Import this GitHub repo on Vercel (framework Next.js, build `next build`, no env vars). Intended production alias: **https://zenith-canvas.vercel.app**
+**https://zenith-workspace-ten.vercel.app**
+
+[![Live Demo](https://img.shields.io/badge/Live%20Demo-Vercel-black?logo=vercel)](https://zenith-workspace-ten.vercel.app)
+
+Do **not** use https://zenith-canvas.vercel.app or https://zenith-workspace.vercel.app — those hostnames are not this project.
 
 > **Status:** Client-side only. Canvases, checklists, sketches, guest passes and the vault PIN live in `localStorage`. There is no account system, no database, and no production backend. Do not store secrets on the board.
->
-> A Live Demo badge is omitted until the Vercel GitHub app is granted on this repo and a production alias is READY. Until then, `npm run dev` is the local path.
 
 ---
 
