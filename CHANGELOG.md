@@ -4,7 +4,14 @@ All notable changes to **Zenith Workspace** will be documented in this file.
 
 ---
 
-## [1.12.0] - 2026-08-21
+## [1.12.1] - 2026-08-25
+### Fixed
+* CI install: regenerate `package-lock.json` for this repo (it had been left over from a different app) and pin `lucide-react` so `npm ci` resolves on npm 10.
+* Restore `test` / `typecheck` / `test:e2e` scripts plus Playwright hooks the workflow already expected.
+
+---
+
+
 ### Added
 * Root `SECURITY.md` threat model (client-side PIN, CSV sanitizer, no backend).
 * Unit tests for CSV formula injection, vault PIN, productivity stars, and guest-pass expiry.
