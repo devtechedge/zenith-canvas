@@ -16,7 +16,7 @@ Import this GitHub repo on Vercel (framework Next.js, build `next build`, no env
 
 > **Status:** Client-side only. Canvases, checklists, sketches, guest passes and the vault PIN live in `localStorage`. There is no account system, no database, and no production backend. Do not store secrets on the board.
 >
-> A Live Demo badge is omitted until the Vercel GitHub app is granted on this repo and a production alias is READY. Until then, `npm run dev` is the recruiter path.
+> A Live Demo badge is omitted until the Vercel GitHub app is granted on this repo and a production alias is READY. Until then, `npm run dev` is the local path.
 
 ---
 
@@ -40,7 +40,7 @@ Import this GitHub repo on Vercel (framework Next.js, build `next build`, no env
 - Web Audio chimes (single cached `AudioContext`) and confetti on milestones
 - CSV / text drop import with formula-injection sanitization (`= + - @` → quoted)
 - Client-side 4-digit PIN vault, guest-pass codes, and JSON backup export/import
-- Recruiter “Fresh Start” reset plus an architecture-blueprint modal
+- Demo “Fresh Start” reset plus an architecture-blueprint modal
 
 ---
 

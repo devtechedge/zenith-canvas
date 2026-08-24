@@ -10,7 +10,7 @@ All notable changes to **Zenith Workspace** will be documented in this file.
 * Unit tests for CSV formula injection, vault PIN, productivity stars, and guest-pass expiry.
 * Playwright Chromium smokes (workspace shell, Control Deck, streak check-in, blueprint, Fresh Start).
 * GitHub Actions CI (unit → typecheck → e2e) on Node 22, plus Dependabot (patch/minor only).
-* MIT `LICENSE`, branded `public/favicon.svg`, and an honest hiring-manager README.
+* MIT `LICENSE`, branded `public/favicon.svg`, and an honest product README.
 
 ### Changed
 * `ignoreBuildErrors` is **false**; `tsc --noEmit` is a first-class script.

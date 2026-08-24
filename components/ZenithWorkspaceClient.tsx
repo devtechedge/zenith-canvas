@@ -3027,7 +3027,7 @@ export default function ZenithWorkspace() {
 
                   {/* 100. One-Click Fresh Start Initialization (Batch 10) */}
                   <div className="space-y-2 pt-3 border-t-2 border-dashed border-red-500/30">
-                    <span className="text-[10px] font-black uppercase text-red-600 block">⚠️ Recruiter One-Click Fresh Start Reset</span>
+                    <span className="text-[10px] font-black uppercase text-red-600 block">⚠️ Demo One-Click Fresh Start Reset</span>
                     <p className="text-[9px] text-stone-500 font-bold leading-normal text-black">
                       Instantly purges all active cards, sketchpads, and guest passes, triggers a celebratory sound synth and confetti, and spawns a pristine pre-loaded layout for immediate testing!
                     </p>
@@ -3062,7 +3062,7 @@ export default function ZenithWorkspace() {
                               {
                                 id: `starter-well-2-${t}`,
                                 type: 'checklist',
-                                title: '📋 Recruiter Wow Factor Goals',
+                                title: '📋 Demo Workspace Goals',
                                 x: 360,
                                 y: 60,
                                 w: 290,
@@ -3345,7 +3345,7 @@ export default function ZenithWorkspace() {
             {/* Header */}
             <div className="mb-4 border-b-2 border-slate-700 pb-3 select-none">
               <span className="text-[9px] font-black uppercase tracking-widest bg-sky-500 text-black px-2 py-0.5 border border-black inline-block">
-                Feature 99: Recruiter Wow Factor
+                Feature 99: Demo Wow Factor
               </span>
               <h3 className="text-base font-black uppercase tracking-tight mt-1 text-sky-400">
                 ⚙️ Interactive System Architecture Blueprint
@@ -3406,7 +3406,7 @@ export default function ZenithWorkspace() {
                 <div className="border border-slate-700 p-3 bg-slate-900/30">
                   <h4 className="font-extrabold text-[11px] text-pink-400 uppercase tracking-wider">🎉 Engagement Delighters</h4>
                   <p className="text-[10px] text-slate-300 leading-normal mt-1">
-                    The streak checking system, productivity star algorithms, and interactive confetti celebration streams keep users motivated and offer recruiters a polished experience.
+                    The streak checking system, productivity star algorithms, and interactive confetti celebration streams keep users motivated and offer visitors a polished experience.
                   </p>
                 </div>
               </div>
@@ -3426,7 +3426,7 @@ export default function ZenithWorkspace() {
             </div>
 
             <div className="text-[10px] text-slate-400 font-bold uppercase text-center mt-4 pt-3 border-t border-slate-800 select-none">
-              ⚡ Proudly built for recruiters with clean design and attention to detail.
+              ⚡ Proudly built with clean design and attention to detail.
             </div>
           </div>
         </div>
