@@ -33,21 +33,16 @@ Do **not** use https://zenith-canvas.vercel.app or https://zenith-workspace.verc
 |-----------|----------------|
 | ![Workspace](docs/screenshots/01-workspace.png) | ![Control Deck](docs/screenshots/02-control-deck.png) |
 
-| Blueprint |
-|-----------|
-| ![Blueprint](docs/screenshots/03-blueprint.png) |
-
 ---
 
 ## Features
 
-- Absolute-positioned bento canvas with drag, resize, stickers, and multi-canvas switching
-- Checklist, note, sketch, countdown, media, and ambient-sound cards
+- Absolute-positioned family canvas with drag, resize, and multi-canvas switching
+- Checklist, note, sketch, countdown, and ambient-sound cards
 - Direct-DOM drag/resize so pointer moves do not re-render the React tree
-- Web Audio chimes (single cached `AudioContext`) and confetti on milestones
+- Web Audio chimes and a client-side 4-digit PIN vault (Control Deck)
 - CSV / text drop import with formula-injection sanitization (`= + - @` → quoted)
-- Client-side 4-digit PIN vault, guest-pass codes, and JSON backup export/import
-- Demo “Fresh Start” reset plus an architecture-blueprint modal
+- Demo “Fresh Start” reset in Control Deck → Automations
 
 ---
 
@@ -76,7 +71,7 @@ Open http://localhost:3000
 ```bash
 npm test            # unit (CSV sanitizer, PIN, stars, guest passes)
 npm run typecheck
-npm run test:e2e    # Playwright Chromium smokes
+npm run test:e2e    # Playwright Chromium smokes (shell, Control Deck, check-off, Fresh Start)
 ```
 
 ---
