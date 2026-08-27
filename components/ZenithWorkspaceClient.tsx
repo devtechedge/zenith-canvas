@@ -37,6 +37,7 @@ import {
   Archive,
   RefreshCw
 } from 'lucide-react';
+import { estimateBoardWidth, nextEqualSlot, packEqualCards } from '@/lib/layout';
 
 // --- TYPES & INTERFACES ---
 interface CanvasElement {
@@ -92,6 +93,108 @@ function getSafeTimestamp(): number {
 
 function getSafeRandom(): number {
   return typeof window !== 'undefined' ? Math.random() : 0.5;
+}
+
+function buildHomeCards(now: number, mode: 'seed' | 'fresh' = 'seed'): CanvasElement[] {
+  const p = mode === 'seed' ? 'elem' : `starter-${now}`;
+  const tryMeId = mode === 'seed' ? 'todo-try-me' : `${p}-try-me`;
+  const welcomeTitle = mode === 'seed' ? 'Welcome' : 'Welcome to Zenith Canvas!';
+  return [
+    {
+      id: `${p}-welcome`,
+      type: 'text',
+      title: welcomeTitle,
+      x: 0,
+      y: 0,
+      w: 260,
+      h: 240,
+      color: '#FEF08A',
+      content: 'Family board. Check a box, or add a card from the bar.',
+      createdAt: now,
+      livePreviewActive: false
+    },
+    {
+      id: `${p}-try-this`,
+      type: 'checklist',
+      title: 'Try this',
+      x: 0,
+      y: 0,
+      w: 260,
+      h: 240,
+      color: '#A7F3D0',
+      checklistItems: [
+        { id: tryMeId, text: 'Check this off', done: false },
+        { id: `${p}-todo-2`, text: 'Drag a card', done: false },
+        { id: `${p}-todo-3`, text: 'Open Control Deck', done: false }
+      ],
+      createdAt: now
+    },
+    {
+      id: `${p}-note`,
+      type: 'text',
+      title: 'Note',
+      x: 0,
+      y: 0,
+      w: 260,
+      h: 240,
+      color: '#E0F2FE',
+      content: 'Write a note.',
+      createdAt: now,
+      livePreviewActive: false
+    },
+    {
+      id: `${p}-checklist`,
+      type: 'checklist',
+      title: 'Checklist',
+      x: 0,
+      y: 0,
+      w: 260,
+      h: 240,
+      color: '#FFD8A8',
+      checklistItems: [
+        { id: `${p}-list-1`, text: 'First item', done: false },
+        { id: `${p}-list-2`, text: 'Second item', done: false }
+      ],
+      createdAt: now
+    },
+    {
+      id: `${p}-sketch`,
+      type: 'sketch',
+      title: 'Sketch',
+      x: 0,
+      y: 0,
+      w: 260,
+      h: 240,
+      color: '#F5D0FE',
+      sketchData: '',
+      createdAt: now
+    },
+    {
+      id: `${p}-timer`,
+      type: 'countdown',
+      title: 'Timer',
+      x: 0,
+      y: 0,
+      w: 260,
+      h: 240,
+      color: '#FDE047',
+      countdownTarget: new Date(now + 7 * 24 * 60 * 60 * 1000).toISOString().split('T')[0],
+      createdAt: now
+    },
+    {
+      id: `${p}-sound`,
+      type: 'sound',
+      title: 'Sound',
+      x: 0,
+      y: 0,
+      w: 260,
+      h: 240,
+      color: '#FBCFE8',
+      soundType: 'rain',
+      soundVolume: 0.5,
+      createdAt: now
+    }
+  ];
 }
 
 export default function ZenithWorkspace() {
@@ -266,14 +369,14 @@ export default function ZenithWorkspace() {
     // Set formatted date for safe client hydration
     setFormattedDate(new Date().toLocaleDateString('en-US', { weekday: 'long', month: 'long', day: 'numeric' }));
 
-    // v2 first-paint: quiet sidebar, two starter cards. Returning demo
-    // visitors still have the old grocery board in localStorage — reset it.
-    if (localStorage.getItem('zenith-ui-version') !== '2') {
+    // v3 first-paint: seven equal Home cards. Returning demo visitors
+    // still have the two-card v2 board in localStorage — reset it.
+    if (localStorage.getItem('zenith-ui-version') !== '3') {
       localStorage.removeItem('zenith-canvases');
       localStorage.removeItem('zenith-elements');
       localStorage.removeItem('zenith-active-canvas-id');
       localStorage.removeItem('zenith-family-activities');
-      localStorage.setItem('zenith-ui-version', '2');
+      localStorage.setItem('zenith-ui-version', '3');
     }
 
     // Load Canvases
@@ -308,38 +411,10 @@ export default function ZenithWorkspace() {
         setElements([]);
       }
     } else {
-      // Default elements
-      const defaultElements: CanvasElement[] = [
-        {
-          id: 'elem-1',
-          type: 'text',
-          title: 'Welcome',
-          x: 24,
-          y: 16,
-          w: 320,
-          h: 200,
-          color: '#FEF08A',
-          content: 'This is a family board.\n\nCheck off the list below.\nDrag cards around.\nAdd a note from the bar above.\n\nThemes, PIN, and sound live in Control Deck.',
-          createdAt: Date.now(),
-          livePreviewActive: false
-        },
-        {
-          id: 'elem-2',
-          type: 'checklist',
-          title: 'Try this',
-          x: 24,
-          y: 240,
-          w: 320,
-          h: 220,
-          color: '#A7F3D0',
-          checklistItems: [
-            { id: 'todo-try-me', text: 'Check this off', done: false },
-            { id: 'todo-2', text: 'Drag this card', done: false },
-            { id: 'todo-3', text: 'Open Control Deck', done: false }
-          ],
-          createdAt: Date.now()
-        }
-      ];
+      const defaultElements = packEqualCards(
+        buildHomeCards(Date.now(), 'seed'),
+        estimateBoardWidth(window.innerWidth)
+      );
       setElements(defaultElements);
       localStorage.setItem('zenith-elements', JSON.stringify(defaultElements));
     }
@@ -750,20 +825,17 @@ export default function ZenithWorkspace() {
     const colors = ['#FEF08A', '#A7F3D0', '#E0F2FE', '#FBCFE8', '#FDE047', '#FFD8A8'];
     const randomColor = colors[Math.floor(getSafeRandom() * colors.length)];
     
-    // Position randomly on current board
-    const boardWidth = boardRef.current?.clientWidth || 800;
-    const boardHeight = boardRef.current?.clientHeight || 600;
-    const rx = Math.max(20, Math.floor(getSafeRandom() * (boardWidth - 320)));
-    const ry = Math.max(20, Math.floor(getSafeRandom() * (boardHeight - 240)));
+    const boardWidth = boardRef.current?.clientWidth || estimateBoardWidth(window.innerWidth);
+    const slot = nextEqualSlot(elements.length, boardWidth);
 
     const newElement: CanvasElement = {
       id: `elem-${Date.now()}-${getSafeRandom()}`,
       type,
       title: `📝 New ${type.toUpperCase()}`,
-      x: rx,
-      y: ry,
-      w: type === 'sketch' ? 320 : 280,
-      h: type === 'sketch' ? 300 : type === 'checklist' ? 240 : 200,
+      x: slot.x,
+      y: slot.y,
+      w: slot.w,
+      h: slot.h,
       color: randomColor,
       content: type === 'text' ? 'Write thoughts, suggestions, or notes here...' : '',
       checklistItems: type === 'checklist' ? [{ id: `todo-${Date.now()}`, text: 'First list item', done: false }] : [],
@@ -1932,31 +2004,31 @@ export default function ZenithWorkspace() {
           <div className="flex items-center flex-wrap gap-2">
             <button
               onClick={() => handleAddElement('text')}
-              className="bg-white text-black hover:bg-[#FFB703] border-2 border-black px-2.5 py-1.5 text-[11px] font-black uppercase tracking-wider rounded-none neo-shadow-sm cursor-pointer transition-all active:translate-y-0.5"
+              className="bg-white text-black hover:bg-[#FFB703] border-2 border-black w-[6.75rem] h-9 inline-flex items-center justify-center text-[11px] font-black uppercase tracking-wider rounded-none neo-shadow-sm cursor-pointer transition-all active:translate-y-0.5"
             >
               + Note
             </button>
             <button
               onClick={() => handleAddElement('checklist')}
-              className="bg-white text-black hover:bg-[#FFB703] border-2 border-black px-2.5 py-1.5 text-[11px] font-black uppercase tracking-wider rounded-none neo-shadow-sm cursor-pointer transition-all active:translate-y-0.5"
+              className="bg-white text-black hover:bg-[#FFB703] border-2 border-black w-[6.75rem] h-9 inline-flex items-center justify-center text-[11px] font-black uppercase tracking-wider rounded-none neo-shadow-sm cursor-pointer transition-all active:translate-y-0.5"
             >
               + Checklist
             </button>
             <button
               onClick={() => handleAddElement('sketch')}
-              className="bg-white text-black hover:bg-[#FFB703] border-2 border-black px-2.5 py-1.5 text-[11px] font-black uppercase tracking-wider rounded-none neo-shadow-sm cursor-pointer transition-all active:translate-y-0.5"
+              className="bg-white text-black hover:bg-[#FFB703] border-2 border-black w-[6.75rem] h-9 inline-flex items-center justify-center text-[11px] font-black uppercase tracking-wider rounded-none neo-shadow-sm cursor-pointer transition-all active:translate-y-0.5"
             >
               + Sketch
             </button>
             <button
               onClick={() => handleAddElement('countdown')}
-              className="bg-white text-black hover:bg-[#FFB703] border-2 border-black px-2.5 py-1.5 text-[11px] font-black uppercase tracking-wider rounded-none neo-shadow-sm cursor-pointer transition-all active:translate-y-0.5"
+              className="bg-white text-black hover:bg-[#FFB703] border-2 border-black w-[6.75rem] h-9 inline-flex items-center justify-center text-[11px] font-black uppercase tracking-wider rounded-none neo-shadow-sm cursor-pointer transition-all active:translate-y-0.5"
             >
               + Timer
             </button>
             <button
               onClick={() => handleAddElement('sound')}
-              className="bg-white text-black hover:bg-[#FFB703] border-2 border-black px-2.5 py-1.5 text-[11px] font-black uppercase tracking-wider rounded-none neo-shadow-sm cursor-pointer transition-all active:translate-y-0.5"
+              className="bg-white text-black hover:bg-[#FFB703] border-2 border-black w-[6.75rem] h-9 inline-flex items-center justify-center text-[11px] font-black uppercase tracking-wider rounded-none neo-shadow-sm cursor-pointer transition-all active:translate-y-0.5"
             >
               + Sound
             </button>
@@ -2002,6 +2074,7 @@ export default function ZenithWorkspace() {
             return (
               <div
                 key={element.id}
+                data-testid="canvas-card"
                 style={{
                   position: 'absolute',
                   left: element.x,
@@ -2913,37 +2986,10 @@ export default function ZenithWorkspace() {
                             setCanvasBackgroundTheme('default');
                             
                             const t = Date.now();
-                            const defaultStarterElements: CanvasElement[] = [
-                              {
-                                id: `starter-well-1-${t}`,
-                                type: 'text',
-                                title: 'Welcome to Zenith Canvas!',
-                                x: 24,
-                                y: 16,
-                                w: 320,
-                                h: 200,
-                                color: '#FEF08A',
-                                content: 'This is a family board.\n\nCheck off the list below.\nDrag cards around.\nAdd a note from the bar above.',
-                                createdAt: t,
-                                livePreviewActive: false
-                              },
-                              {
-                                id: `starter-well-2-${t}`,
-                                type: 'checklist',
-                                title: 'Try this',
-                                x: 24,
-                                y: 240,
-                                w: 320,
-                                h: 220,
-                                color: '#A7F3D0',
-                                checklistItems: [
-                                  { id: `starter-check-1-${t}`, text: 'Check this off', done: false },
-                                  { id: `starter-check-2-${t}`, text: 'Drag this card', done: false },
-                                  { id: `starter-check-3-${t}`, text: 'Open Control Deck', done: false }
-                                ],
-                                createdAt: t
-                              }
-                            ];
+                            const defaultStarterElements = packEqualCards(
+                              buildHomeCards(t, 'fresh'),
+                              estimateBoardWidth(window.innerWidth)
+                            );
                             setElements(defaultStarterElements);
                             playMilestoneChime();
                             triggerConfettiCelebrate();

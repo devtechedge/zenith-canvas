@@ -26,6 +26,20 @@ test("checking off a task is the first action", async ({ page }) => {
   await expect(box).toBeChecked();
 });
 
+test("home cards load at equal size", async ({ page }) => {
+  await page.goto("/");
+  const cards = page.getByTestId("canvas-card");
+  await expect(cards).toHaveCount(7);
+  const boxes = await cards.all();
+  const first = await boxes[0].boundingBox();
+  expect(first).toBeTruthy();
+  for (const card of boxes) {
+    const box = await card.boundingBox();
+    expect(Math.abs((box?.width ?? 0) - first!.width)).toBeLessThan(2);
+    expect(Math.abs((box?.height ?? 0) - first!.height)).toBeLessThan(2);
+  }
+});
+
 test("fresh start confirm restores a starter board", async ({ page }) => {
   await page.goto("/");
   await page.getByTestId("control-deck-open").click();
