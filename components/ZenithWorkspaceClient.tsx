@@ -35,7 +35,8 @@ import {
   Mail,
   Calendar,
   Archive,
-  RefreshCw
+  RefreshCw,
+  Palette
 } from 'lucide-react';
 import { estimateBoardWidth, nextEqualSlot, packEqualCards } from '@/lib/layout';
 
@@ -195,6 +196,73 @@ function buildHomeCards(now: number, mode: 'seed' | 'fresh' = 'seed'): CanvasEle
       createdAt: now
     }
   ];
+}
+
+function DeckSection({ title, hint, children }: { title: string; hint?: string; children: React.ReactNode }) {
+  return (
+    <section className="deck-section space-y-3">
+      <header className="space-y-0.5">
+        <h3 className="text-[13px] font-black tracking-tight text-black">{title}</h3>
+        {hint ? <p className="text-[11px] text-stone-500 leading-snug">{hint}</p> : null}
+      </header>
+      {children}
+    </section>
+  );
+}
+
+function DeckToggleRow({
+  label,
+  hint,
+  on,
+  onClick,
+}: {
+  label: string;
+  hint?: string;
+  on: boolean;
+  onClick: () => void;
+}) {
+  return (
+    <button
+      type="button"
+      onClick={onClick}
+      className="w-full min-h-11 flex items-center justify-between gap-3 border-2 border-black bg-white px-3 py-2 text-left cursor-pointer hover:bg-stone-50"
+    >
+      <span className="min-w-0">
+        <span className="block text-[12px] font-bold text-black">{label}</span>
+        {hint ? <span className="block text-[11px] text-stone-500 mt-0.5 leading-snug">{hint}</span> : null}
+      </span>
+      <span className="deck-knob" data-on={on ? 'true' : 'false'} aria-hidden>
+        <span className="deck-knob-dot" />
+      </span>
+    </button>
+  );
+}
+
+function DeckSegment<T extends string | number>({
+  options,
+  value,
+  onChange,
+}: {
+  options: { id: T; label: string }[];
+  value: T;
+  onChange: (id: T) => void;
+}) {
+  return (
+    <div className="grid border-2 border-black" style={{ gridTemplateColumns: `repeat(${options.length}, minmax(0, 1fr))` }}>
+      {options.map((opt, i) => (
+        <button
+          key={String(opt.id)}
+          type="button"
+          onClick={() => onChange(opt.id)}
+          className={`min-h-10 px-1 text-[11px] font-bold cursor-pointer ${
+            i > 0 ? 'border-l-2 border-black' : ''
+          } ${value === opt.id ? 'bg-black text-[#FFB703]' : 'bg-white hover:bg-stone-50 text-black'}`}
+        >
+          {opt.label}
+        </button>
+      ))}
+    </div>
+  );
 }
 
 export default function ZenithWorkspace() {
@@ -2407,80 +2475,99 @@ export default function ZenithWorkspace() {
 
       {/* --- RIGHT OPS CONTROL DECK DRAWER --- */}
       {isControlDeckOpen && (
-        <div
+        <>
+        <button
+          type="button"
+          aria-label="Close Control Deck"
+          onClick={() => setIsControlDeckOpen(false)}
+          className="fixed inset-0 z-40 bg-black/35 cursor-pointer"
+        />
+        <aside
           data-testid="control-deck"
-          className="fixed top-0 right-0 h-full w-full max-w-sm bg-white border-l-4 border-black p-5 flex flex-col z-50 neo-shadow animate-in slide-in-from-right duration-300"
+          className="fixed top-0 right-0 h-full w-full max-w-md bg-[#F7F4EE] border-l-4 border-black flex flex-col z-50 neo-shadow-lg"
         >
-            {/* Control Panel Header Row */}
-            <div className="flex items-center justify-between pb-3 border-b-2 border-black mb-4">
-              <div className="flex items-center space-x-1.5 text-black">
-                <Sliders className="w-5 h-5 text-[#FFB703]" />
-                <h2 className="text-xs font-black uppercase tracking-wider">Zenith Control Deck</h2>
+            <div className="bg-[#FFB703] border-b-4 border-black px-5 py-4 flex items-start justify-between gap-3 shrink-0">
+              <div className="min-w-0">
+                <p className="text-[10px] font-bold uppercase tracking-[0.18em] text-black/55">Workspace</p>
+                <h2 className="text-[17px] font-black tracking-tight text-black leading-tight mt-0.5">Zenith Control Deck</h2>
+                <p className="text-[12px] text-black/70 mt-1 leading-snug">Look, lock, share, and reset — without leaving the board.</p>
               </div>
               <button
                 onClick={() => setIsControlDeckOpen(false)}
-                className="p-1 hover:bg-red-500 hover:text-white border-2 border-black bg-stone-50 rounded-none cursor-pointer"
+                className="w-11 h-11 shrink-0 hover:bg-black hover:text-[#FFB703] border-2 border-black bg-white cursor-pointer flex items-center justify-center"
+                aria-label="Close"
               >
                 <X className="w-4 h-4" />
               </button>
             </div>
 
-            {/* Sub-navigation categories */}
-            <div className="flex border-b-2 border-black mb-4 gap-1 overflow-x-auto">
-              {(['appearance', 'safety', 'sharing', 'audio', 'automations'] as const).map(tab => (
+            <div className="grid grid-cols-5 border-b-4 border-black shrink-0">
+              {([
+                { id: 'appearance', label: 'Look', Icon: Palette },
+                { id: 'safety', label: 'Lock', Icon: Shield },
+                { id: 'sharing', label: 'Share', Icon: Share2 },
+                { id: 'audio', label: 'Data', Icon: Archive },
+                { id: 'automations', label: 'Auto', Icon: Sparkles },
+              ] as const).map(tab => (
                 <button
-                  key={tab}
-                  onClick={() => setActiveTab(tab)}
-                  data-testid={`control-tab-${tab}`}
-                  className={`flex-1 text-[9px] font-black uppercase p-1.5 border-t-2 border-x-2 border-transparent text-center transition-all cursor-pointer ${
-                    activeTab === tab
-                      ? 'bg-black text-[#FFB703] border-black font-black translate-y-0.5'
-                      : 'bg-stone-50 hover:bg-stone-100 text-stone-600'
+                  key={tab.id}
+                  onClick={() => setActiveTab(tab.id)}
+                  data-testid={`control-tab-${tab.id}`}
+                  className={`min-h-12 px-1 py-2 flex flex-col items-center justify-center gap-0.5 text-[10px] font-bold cursor-pointer border-r-2 border-black last:border-r-0 ${
+                    activeTab === tab.id
+                      ? 'bg-black text-[#FFB703]'
+                      : 'bg-[#F7F4EE] text-stone-600 hover:bg-white'
                   }`}
                 >
-                  {tab}
+                  <tab.Icon className="w-4 h-4" />
+                  <span>{tab.label}</span>
                 </button>
               ))}
             </div>
 
-            {/* Dynamic tabs container */}
-            <div className="flex-1 overflow-y-auto space-y-4">
+            <div className="flex-1 overflow-y-auto p-4 space-y-3">
               {/* TAB 1: APPEARANCE */}
               {activeTab === 'appearance' && (
-                <div className="space-y-4">
-                  <div>
-                    <h3 className="text-[10px] font-black uppercase text-stone-400 mb-1">Canvas Theme Selector</h3>
+                <div className="space-y-3">
+                  <DeckSection title="Paper" hint="The board’s stationery.">
                     <div className="grid grid-cols-2 gap-1.5">
-                      {(['ivory', 'blueprint', 'cozy', 'terminal', 'cyber'] as const).map(theme => (
+                      {([
+                        { id: 'ivory', label: 'Ivory', swatch: '#FCFBF7' },
+                        { id: 'blueprint', label: 'Blueprint', swatch: '#0c4a6e' },
+                        { id: 'cozy', label: 'Cozy', swatch: '#FAF6F0' },
+                        { id: 'terminal', label: 'Terminal', swatch: '#0A0F0D' },
+                        { id: 'cyber', label: 'Cyber', swatch: '#181124' },
+                      ] as const).map(theme => (
                         <button
-                          key={theme}
+                          key={theme.id}
                           onClick={() => {
                             setCanvases(prev =>
-                              prev.map(c => (c.id === activeCanvasId ? { ...c, stationery: theme } : c))
+                              prev.map(c => (c.id === activeCanvasId ? { ...c, stationery: theme.id } : c))
                             );
-                            addActivityLog('System', `🎨 Swapped workspace stationery background to: ${theme}`);
+                            addActivityLog('System', `🎨 Swapped workspace stationery background to: ${theme.id}`);
                           }}
-                          className={`p-2 border-2 border-black rounded-none text-left font-bold capitalize cursor-pointer text-[10px] ${
-                            activeStationery === theme ? 'bg-[#FFB703]' : 'bg-stone-50 hover:bg-stone-100'
+                          className={`min-h-10 px-2.5 py-2 border-2 border-black text-[12px] font-bold text-left cursor-pointer ${
+                            activeStationery === theme.id ? 'bg-[#FFB703]' : 'bg-white hover:bg-stone-50'
                           }`}
                         >
-                          {theme} Stationery
+                          <span className="flex items-center gap-2">
+                            <span className="w-4 h-4 border-2 border-black shrink-0" style={{ background: theme.swatch }} />
+                            {theme.label}
+                          </span>
                         </button>
                       ))}
                     </div>
-                  </div>
+                  </DeckSection>
 
-                  {/* 96. Cozy Background Theme Selector (Batch 10) */}
-                  <div>
-                    <h3 className="text-[10px] font-black uppercase text-stone-400 mb-1">Cozy Ambient Background Mood</h3>
+                  <DeckSection title="Mood" hint="A wash over the stationery.">
                     <div className="grid grid-cols-2 gap-1.5">
                       {[
-                        { id: 'default', label: 'Default Stationery' },
-                        { id: 'hearth', label: '🔥 Fireside Hearth' },
-                        { id: 'moonlight', label: '🌙 Midnight Forest' },
-                        { id: 'ivory', label: '📜 Antique Ivory' },
-                        { id: 'sunset', label: '🌅 Crimson Sunset' },
-                        { id: 'slate', label: 'Obsidian Slate 🖤' },
+                        { id: 'default', label: 'None', swatch: '#F7F4EE' },
+                        { id: 'hearth', label: 'Hearth', swatch: '#78350F' },
+                        { id: 'moonlight', label: 'Moonlight', swatch: '#022c22' },
+                        { id: 'ivory', label: 'Antique', swatch: '#FDFBF7' },
+                        { id: 'sunset', label: 'Sunset', swatch: '#4c0519' },
+                        { id: 'slate', label: 'Slate', swatch: '#292524' },
                       ].map(bgTheme => (
                         <button
                           key={bgTheme.id}
@@ -2490,223 +2577,164 @@ export default function ZenithWorkspace() {
                             triggerConfettiCelebrate();
                             addActivityLog('System', `🎭 Changed ambient background mood to: ${bgTheme.label}`);
                           }}
-                          className={`p-2 border-2 border-black rounded-none text-left font-bold cursor-pointer text-[10px] text-black ${
-                            canvasBackgroundTheme === bgTheme.id ? 'bg-[#FFB703]' : 'bg-stone-50 hover:bg-stone-100'
+                          className={`min-h-10 px-2.5 py-2 border-2 border-black text-[12px] font-bold text-left cursor-pointer ${
+                            canvasBackgroundTheme === bgTheme.id ? 'bg-[#FFB703]' : 'bg-white hover:bg-stone-50'
                           }`}
                         >
-                          {bgTheme.label}
+                          <span className="flex items-center gap-2">
+                            <span className="w-4 h-4 border-2 border-black shrink-0" style={{ background: bgTheme.swatch }} />
+                            {bgTheme.label}
+                          </span>
                         </button>
                       ))}
                     </div>
-                  </div>
+                  </DeckSection>
 
-                  <div>
-                    <h3 className="text-[10px] font-black uppercase text-stone-400 mb-1">Border Weight</h3>
-                    <div className="grid grid-cols-2 gap-1.5">
-                      {[2, 4].map(w => (
-                        <button
-                          key={w}
-                          onClick={() => setBorderWeight(w)}
-                          className={`p-2 border-2 border-black rounded-none text-[10px] font-bold uppercase text-center cursor-pointer ${
-                            borderWeight === w ? 'bg-black text-white' : 'bg-stone-50 hover:bg-stone-100'
-                          }`}
-                        >
-                          {w}px Stroke
-                        </button>
-                      ))}
-                    </div>
-                  </div>
+                  <DeckSection title="Stroke">
+                    <DeckSegment
+                      options={[{ id: 2, label: '2px' }, { id: 4, label: '4px' }]}
+                      value={borderWeight}
+                      onChange={setBorderWeight}
+                    />
+                  </DeckSection>
 
-                  <div>
-                    <h3 className="text-[10px] font-black uppercase text-stone-400 mb-1">Interactive Elements Text Size</h3>
-                    <div className="grid grid-cols-3 gap-1.5">
-                      {(['sm', 'md', 'lg'] as const).map(sz => (
-                        <button
-                          key={sz}
-                          onClick={() => setTextSize(sz)}
-                          className={`p-2 border-2 border-black rounded-none text-[10px] font-bold uppercase text-center cursor-pointer ${
-                            textSize === sz ? 'bg-black text-white' : 'bg-stone-50'
-                          }`}
-                        >
-                          {sz} Text
-                        </button>
-                      ))}
-                    </div>
-                  </div>
+                  <DeckSection title="Type">
+                    <DeckSegment
+                      options={[
+                        { id: 'sm', label: 'Small' },
+                        { id: 'md', label: 'Medium' },
+                        { id: 'lg', label: 'Large' },
+                      ]}
+                      value={textSize}
+                      onChange={setTextSize}
+                    />
+                  </DeckSection>
 
-                  <div>
-                    <h3 className="text-[10px] font-black uppercase text-stone-400 mb-1">Neo-Brutalist Shadow Depth</h3>
-                    <div className="grid grid-cols-2 gap-1.5">
-                      {[
-                        { id: 'none', label: 'Flat Zero' },
-                        { id: 'neo-shadow-sm', label: 'Cozy (2px)' },
-                        { id: 'neo-shadow', label: 'Neo Bold (4px)' },
-                        { id: 'neo-shadow-lg', label: 'Cyber Giant (8px)' }
-                      ].map(sh => (
-                        <button
-                          key={sh.id}
-                          onClick={() => setShadowDepth(sh.id)}
-                          className={`p-2 border-2 border-black rounded-none text-[10px] font-bold uppercase text-center cursor-pointer ${
-                            shadowDepth === sh.id ? 'bg-black text-[#FFB703] font-black' : 'bg-stone-50 hover:bg-stone-100'
-                          }`}
-                        >
-                          {sh.label}
-                        </button>
-                      ))}
-                    </div>
-                  </div>
+                  <DeckSection title="Shadow">
+                    <DeckSegment
+                      options={[
+                        { id: 'none', label: 'Flat' },
+                        { id: 'neo-shadow-sm', label: 'Soft' },
+                        { id: 'neo-shadow', label: 'Bold' },
+                        { id: 'neo-shadow-lg', label: 'Giant' },
+                      ]}
+                      value={shadowDepth}
+                      onChange={setShadowDepth}
+                    />
+                  </DeckSection>
                 </div>
               )}
 
               {/* TAB 2: SAFETY LOCKS */}
               {activeTab === 'safety' && (
-                <div className="space-y-4">
-                  {/* Read Only Safeguard Toggle */}
-                  <div className="space-y-1.5">
-                    <span className="text-[10px] font-black uppercase text-stone-400 block">Workspace Edit Safeguard</span>
-                    <div className="grid grid-cols-2 gap-2">
-                      <button
-                        onClick={() => {
-                          setIsReadOnlyMode(true);
-                          addActivityLog('System', '👓 Read-Only safeguarding toggle turned ON');
-                        }}
-                        className={`border-2 border-black p-2 text-left cursor-pointer transition-all ${
-                          isReadOnlyMode ? 'bg-[#FFB703] text-black font-black' : 'bg-stone-50 hover:bg-stone-100'
-                        }`}
-                      >
-                        <div className="text-[10px] font-black">👓 READ-ONLY</div>
-                        <div className="text-[8px] opacity-75">Blocks edits</div>
-                      </button>
-                      <button
-                        onClick={() => {
-                          setIsReadOnlyMode(false);
-                          addActivityLog('System', '✍️ Full-Edit writing canvas turned ON');
-                        }}
-                        className={`border-2 border-black p-2 text-left cursor-pointer transition-all ${
-                          !isReadOnlyMode ? 'bg-black text-[#FFB703] font-black' : 'bg-stone-50 hover:bg-stone-100'
-                        }`}
-                      >
-                        <div className="text-[10px] font-black">✍️ FULL EDIT</div>
-                        <div className="text-[8px] opacity-75">Allows edits</div>
-                      </button>
-                    </div>
-                  </div>
+                <div className="space-y-3">
+                  <DeckSection title="Editing" hint="Lock the board so nobody nudges a card.">
+                    <DeckSegment
+                      options={[
+                        { id: 'edit', label: 'Can edit' },
+                        { id: 'readonly', label: 'Read-only' },
+                      ]}
+                      value={isReadOnlyMode ? 'readonly' : 'edit'}
+                      onChange={(next) => {
+                        const readOnly = next === 'readonly';
+                        setIsReadOnlyMode(readOnly);
+                        addActivityLog('System', readOnly ? '👓 Read-Only safeguarding toggle turned ON' : '✍️ Full-Edit writing canvas turned ON');
+                      }}
+                    />
+                  </DeckSection>
 
-                  {/* Private Document Vault with PIN setup */}
-                  <div className="space-y-2 pt-3 border-t border-gray-200">
-                    <span className="text-[10px] font-black uppercase text-stone-400 block">🔒 Private Document PIN Vault</span>
-                    
+                  <DeckSection title="PIN lock" hint="A 4-digit gate on this browser. Not a real vault.">
                     {!vaultPIN ? (
-                      <form onSubmit={handleSetPIN} className="space-y-2 bg-amber-50/50 p-3 border-2 border-dashed border-amber-300">
-                        <p className="text-[9px] text-amber-950 font-bold leading-normal">
-                          Lock this entire board behind a secret 4-digit PIN lock. When anyone opens it, the lock gate dialpad overlay will activate.
-                        </p>
+                      <form onSubmit={handleSetPIN} className="space-y-2">
                         <div className="flex gap-2">
                           <input
                             type="password"
+                            inputMode="numeric"
                             maxLength={4}
-                            placeholder="4-digit PIN"
+                            placeholder="••••"
                             value={pinSetupVal}
                             onChange={(e) => setPinSetupVal(e.target.value.replace(/\D/g, ''))}
-                            className="flex-1 text-xs border-2 border-black p-1 rounded-none font-mono focus:outline-none"
+                            className="flex-1 min-h-11 text-sm border-2 border-black px-3 font-mono tracking-[0.4em] focus:outline-none bg-white"
                           />
                           <button
                             type="submit"
                             disabled={pinSetupVal.length !== 4}
-                            className="bg-black text-[#FFB703] hover:bg-stone-800 disabled:opacity-50 text-[10px] font-black px-3 py-1 border-2 border-black rounded-none cursor-pointer"
+                            className="min-h-11 bg-black text-[#FFB703] hover:bg-stone-800 disabled:opacity-40 text-[12px] font-black px-4 border-2 border-black cursor-pointer"
                           >
-                            Set PIN
+                            Set
                           </button>
                         </div>
                       </form>
                     ) : (
-                      <div className="p-3 bg-red-50 border-2 border-red-500 flex items-center justify-between">
-                        <div className="flex items-center space-x-1.5">
-                          <Key className="w-4 h-4 text-red-600 animate-pulse" />
-                          <span className="text-[10px] font-black text-red-950 uppercase">PIN Shield Engaged</span>
-                        </div>
+                      <div className="min-h-11 border-2 border-black bg-white px-3 py-2 flex items-center justify-between">
+                        <span className="text-[12px] font-bold flex items-center gap-2">
+                          <Key className="w-4 h-4" />
+                          PIN is on
+                        </span>
                         <button
                           onClick={handleRemovePIN}
-                          className="bg-red-600 hover:bg-red-500 text-white text-[8px] font-black uppercase px-2 py-1 border border-black rounded-none cursor-pointer"
+                          className="text-[12px] font-bold underline cursor-pointer"
                         >
                           Remove
                         </button>
                       </div>
                     )}
-                  </div>
+                  </DeckSection>
 
-                  {/* Copy intercept protection button */}
-                  <div className="space-y-1.5 pt-3 border-t border-gray-200">
-                    <span className="text-[10px] font-black uppercase text-stone-400 block">Copy Intercept Shield</span>
-                    <button
+                  <DeckSection title="Clipboard">
+                    <DeckToggleRow
+                      label="Block copy"
+                      hint="Beep and skip the clipboard."
+                      on={isCopyInterceptEnabled}
                       onClick={() => {
                         const next = !isCopyInterceptEnabled;
                         setIsCopyInterceptEnabled(next);
                         addActivityLog('System', `🛡️ Copy Intercept Shield turned ${next ? 'ON' : 'OFF'}`);
                       }}
-                      className={`w-full border-2 border-black p-3 flex items-center justify-between rounded-none text-left cursor-pointer transition-all ${
-                        isCopyInterceptEnabled ? 'bg-amber-100 text-black font-black' : 'bg-stone-50 hover:bg-stone-100'
-                      }`}
-                    >
-                      <div className="flex flex-col">
-                        <span className="text-[10px] font-bold uppercase flex items-center gap-1 text-[#1A1A1A]">
-                          <Shield className="w-3.5 h-3.5 text-amber-600" />
-                          Intercept Clipboard Copy
-                        </span>
-                        <span className="text-[8px] text-stone-500 mt-0.5">Restrict viewer copying and trigger synth beeps</span>
-                      </div>
-                      <span className="text-[9px] font-mono px-1.5 py-0.5 border border-black bg-white">
-                        {isCopyInterceptEnabled ? 'ACTIVE' : 'OFF'}
-                      </span>
-                    </button>
-                  </div>
+                    />
+                  </DeckSection>
                 </div>
               )}
 
               {/* TAB 3: SHARING ACCESS */}
               {activeTab === 'sharing' && (
-                <div className="space-y-4">
-                  {/* Share Link Generator Box */}
-                  <div>
-                    <span className="text-[10px] font-black uppercase text-stone-400 block mb-1">One-Tap Share URL</span>
+                <div className="space-y-3">
+                  <DeckSection title="Share link" hint="Copy a URL. This demo does not host a live share.">
                     <button
                       onClick={() => setShowShareModal(true)}
-                      className="w-full bg-emerald-500 hover:bg-emerald-600 text-white border-2 border-black p-3 font-black uppercase text-[10px] rounded-none cursor-pointer flex items-center justify-center gap-2 neo-shadow-sm"
+                      className="w-full min-h-11 bg-black text-[#FFB703] hover:bg-stone-800 border-2 border-black px-3 font-black text-[12px] cursor-pointer flex items-center justify-center gap-2"
                     >
                       <Share2 className="w-4 h-4" />
-                      <span>Generate Public Link</span>
+                      Generate link
                     </button>
-                  </div>
+                  </DeckSection>
 
-                  {/* Guest Passes */}
-                  <div className="space-y-2 pt-3 border-t border-gray-200">
-                    <span className="text-[10px] font-black uppercase text-stone-400 block">🎫 Generate Guest Access Passes</span>
-                    <div className="flex gap-2">
+                  <DeckSection title="Guest passes" hint="Local codes only — they live in this browser.">
+                    <div className="grid grid-cols-2 gap-1.5">
                       <button
                         onClick={() => handleGenerateGuestPass(1)}
-                        className="flex-1 bg-stone-50 hover:bg-stone-100 border-2 border-black p-1.5 text-[9px] font-black uppercase rounded-none cursor-pointer"
+                        className="min-h-10 bg-white hover:bg-stone-50 border-2 border-black text-[12px] font-bold cursor-pointer"
                       >
-                        + 1 Day Pass
+                        1 day
                       </button>
                       <button
                         onClick={() => handleGenerateGuestPass(7)}
-                        className="flex-1 bg-stone-50 hover:bg-stone-100 border-2 border-black p-1.5 text-[9px] font-black uppercase rounded-none cursor-pointer"
+                        className="min-h-10 bg-white hover:bg-stone-50 border-2 border-black text-[12px] font-bold cursor-pointer"
                       >
-                        + 7 Day Pass
+                        7 days
                       </button>
                     </div>
-
                     {guestPasses.length > 0 && (
-                      <div className="border-2 border-black max-h-32 overflow-y-auto divide-y divide-black bg-stone-50">
+                      <div className="border-2 border-black max-h-36 overflow-y-auto divide-y-2 divide-black bg-white">
                         {guestPasses.map(pass => (
-                          <div key={pass.id} className="p-2 flex items-center justify-between text-[9px] font-mono bg-white">
-                            <div>
-                              <span className="bg-amber-100 px-1 py-0.5 border border-amber-300 font-bold text-amber-900">{pass.code}</span>
-                              <span className="ml-1 text-gray-500">({pass.label})</span>
+                          <div key={pass.id} className="px-3 py-2 flex items-center justify-between gap-2 text-[12px]">
+                            <div className="min-w-0">
+                              <span className="font-mono font-bold bg-[#FFB703] px-1.5 py-0.5 border border-black">{pass.code}</span>
+                              <span className="ml-2 text-stone-500">{pass.label}</span>
                             </div>
                             <button
                               onClick={() => handleRevokeGuestPass(pass.id, pass.code)}
-                              className="text-red-600 hover:underline font-black uppercase"
+                              className="text-[12px] font-bold underline cursor-pointer shrink-0"
                             >
                               Revoke
                             </button>
@@ -2714,56 +2742,37 @@ export default function ZenithWorkspace() {
                         ))}
                       </div>
                     )}
-                  </div>
+                  </DeckSection>
 
-                  {/* Simulated Cursor Trails Toggle */}
-                  <div className="space-y-1.5 pt-3 border-t border-gray-200">
-                    <span className="text-[10px] font-black uppercase text-stone-400 block">Simulate Family Cooperators</span>
-                    <button
+                  <DeckSection title="Presence">
+                    <DeckToggleRow
+                      label="Cursor trails"
+                      hint="Fake family cursors on the board."
+                      on={isCursorTrailsEnabled}
                       onClick={() => {
                         const next = !isCursorTrailsEnabled;
                         setIsCursorTrailsEnabled(next);
                         addActivityLog('System', `👥 Simulated cooperator cursors trails turned ${next ? 'ON' : 'OFF'}`);
                       }}
-                      className={`w-full border-2 border-black p-3 flex items-center justify-between rounded-none text-left cursor-pointer transition-all ${
-                        isCursorTrailsEnabled ? 'bg-sky-100 text-black font-black' : 'bg-stone-50 hover:bg-stone-100'
-                      }`}
-                    >
-                      <div className="flex flex-col">
-                        <span className="text-[10px] font-bold uppercase flex items-center gap-1 text-[#1A1A1A]">
-                          <Users className="w-3.5 h-3.5 text-sky-600" />
-                          Cursor Trails Simulation
-                        </span>
-                        <span className="text-[8px] text-stone-500 mt-0.5">Visualize cursor paths for Mom, Dad, Lucy & Billy</span>
-                      </div>
-                      <span className="text-[9px] font-mono px-1.5 py-0.5 border border-black bg-white">
-                        {isCursorTrailsEnabled ? 'ON' : 'OFF'}
-                      </span>
-                    </button>
-                  </div>
+                    />
+                  </DeckSection>
                 </div>
               )}
 
-              {/* TAB 4: SYSTEM DATABASE ARCHIVE BACKUPS */}
               {activeTab === 'audio' && (
-                <div className="space-y-4">
-                  {/* Backup / Restore Database Console */}
-                  <div className="space-y-2">
-                    <span className="text-[10px] font-black uppercase text-stone-400 block">🗄️ Full Workspace Database Archive</span>
-                    <p className="text-[9px] text-stone-500 font-bold leading-normal">
-                      Export this workspace&apos;s complete canvases, stickies, sketch drawings, and safety parameters into a local JSON archive file, or upload an archive to restore your layout state instantly.
-                    </p>
-                    <div className="grid grid-cols-2 gap-2 pt-1">
+                <div className="space-y-3">
+                  <DeckSection title="Backup" hint="Download or restore this browser’s JSON snapshot.">
+                    <div className="grid grid-cols-2 gap-1.5">
                       <button
                         onClick={handleExportBackup}
-                        className="bg-emerald-600 hover:bg-emerald-700 text-white text-[9px] font-black uppercase p-2 border-2 border-black rounded-none flex items-center justify-center gap-1 cursor-pointer"
+                        className="min-h-11 bg-black text-[#FFB703] text-[12px] font-black border-2 border-black flex items-center justify-center gap-1.5 cursor-pointer hover:bg-stone-800"
                       >
-                        <Download className="w-3.5 h-3.5" />
-                        <span>Export DB</span>
+                        <Download className="w-4 h-4" />
+                        Export
                       </button>
-                      <label className="bg-sky-600 hover:bg-sky-700 text-white text-[9px] font-black uppercase p-2 border-2 border-black rounded-none flex items-center justify-center gap-1 cursor-pointer text-center">
-                        <Upload className="w-3.5 h-3.5" />
-                        <span>Import DB</span>
+                      <label className="min-h-11 bg-white hover:bg-stone-50 text-black text-[12px] font-black border-2 border-black flex items-center justify-center gap-1.5 cursor-pointer">
+                        <Upload className="w-4 h-4" />
+                        Import
                         <input
                           type="file"
                           accept=".json"
@@ -2772,170 +2781,140 @@ export default function ZenithWorkspace() {
                         />
                       </label>
                     </div>
-                  </div>
+                  </DeckSection>
 
-                  {/* Family ties activity log stream */}
-                  <div className="space-y-2 pt-3 border-t border-gray-200">
-                    <div className="flex items-center justify-between">
-                      <span className="text-[10px] font-black uppercase text-stone-400">👪 Family Activity Log</span>
-                      <button
-                        onClick={() => {
-                          const members = ['Mom', 'Dad', 'Lucy', 'Billy'];
-                          const actions = [
-                            '✏️ Appended checklist items to "Grocery Runs"',
-                            '🎨 Drafted custom smiley drawing sketchpad',
-                            '⏱️ Recalibrated Picnic countdown deadline',
-                            '🧘 Tuned wave ambient audio volume up',
-                            '🔒 Reset secure lock screen barrier'
-                          ];
-                          const m = members[Math.floor(getSafeRandom() * members.length)];
-                          const a = actions[Math.floor(getSafeRandom() * actions.length)];
-                          addActivityLog(m, a);
-                        }}
-                        className="text-[8px] bg-black text-[#FFB703] border-2 border-black px-1.5 py-0.5 uppercase font-bold cursor-pointer"
-                      >
-                        Simulate Action
-                      </button>
-                    </div>
-
-                    <div className="border-2 border-black bg-stone-50 text-[9px] max-h-48 overflow-y-auto divide-y divide-black/10 font-mono p-1">
+                  <DeckSection title="Activity" hint="A local log. Simulate adds a fake family event.">
+                    <button
+                      onClick={() => {
+                        const members = ['Mom', 'Dad', 'Lucy', 'Billy'];
+                        const actions = [
+                          'Appended checklist items to Grocery Runs',
+                          'Drafted a sketch',
+                          'Recalibrated a countdown',
+                          'Tuned ambient audio',
+                          'Reset the lock screen'
+                        ];
+                        const m = members[Math.floor(getSafeRandom() * members.length)];
+                        const a = actions[Math.floor(getSafeRandom() * actions.length)];
+                        addActivityLog(m, a);
+                      }}
+                      className="min-h-10 w-full bg-white hover:bg-stone-50 border-2 border-black text-[12px] font-bold cursor-pointer"
+                    >
+                      Simulate action
+                    </button>
+                    <div className="border-2 border-black bg-white text-[12px] max-h-52 overflow-y-auto divide-y divide-black/10">
                       {activityLogs.length === 0 ? (
-                        <div className="p-4 text-center text-stone-400">No active activity logs found.</div>
+                        <div className="p-4 text-center text-stone-400">Nothing yet.</div>
                       ) : (
                         activityLogs.map(log => (
-                          <div key={log.id} className="p-1 flex items-start space-x-1.5 text-stone-800">
-                            <span className="shrink-0 text-xs">{log.avatar}</span>
+                          <div key={log.id} className="px-3 py-2 flex items-start gap-2">
+                            <span className="shrink-0">{log.avatar}</span>
                             <div className="min-w-0 flex-1">
-                              <div className="flex justify-between text-[7px] text-stone-400 font-bold">
+                              <div className="flex justify-between text-[11px] text-stone-400 font-bold">
                                 <span>{log.member}</span>
                                 <span>{log.time}</span>
                               </div>
-                              <p className="font-semibold text-stone-700 leading-tight mt-0.5">{log.action}</p>
+                              <p className="text-stone-800 leading-snug mt-0.5">{log.action}</p>
                             </div>
                           </div>
                         ))
                       )}
                     </div>
-                  </div>
+                  </DeckSection>
                 </div>
               )}
 
-              {/* TAB 5: AUTOMATIONS & ARCHIVE (Batch 9) */}
               {activeTab === 'automations' && (
-                <div className="space-y-4">
-                  {/* Automated Spawners */}
-                  <div className="space-y-2 border-b border-black/10 pb-3">
-                    <span className="text-[10px] font-black uppercase text-stone-400 block">🗓️ Sunday Layout Spawner</span>
-                    <div className="flex items-center justify-between">
-                      <span className="text-[11px] font-bold text-stone-700">Auto-spawn layouts</span>
-                      <button
-                        onClick={() => {
-                          setWeeklySpawnerEnabled(prev => !prev);
-                          addActivityLog('System', `Weekly layout spawner toggle changed to: ${!weeklySpawnerEnabled ? 'ENABLED' : 'DISABLED'}`);
-                        }}
-                        className={`text-[9px] font-black px-2 py-1 border-2 border-black rounded-none cursor-pointer ${weeklySpawnerEnabled ? 'bg-emerald-400 text-black border-black neo-shadow-sm font-black' : 'bg-stone-100 text-stone-500 border-stone-300'}`}
-                      >
-                        {weeklySpawnerEnabled ? 'ACTIVE ON SUNDAYS' : 'DISABLED'}
-                      </button>
-                    </div>
+                <div className="space-y-3">
+                  <DeckSection title="Weekly spawn" hint="Drops an empty weekly checklist on Sundays, or now.">
+                    <DeckToggleRow
+                      label="Auto-spawn on Sundays"
+                      on={weeklySpawnerEnabled}
+                      onClick={() => {
+                        setWeeklySpawnerEnabled(prev => !prev);
+                        addActivityLog('System', `Weekly layout spawner toggle changed to: ${!weeklySpawnerEnabled ? 'ENABLED' : 'DISABLED'}`);
+                      }}
+                    />
                     <button
                       onClick={() => triggerWeeklySpawner(true)}
-                      className="w-full bg-white hover:bg-stone-50 border-2 border-black py-1.5 text-[9px] font-black uppercase rounded-none text-center cursor-pointer transition-all active:translate-y-0.5"
+                      className="w-full min-h-10 bg-white hover:bg-stone-50 border-2 border-black text-[12px] font-bold cursor-pointer"
                     >
-                      Spawn Empty Weekly Checklist Now
+                      Spawn checklist now
                     </button>
-                  </div>
+                  </DeckSection>
 
-                  {/* Smart Email Inbox Sim */}
-                  <div className="space-y-2 border-b border-black/10 pb-3">
-                    <span className="text-[10px] font-black uppercase text-stone-400 block">📬 Simulate Email Inbox Hook</span>
-                    <p className="text-[9px] text-stone-500 font-bold leading-normal">
-                      Send notes to your system board address <span className="bg-stone-100 px-1 font-mono text-black">board-inbox@zenith.com</span> to automatically append elements:
-                    </p>
-                    <div className="space-y-1">
+                  <DeckSection title="Email in" hint="Pretend a note arrived at board-inbox@zenith.com.">
+                    <div className="space-y-1.5">
                       <input
                         type="text"
-                        placeholder="Email Subject Header..."
+                        placeholder="Subject"
                         value={incomingEmail.subject}
                         onChange={(e) => setIncomingEmail(prev => ({ ...prev, subject: e.target.value }))}
-                        className="w-full text-[10px] border-2 border-black p-1 bg-white font-semibold rounded-none focus:outline-none"
+                        className="w-full min-h-10 text-[12px] border-2 border-black px-3 bg-white font-semibold focus:outline-none"
                       />
                       <textarea
-                        placeholder="Type body details to send..."
+                        placeholder="Body"
                         value={incomingEmail.body}
                         onChange={(e) => setIncomingEmail(prev => ({ ...prev, body: e.target.value }))}
                         rows={2}
-                        className="w-full text-[10px] border-2 border-black p-1 bg-white font-semibold rounded-none focus:outline-none resize-none"
+                        className="w-full text-[12px] border-2 border-black p-2.5 bg-white font-semibold focus:outline-none resize-none"
                       />
                       <button
                         onClick={handleSimulatedEmailSend}
-                        className="w-full bg-black text-[#FFB703] hover:bg-stone-900 border-2 border-black py-1 text-[9px] font-black uppercase rounded-none cursor-pointer transition-all active:translate-y-0.5"
+                        className="w-full min-h-10 bg-black text-[#FFB703] hover:bg-stone-900 border-2 border-black text-[12px] font-black cursor-pointer"
                       >
-                        Simulate Email Arrival
+                        Simulate arrival
                       </button>
                     </div>
-                  </div>
+                  </DeckSection>
 
-                  {/* Auto Archive Rules */}
-                  <div className="space-y-2 border-b border-black/10 pb-3">
-                    <span className="text-[10px] font-black uppercase text-stone-400 block">🗃️ Auto-Archive Rule Schedule</span>
-                    <div className="flex items-center justify-between">
-                      <span className="text-[11px] font-bold text-stone-700">Archive 30-day old cards</span>
-                      <button
-                        onClick={() => {
-                          setAutoArchiveEnabled(prev => !prev);
-                          addActivityLog('System', `Auto-archive rule schedule toggle changed to: ${!autoArchiveEnabled ? 'ENABLED' : 'DISABLED'}`);
-                        }}
-                        className={`text-[9px] font-black px-2 py-1 border-2 border-black rounded-none cursor-pointer ${autoArchiveEnabled ? 'bg-emerald-400 text-black border-black neo-shadow-sm font-black' : 'bg-stone-100 text-stone-500 border-stone-300'}`}
-                      >
-                        {autoArchiveEnabled ? 'SCHEDULED ACTIVE' : 'MUTED'}
-                      </button>
-                    </div>
+                  <DeckSection title="Auto-archive" hint="Cards older than 30 days.">
+                    <DeckToggleRow
+                      label="Archive stale cards"
+                      on={autoArchiveEnabled}
+                      onClick={() => {
+                        setAutoArchiveEnabled(prev => !prev);
+                        addActivityLog('System', `Auto-archive rule schedule toggle changed to: ${!autoArchiveEnabled ? 'ENABLED' : 'DISABLED'}`);
+                      }}
+                    />
                     <button
                       onClick={() => archiveStaleElements()}
-                      className="w-full bg-stone-100 hover:bg-stone-200 border-2 border-black py-1.5 text-[9px] font-black uppercase rounded-none text-center cursor-pointer transition-all active:translate-y-0.5"
+                      className="w-full min-h-10 bg-white hover:bg-stone-50 border-2 border-black text-[12px] font-bold cursor-pointer"
                     >
-                      Run 30-Day Archival Scan Now
+                      Run scan now
                     </button>
-                  </div>
+                  </DeckSection>
 
-                  {/* Archives List Drawer Section */}
-                  <div className="space-y-2">
-                    <div className="flex items-center justify-between">
-                      <span className="text-[10px] font-black uppercase text-stone-400">📁 Archived Elements ({archivedElements.length})</span>
-                      {archivedElements.length > 0 && (
-                        <button
-                          onClick={() => {
-                            if (confirm('Permanently purge ALL archived elements forever?')) {
-                              setArchivedElements([]);
-                              addActivityLog('System', '🧹 Permanently purged the entire archived cards folder');
-                            }
-                          }}
-                          className="text-[8px] bg-red-100 text-red-600 border border-red-400 px-1 hover:bg-red-200 uppercase font-black rounded-none cursor-pointer"
-                        >
-                          Purge All
-                        </button>
-                      )}
-                    </div>
-                    
-                    <div className="border-2 border-black bg-stone-50 text-[9px] max-h-44 overflow-y-auto divide-y divide-black/10 font-sans p-1">
+                  <DeckSection title={`Archive (${archivedElements.length})`}>
+                    {archivedElements.length > 0 && (
+                      <button
+                        onClick={() => {
+                          if (confirm('Permanently purge ALL archived elements forever?')) {
+                            setArchivedElements([]);
+                            addActivityLog('System', 'Permanently purged the entire archived cards folder');
+                          }
+                        }}
+                        className="text-[12px] font-bold underline cursor-pointer"
+                      >
+                        Purge all
+                      </button>
+                    )}
+                    <div className="border-2 border-black bg-white text-[12px] max-h-44 overflow-y-auto divide-y divide-black/10">
                       {archivedElements.length === 0 ? (
-                        <div className="p-4 text-center text-stone-400 font-bold uppercase">Archive folder is empty.</div>
+                        <div className="p-4 text-center text-stone-400">Empty.</div>
                       ) : (
                         archivedElements.map(item => (
-                          <div key={item.id} className="p-1.5 flex flex-col gap-1 bg-white border border-stone-200 my-0.5 rounded-none text-black">
-                            <div className="flex justify-between items-center">
-                              <span className="font-extrabold text-black uppercase truncate max-w-[150px]">
-                                {item.title || 'Untitled Card'}
-                              </span>
-                              <div className="flex gap-1 shrink-0">
+                          <div key={item.id} className="px-3 py-2 flex flex-col gap-1">
+                            <div className="flex justify-between items-center gap-2">
+                              <span className="font-bold truncate">{item.title || 'Untitled'}</span>
+                              <div className="flex gap-2 shrink-0">
                                 <button
                                   onClick={() => {
                                     setElements(prev => [...prev, item]);
                                     setArchivedElements(prev => prev.filter(e => e.id !== item.id));
                                     addActivityLog('System', `Restored archived card: "${item.title}" back to active canvas`);
                                   }}
-                                  className="bg-black text-white hover:bg-stone-800 text-[8px] font-black px-1.5 py-0.5 uppercase rounded-none cursor-pointer"
+                                  className="text-[12px] font-bold underline cursor-pointer"
                                 >
                                   Restore
                                 </button>
@@ -2944,34 +2923,25 @@ export default function ZenithWorkspace() {
                                     setArchivedElements(prev => prev.filter(e => e.id !== item.id));
                                     addActivityLog('System', `Permanently deleted archived card: "${item.title}"`);
                                   }}
-                                  className="text-red-600 hover:bg-red-50 text-[8px] font-black px-1 py-0.5 uppercase border border-stone-300 rounded-none cursor-pointer"
+                                  className="text-[12px] font-bold underline cursor-pointer text-red-700"
                                 >
                                   Delete
                                 </button>
                               </div>
                             </div>
                             {item.content && (
-                              <p className="text-[9px] text-stone-500 font-semibold line-clamp-2 truncate">
-                                {item.content}
-                              </p>
+                              <p className="text-[11px] text-stone-500 line-clamp-2">{item.content}</p>
                             )}
                             {item.checklistItems && (
-                              <span className="text-[8px] text-stone-400 font-black uppercase">
-                                Checklist • {item.checklistItems.length} items
-                              </span>
+                              <span className="text-[11px] text-stone-400">{item.checklistItems.length} items</span>
                             )}
                           </div>
                         ))
                       )}
                     </div>
-                  </div>
+                  </DeckSection>
 
-                  {/* 100. One-Click Fresh Start Initialization (Batch 10) */}
-                  <div className="space-y-2 pt-3 border-t-2 border-dashed border-red-500/30">
-                    <span className="text-[10px] font-black uppercase text-red-600 block">⚠️ Demo One-Click Fresh Start Reset</span>
-                    <p className="text-[9px] text-stone-500 font-bold leading-normal text-black">
-                      Instantly purges all active cards, sketchpads, and guest passes, triggers a celebratory sound synth and confetti, and spawns a pristine pre-loaded layout for immediate testing!
-                    </p>
+                  <DeckSection title="Fresh start" hint="Clears cards and guest passes, then loads the starter board.">
                     <button
                       onClick={() => {
                         requestConfirm(
@@ -2984,7 +2954,7 @@ export default function ZenithWorkspace() {
                             setStreakCount(1);
                             setCompletedTasksCount(0);
                             setCanvasBackgroundTheme('default');
-                            
+
                             const t = Date.now();
                             const defaultStarterElements = packEqualCards(
                               buildHomeCards(t, 'fresh'),
@@ -2993,21 +2963,22 @@ export default function ZenithWorkspace() {
                             setElements(defaultStarterElements);
                             playMilestoneChime();
                             triggerConfettiCelebrate();
-                            addActivityLog('System', '🔄 Performed 100% One-Click Fresh Start Initialization!');
+                            addActivityLog('System', 'Performed One-Click Fresh Start Initialization');
                             triggerToast('Zenith board successfully restored to a fresh, clean setup!', 'success');
                           }
                         );
                       }}
-                      className="w-full bg-red-600 hover:bg-red-700 text-white border-2 border-black py-2 text-[10px] font-black uppercase rounded-none cursor-pointer transition-all active:translate-y-0.5 text-center flex items-center justify-center gap-1.5"
+                      className="w-full min-h-11 bg-[#FFB703] hover:bg-[#F5C518] text-black border-2 border-black text-[12px] font-black cursor-pointer"
                       data-testid="fresh-start"
                     >
-                      <span>🔄 Trigger Fresh Start Reset</span>
+                      Reset the board
                     </button>
-                  </div>
+                  </DeckSection>
                 </div>
               )}
             </div>
-          </div>
+        </aside>
+        </>
         )}
 
       {/* --- PUBLIC SHARE LINK MODAL POPUP --- */}
