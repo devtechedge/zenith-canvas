@@ -4,7 +4,15 @@ All notable changes to **Zenith Workspace** will be documented in this file.
 
 ---
 
-## [1.12.1] - 2026-08-25
+## [1.13.0] - 2026-08-28
+### Changed
+* Quieter first paint: one Home canvas, two non-overlapping cards, sidebar is canvases + Control Deck.
+* Mascot, architecture-blueprint modal, stamp book, and family-briefing banner are off the default view. Advanced tools stay in Control Deck.
+* Returning demo visitors get the new board (storage key `zenith-ui-version=2`).
+
+---
+
+
 ### Fixed
 * CI install: regenerate `package-lock.json` for this repo (it had been left over from a different app) and pin `lucide-react` so `npm ci` resolves on npm 10.
 * Restore `test` / `typecheck` / `test:e2e` scripts plus Playwright hooks the workflow already expected.

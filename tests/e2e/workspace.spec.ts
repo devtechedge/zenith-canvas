@@ -5,7 +5,8 @@ test("workspace shell renders the canvas and sidebar", async ({ page }) => {
   await expect(page.getByTestId("workspace-shell")).toBeVisible();
   await expect(page.getByTestId("workspace-title")).toHaveText("Zenith Workspace");
   await expect(page.getByTestId("canvas-board")).toBeVisible();
-  await expect(page.getByTestId("milestones")).toBeVisible();
+  await expect(page.getByRole("button", { name: "Control Deck" })).toBeVisible();
+  await expect(page.getByText("Try this")).toBeVisible();
 });
 
 test("control deck opens from the sidebar", async ({ page }) => {
@@ -16,18 +17,13 @@ test("control deck opens from the sidebar", async ({ page }) => {
   await expect(page.getByTestId("control-tab-appearance")).toBeVisible();
 });
 
-test("daily check-in increments the streak counter", async ({ page }) => {
+test("checking off a task is the first action", async ({ page }) => {
   await page.goto("/");
-  await expect(page.getByTestId("streak-count")).toContainText("3 Days Active");
-  await page.getByTestId("streak-check-in").click();
-  await expect(page.getByTestId("streak-count")).toContainText("4 Days Active");
-});
-
-test("blueprint stack modal shows the runtime pipeline", async ({ page }) => {
-  await page.goto("/");
-  await page.getByTestId("blueprint-open").click();
-  await expect(page.getByTestId("architecture-blueprint")).toBeVisible();
-  await expect(page.getByText("Interactive System Architecture Blueprint")).toBeVisible();
+  const box = page.getByTestId("checklist-toggle-todo-try-me");
+  await expect(box).toBeVisible();
+  await expect(box).not.toBeChecked();
+  await box.click();
+  await expect(box).toBeChecked();
 });
 
 test("fresh start confirm restores a starter board", async ({ page }) => {
