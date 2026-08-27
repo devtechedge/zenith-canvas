@@ -4,7 +4,14 @@ All notable changes to **Zenith Workspace** will be documented in this file.
 
 ---
 
-## [1.13.0] - 2026-08-28
+## [1.14.0] - 2026-08-28
+### Changed
+* Home loads seven equal tiles: Welcome, Try this, Note, Checklist, Sketch, Timer, Sound.
+* Overlay / auto-hide scrollbars across the workspace (visible on hover, not a permanent gutter).
+
+---
+
+
 ### Changed
 * Quieter first paint: one Home canvas, two non-overlapping cards, sidebar is canvases + Control Deck.
 * Mascot, architecture-blueprint modal, stamp book, and family-briefing banner are off the default view. Advanced tools stay in Control Deck.
