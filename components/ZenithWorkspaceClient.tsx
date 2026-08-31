@@ -39,6 +39,7 @@ import {
   Palette
 } from 'lucide-react';
 import { estimateBoardWidth, nextEqualSlot, packEqualCards } from '@/lib/layout';
+import { ThemeToggle } from '@/components/ThemeToggle';
 
 // --- TYPES & INTERFACES ---
 interface CanvasElement {
@@ -2100,6 +2101,7 @@ export default function ZenithWorkspace() {
             >
               + Sound
             </button>
+            <ThemeToggle />
           </div>
         </div>
 
