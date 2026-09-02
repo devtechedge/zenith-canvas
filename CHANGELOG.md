@@ -4,7 +4,13 @@ All notable changes to **Zenith Workspace** will be documented in this file.
 
 ---
 
-## [1.15.1] - 2026-08-28
+## [1.15.2] - 2026-09-03
+### Fixed
+* Replace the Control Deck README screenshot. It had been captured while Tailwind was missing, so GitHub was showing unstyled HTML.
+
+---
+
+
 ### Fixed
 * Restore Tailwind in `globals.css`. The Control Deck restyle had overwritten the file and shipped without `@tailwind` directives, so production rendered as unstyled HTML.
 
