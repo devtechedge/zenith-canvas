@@ -39,6 +39,9 @@ import {
   Palette
 } from 'lucide-react';
 import { estimateBoardWidth, nextEqualSlot, packEqualCards } from '@/lib/layout';
+import { isValidVaultPin } from '@/lib/pin';
+import { createGuestPassCode, guestPassExpiryMs } from '@/lib/guest-pass';
+import { productivityStars } from '@/lib/productivity';
 import { ThemeToggle } from '@/components/ThemeToggle';
 
 // --- TYPES & INTERFACES ---
@@ -1504,7 +1507,7 @@ export default function ZenithWorkspace() {
   // --- PIN LOCK FLOW ---
   const handleSetPIN = (e: React.FormEvent) => {
     e.preventDefault();
-    if (pinSetupVal.length !== 4 || isNaN(Number(pinSetupVal))) {
+    if (!isValidVaultPin(pinSetupVal)) {
       triggerToast('PIN must be exactly 4 numeric digits.', 'error');
       return;
     }
@@ -1539,12 +1542,12 @@ export default function ZenithWorkspace() {
 
   // --- EXPIRING GUEST ACCESS PASSES ---
   const handleGenerateGuestPass = (days: number) => {
-    const code = 'ZEN-' + Math.floor(100000 + getSafeRandom() * 900000);
+    const code = createGuestPassCode(getSafeRandom());
     const newPass: GuestPass = {
       id: `pass-${Date.now()}-${getSafeRandom()}`,
       code,
       label: `${days}-Day Access Pass`,
-      expiry: Date.now() + days * 24 * 60 * 60 * 1000
+      expiry: guestPassExpiryMs(days, Date.now())
     };
     const nextPasses = [...guestPasses, newPass];
     setGuestPasses(nextPasses);
@@ -1643,12 +1646,7 @@ export default function ZenithWorkspace() {
     const allChecklistItems = elements.flatMap(e => e.checklistItems || []);
     if (allChecklistItems.length === 0) return 3; // default
     const completed = allChecklistItems.filter(i => i.done).length;
-    const ratio = completed / allChecklistItems.length;
-    if (ratio <= 0.2) return 1;
-    if (ratio <= 0.4) return 2;
-    if (ratio <= 0.6) return 3;
-    if (ratio <= 0.8) return 4;
-    return 5;
+    return productivityStars(allChecklistItems.map((item) => ({ done: item.done })));
   };
 
   const getStationeryClass = () => {
