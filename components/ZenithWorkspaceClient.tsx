@@ -442,7 +442,7 @@ export default function ZenithWorkspace() {
     setFormattedDate(new Date().toLocaleDateString('en-US', { weekday: 'long', month: 'long', day: 'numeric' }));
 
     // v3 first-paint: seven equal Home cards. Returning demo visitors
-    // still have the two-card v2 board in localStorage — reset it.
+    // still have the two-card v2 board in localStorage - reset it.
     if (localStorage.getItem('zenith-ui-version') !== '3') {
       localStorage.removeItem('zenith-canvases');
       localStorage.removeItem('zenith-elements');
@@ -2490,7 +2490,7 @@ export default function ZenithWorkspace() {
               <div className="min-w-0">
                 <p className="text-[10px] font-bold uppercase tracking-[0.18em] text-black/55">Workspace</p>
                 <h2 className="text-[17px] font-black tracking-tight text-black leading-tight mt-0.5">Zenith Control Deck</h2>
-                <p className="text-[12px] text-black/70 mt-1 leading-snug">Look, lock, share, and reset — without leaving the board.</p>
+                <p className="text-[12px] text-black/70 mt-1 leading-snug">Look, lock, share, and reset - without leaving the board.</p>
               </div>
               <button
                 onClick={() => setIsControlDeckOpen(false)}
@@ -2709,7 +2709,7 @@ export default function ZenithWorkspace() {
                     </button>
                   </DeckSection>
 
-                  <DeckSection title="Guest passes" hint="Local codes only — they live in this browser.">
+                  <DeckSection title="Guest passes" hint="Local codes only - they live in this browser.">
                     <div className="grid grid-cols-2 gap-1.5">
                       <button
                         onClick={() => handleGenerateGuestPass(1)}

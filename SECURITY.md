@@ -1,4 +1,4 @@
-# Security Assessment — Zenith Canvas
+# Security Assessment - Zenith Canvas
 
 **Date:** 2026-09-06  
 **Scope:** Auth, XSS, injection, CORS, secrets, payments, client-side vault  
@@ -18,11 +18,11 @@
 | Payments | **N/A** | No checkout, no card data |
 | Secrets in repo | **Low** | `.env*` gitignored; `.env.example` has no keys |
 | CORS | **N/A** | No cross-origin API |
-| Build config | **Hardened** | `ignoreBuildErrors` is **false** — type errors fail CI/build |
+| Build config | **Hardened** | `ignoreBuildErrors` is **false** - type errors fail CI/build |
 
-**Overall (public Vercel demo):** Low residual risk — browser-only app, no backend secrets, no auth boundary to break.
+**Overall (public Vercel demo):** Low residual risk - browser-only app, no backend secrets, no auth boundary to break.
 
-**Overall (if someone stored secrets in a canvas):** High for that user — `localStorage` is readable by any script on the origin, and the PIN is not a cryptographic lock.
+**Overall (if someone stored secrets in a canvas):** High for that user - `localStorage` is readable by any script on the origin, and the PIN is not a cryptographic lock.
 
 ---
 

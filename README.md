@@ -1,6 +1,6 @@
 # Zenith Canvas
 
-Neo-brutalist family canvas workspace — drag-and-drop bento cards, client-side persistence, Web Audio chimes, and a 4-digit PIN vault.
+Neo-brutalist family canvas workspace - drag-and-drop bento cards, client-side persistence, Web Audio chimes, and a 4-digit PIN vault.
 
 [![Live Demo](https://img.shields.io/badge/Live%20Demo-Vercel-black?logo=vercel)](https://zenith-workspace-ten.vercel.app)
 [![CI](https://github.com/devtechedge/zenith-canvas/actions/workflows/ci.yml/badge.svg)](https://github.com/devtechedge/zenith-canvas/actions/workflows/ci.yml)
@@ -17,7 +17,7 @@ Neo-brutalist family canvas workspace — drag-and-drop bento cards, client-side
 
 [![Live Demo](https://img.shields.io/badge/Live%20Demo-Vercel-black?logo=vercel)](https://zenith-workspace-ten.vercel.app)
 
-Do **not** use https://zenith-canvas.vercel.app or https://zenith-workspace.vercel.app — those hostnames are not this project.
+Do **not** use https://zenith-canvas.vercel.app or https://zenith-workspace.vercel.app - those hostnames are not this project.
 
 > **Status:** Client-side only. Canvases, checklists, sketches, guest passes and the vault PIN live in `localStorage`. There is no account system, no database, and no production backend. Do not store secrets on the board.
 
@@ -52,7 +52,7 @@ Do **not** use https://zenith-canvas.vercel.app or https://zenith-workspace.verc
 |-------|------------|
 | Frontend | Next.js 14 (App Router), React 18, TypeScript, Tailwind CSS 3, Lucide |
 | Data | Browser `localStorage` (no database) |
-| Auth | None. Demo PIN is a client-side UX gate — see [SECURITY.md](SECURITY.md) |
+| Auth | None. Demo PIN is a client-side UX gate - see [SECURITY.md](SECURITY.md) |
 | Audio | Native Web Audio API |
 | Hosting | Vercel (import this repo; do not use `output: "standalone"`) |
 | CI | GitHub Actions (unit + typecheck + Playwright) |
