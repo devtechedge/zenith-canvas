@@ -1,10 +1,26 @@
 import type { Metadata } from "next";
 import "./globals.css";
 
+const PAGE_TITLE = "Zenith Workspace";
+const PAGE_DESCRIPTION =
+  "A neo-brutalist family canvas workspace with drag-and-drop cards, client-side persistence, and a 4-digit PIN vault.";
+const SITE_URL = "https://zenith-workspace-ten.vercel.app";
+
 export const metadata: Metadata = {
-  title: "Zenith Workspace",
-  description:
-    "A neo-brutalist family canvas workspace with drag-and-drop cards, client-side persistence, and a 4-digit PIN vault.",
+  title: PAGE_TITLE,
+  description: PAGE_DESCRIPTION,
+  // Shared links (LinkedIn, Slack, email) render a bare URL without these.
+  openGraph: {
+    title: PAGE_TITLE,
+    description: PAGE_DESCRIPTION,
+    url: SITE_URL,
+    type: "website",
+  },
+  twitter: {
+    card: "summary",
+    title: PAGE_TITLE,
+    description: PAGE_DESCRIPTION,
+  },
   icons: {
     icon: "/favicon.svg",
   },
