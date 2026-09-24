@@ -32,12 +32,14 @@ body {
 html[data-theme="dark"] .bg-white {
   background-color: var(--ui-surface);
 }
-html[data-theme="dark"] .bg-[#FAFAFA],
-html[data-theme="dark"] .bg-[#F7F4EE] {
+/* The `#` inside an arbitrary-value class must be escaped, otherwise the bracket
+   is parsed as an attribute selector and the stylesheet fails to parse. */
+html[data-theme="dark"] .bg-\[\#FAFAFA\],
+html[data-theme="dark"] .bg-\[\#F7F4EE\] {
   background-color: var(--ui-panel);
 }
 html[data-theme="dark"] .text-black,
-html[data-theme="dark"] .text-[#1A1A1A] {
+html[data-theme="dark"] .text-\[\#1A1A1A\] {
   color: var(--ui-fg);
 }
 html[data-theme="dark"] .border-black {
