@@ -1,3 +1,6 @@
+// Next 15 rejects `ssr: false` on `next/dynamic` inside a Server Component.
+// The whole board is client-only (localStorage, Web Audio), so marking this
+// boundary as a Client Component keeps the previous behaviour intact.
 'use client';
 
 import dynamic from 'next/dynamic';
